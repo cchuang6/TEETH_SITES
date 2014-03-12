@@ -1,0 +1,99 @@
+{% extends "pages/page.html" %}
+
+{% load pages_tags mezzanine_tags staticfiles %}
+
+{% block main %}
+
+{% load leaflet_tags %}
+{% load geojson_tags %}
+
+
+<head>
+    {% leaflet_js %}
+    {% leaflet_css %}    
+    <script src="{% static "js/Bing.js" %}"></script>
+    <!--<script src="{% static "js/jquery-2.1.0.min.js" %}"></script>-->
+    
+    
+    <!--<style>-->
+    <!--    .leaflet-container { height: 100%; }-->
+    <!--</style>-->
+</head>
+
+<body>    
+    {% leaflet_map "main"  callback="main_map_init" %}
+
+    <script type="text/javascript">
+        function main_map_init (map, options) {
+            //map.spin(true); 
+			//add MapBox			
+
+            //var map = new L.Map('map', {center: [51.505, -0.09], zoom: 1});
+            //var osm = new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');            
+            //var bing = new L.BingLayer("Anqm0F_JjIZvT0P3abS6KONpaBaKuTnITRrnYuiJCE0WOhH6ZbE4DzeT6brvKVR5");
+            //map.addLayer(bing);            
+            //map.addControl(new L.Control.Layers( {'OSM':osm, 'Bing':bing}, {}));
+
+
+            var dataurlPoint = '{% url 'dataPoint' %}';            
+            var dataurlPolygon = '{% url 'dataPolygon' %}';            
+            // Download GeoJSON via Ajax
+            console.log('start parse!');
+            console.log(dataurlPoint);
+            console.log(dataurlPolygon);
+            $.getJSON(dataurlPoint, function (data) {
+                // Add GeoJSON layer                                        
+                console.log('in parse');
+                L.geoJson(data, { onEachFeature: onEachFeatureFunction}).addTo(map);
+                //pointLayer.addData(data);
+                //map.spin(false);
+            });
+
+            $.getJSON(dataurlPolygon, function (data) {
+                // Add GeoJSON layer                                        
+                var polygonLayer = L.geoJson().addTo(map).bindPopup("<b>Successfully bind Layer!! </b>");
+                polygonLayer.addData(data);                
+            });
+			
+			
+        }
+        
+        function onEachFeatureFunction(feature, layer){  
+             
+                if (feature.properties && feature.properties.name) {
+
+                    
+                    var name = $('<span style="font-weight:bold"></span>').text(feature.properties.name);
+                    var genealogies = $('<ol></ol>');
+                    //genealogies.append('<li>' + "test" + '</li>');
+                    //use for loop to append all possible geneologies totoal 66
+                    for(var i = 1; i < 67; i++){
+    
+                        //var geneology = $('<a href='#' class='smallPolygonLink'></a>');
+                        var geneology = $('<a href="#" class="smallPolygonLink"></a>');
+                        geneology.text("geneology " + i);
+                        geneology.on('click', function(event){
+                                    alert("Click: " + event.target.text);
+                                    });
+                        var list = $('<li></li>');
+                        list.append(geneology);
+                        genealogies.append(list);
+                    }
+                    var container = $('<div style = "width:150px; height:150px; overflow:auto"></div>');
+                    container.append(name);                    
+                    container.append(genealogies);
+
+					//only bind name
+                   //layer.on('mouseover', function(event){event.target.bindPopup(container[0]).openPopup()});
+				   layer.on('mouseover', function(event){event.target.bindPopup(name[0]).openPopup()});
+				   layer.on('click', function(){alert("To Do: \n Go to the Genealogy page!")});
+				   layer.on('mouseout', function(event){event.target.closePopup()});
+            }
+        }
+		
+	
+		
+    </script>
+</body>
+
+{% endblock %}

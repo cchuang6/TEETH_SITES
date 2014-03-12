@@ -1,0 +1,117 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+		"model":"mapApp.LocationPoint",
+        "name": "Solomon Islands Point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.279541015625,
+          -9.611582210984674
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+		"model":"mapApp.LocationPolygon",
+        "name": "Solomon Islands Polygon"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              154.599609375,
+              -4.565473550710278
+            ],
+            [
+              161.71874999999997,
+              -7.885147283424319
+            ],
+            [
+              168.3984375,
+              -10.746969318459989
+            ],
+            [
+              164.8828125,
+              -12.554563528593656
+            ],
+            [
+              158.90625,
+              -10.574222078332806
+            ],
+            [
+              154.775390625,
+              -7.536764322084078
+            ],
+            [
+              154.599609375,
+              -4.565473550710278
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+		"model":"mapApp.LocationPoint",
+        "name": "South Caroline Point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.244140625,
+          33.578014746143985
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+		"model":"mapApp.LocationPolygon",
+        "name": "South Caroline Polygon"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.771484375,
+              32.24997445586331
+            ],
+            [
+              -82.44140625,
+              33.94335994657882
+            ],
+            [
+              -83.14453125,
+              34.88593094075317
+            ],
+            [
+              -81.03515625,
+              35.460669951495305
+            ],
+            [
+              -79.716796875,
+              35.10193405724606
+            ],
+            [
+              -78.22265625,
+              33.797408767572485
+            ],
+            [
+              -80.771484375,
+              32.24997445586331
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

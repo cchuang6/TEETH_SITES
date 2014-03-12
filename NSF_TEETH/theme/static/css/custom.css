@@ -1,0 +1,44 @@
+body {
+  background-color: #ddd;
+    //background-color: #white;
+  //font-family : 'Ubuntu', sans-serif;
+    font-family : 'Lato', sans-serif;
+    font-weight: 500;
+    //font-size: 36px;
+}
+.col-md-8 img{
+
+    width:150px;
+    height:150px;
+}
+.col-md-8 td{
+    width:186px;    
+}
+
+hr {
+    height: 1px;    
+    color: #fff;
+    border-top: 0px;
+    background-image:-webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image:-moz-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image:-ms-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+    background-image:-o-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0.75), rgba(0,0,0,0));
+}
+.ASU img{
+    
+}
+.NSF img{
+    width:314px;
+    height:57px;
+    
+}
+
+.leaflet-container {  /* all maps */
+    width:  800px;
+    height: 600px;
+}
+/*
+#specialbigmap {
+    height: 800px;
+}
+*/
