@@ -8,7 +8,7 @@ username = []
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 PROJECT_DIRNAME = PROJECT_ROOT.split(os.sep)[-1]
-PACKAGES_PATH = "C:\\Users\\" + username[0] + "\\Envs\\test_site\\Lib\\site-packages"
+PACKAGES_PATH = "C:\\Users\\" + username[0] + "\\Envs\\nsf_teeth\\Lib\\site-packages"
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, PACKAGES_PATH)
 site.addsitedir(PACKAGES_PATH)
