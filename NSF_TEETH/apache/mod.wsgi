@@ -4,7 +4,6 @@ import os,sys, site
 #  You can get user name by CMD:
 #  echo %USERPROFILE%
 #
-
 username = []
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
