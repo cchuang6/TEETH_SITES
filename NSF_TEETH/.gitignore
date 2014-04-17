@@ -3,5 +3,7 @@
 *.db
 .DS_Store
 .coverage
+apache/*
+!apache/wsgi.py
 static/*
 !static/media
