@@ -19,6 +19,8 @@ urlpatterns = patterns('',
 
     #url(r'^admin/', include(admin.site.urls)),
     url(r'^$', TemplateView.as_view(template_name = 'mappage.html'), name='mapHome'),
+    url(r'^testSVG$', TemplateView.as_view(template_name = 'testSVG.html'), name='testSVG'),
+    url(r'^treeView$', TemplateView.as_view(template_name = 'treeview.html'), name='treeView'),
     url(r'^data.geojsonPoint$', MapLayer.as_view(model=LocationPoint), name='dataPoint'),
     url(r'^data.geojsonPolygon$', GeoJSONLayerView.as_view(model=LocationPolygon), name='dataPolygon'),
 )

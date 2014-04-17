@@ -86,12 +86,21 @@
 					//only bind name
                    //layer.on('mouseover', function(event){event.target.bindPopup(container[0]).openPopup()});
 				   layer.on('mouseover', function(event){event.target.bindPopup(name[0]).openPopup()});
-				   layer.on('click', function(){alert("To Do: \n Go to the Genealogy page!")});
+				   
+				   layer.on('click', onViewerClicked);
+				   //layer.on('click', function(){alert("To Do: \n Go to the Genealogy page!")});
 				   layer.on('mouseout', function(event){event.target.closePopup()});
             }
         }
 		
-	
+		function onViewerClicked(event){
+			//event.preventDefault();
+			var tree_view = '{% url 'treeView' %}';
+			var test_svg = '{% url 'testSVG' %}';
+			console.log(tree_view);
+			window.location.replace(tree_view);
+		}
+		
 		
     </script>
 </body>

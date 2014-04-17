@@ -1,0 +1,278 @@
+{% extends "pages/page.html" %}
+
+{% load pages_tags mezzanine_tags staticfiles %}
+{% load leaflet_tags %}
+{% block main %}
+
+
+
+<head>
+{% leaflet_css %}
+<script src="{% static "js/d3.min.js" %}"></script>
+<script src="{% static "js/jquery.ui.position.js" %}"></script>
+<script src="{% static "js/jquery.contextMenu.js" %}"></script>
+<link href="{% static "css/jquery.contextMenu.css" %}" rel="stylesheet" type="text/css" />
+
+<style type= "text/css">
+div.tooltip {
+  position: absolute;-
+  text-align: center;
+  width: 90px;
+  height: 60px;
+  padding: 2px;
+  font: 14px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+#zoomReset{
+	background-image: url('/static/leaflet/images/reset-view.png');
+}
+#zoomIn{
+	background-image: url('/static/leaflet/images/zoom-in.png');
+}
+#zoomOut{
+	background-image: url('/static/leaflet/images/zoom-out.png');
+}
+
+
+</style>
+</head>
+
+
+<div class="leaflet-top leaflet-left">
+	<div class="leaflet-control-zoom leaflet-bar leaflet-control">
+		<a class="leaflet-control-zoom-in" href="#" title="Zoom in" id="zoomIn"></a>
+		<a class="leaflet-control-zoom-out" href="#" title="Zoom out" id="zoomOut"></a>
+	</div>
+	<div class = "leaflet-control-zoom leaflet-bar leaflet-control">		
+		<a class="leaflet-control-zoom-out leaflet-bar-part" href="#" title="Reset view" id="zoomReset"></a>
+	</div>
+
+</div>
+
+<div id="viz"></div>
+    <script type="text/javascript">
+	
+	// svg url
+	var svg_url = "/static/media/uploads/galleries/family_tree/family_s1.svg";
+	//width, height variables
+	var width = $(".col-md-8.left").width();
+	var height = 400;
+	//var ratio
+	var ratio;
+	var viz;
+	var zoom;
+	
+	function resize(width, height, target_wdith, target_height){
+			ratioW = target_wdith/width;
+			ratioH = target_height/height;        
+			if(ratioW >= ratioH)
+				return ratioH;            
+			else
+				return ratioW;
+		}
+	//zoom Reset
+	$(function(){				
+				$('#zoomReset').on('click',function(e){
+					e.preventDefault();
+					zoom.scale(1);
+					zoom.translate([0,0]);					
+					viz.attr("transform", "translate(" + zoom.translate() + ") scale(" + zoom.scale() + ")");
+										
+				});
+				
+				$('#zoomIn').on('click',function(e){					
+					var scale = zoom.scale()+ 0.5;
+					zoom.scale(scale);
+					viz.attr("transform", "translate(" + zoom.translate() + ") scale(" + zoom.scale() + ")");
+					console.log("zoom In: scale " + scale);					
+				});
+				
+				$('#zoomOut').on('click',function(e){					
+					var scale = zoom.scale() - 0.5;
+					zoom.scale(scale);
+					viz.attr("transform", "translate(" + zoom.translate() + ") scale(" + zoom.scale() + ")");
+					console.log("zoom out");					
+				});
+			});
+	
+	
+	//functions for call back
+	rawDataCallback = function(){
+		alert('Click raw data!!');
+	}
+	
+	photoCallback = function(){
+		alert('Click photos!!');
+	}
+	
+	scanCallback = function(){
+		alert('Click scans!!');
+	}
+	
+	//context menu
+	
+	$("#viz").contextMenu({
+					selector: '#context-menu-one',
+					items: {
+								"rawData": {name: "Raw Data", icon: "data", callback: rawDataCallback},
+								"photographs": {name: "Photographs", icon: "photo", callback: photoCallback},
+								"scans": {name: "Scans", icon: "tooth", callback: scanCallback},								
+							}				
+					
+				});
+	
+	
+	
+	d3.xml(svg_url, "image/svg+xml", function(xml){
+				//initialize parameters
+				
+				
+				console.log("col width: " +$(".col-md-8.left").width());
+				console.log("col height: " + $(".col-md-8.left").height());
+				
+				
+				//load treeview as node
+				var importedNode = document.importNode(xml.documentElement, true);
+				
+				//add a svg box
+				//comment here 
+				
+				viz = d3.select("#viz").append("svg")
+							.attr("viewBox", "0 0 "+ width + " " + height)
+							.attr("width", width)
+							.attr("height", height)
+							.attr("preserveAspectRatio", "xMinYMin meet")
+							.append("g")
+							.call(zoom = d3.behavior.zoom().scaleExtent([1, 8]).on("zoom", onZoom))
+							.append("g");	
+							
+				//add treeview as a node
+								
+				viz.node().appendChild(importedNode);
+		
+				//create a div
+				/*
+				var div = d3.select("#viz").append("div")
+							.attr("class", "tooltip")
+							.style("opacity", 0);
+				*/
+				//change index to 0
+				var treeView = d3.selectAll("svg")
+								.filter(function(d, i){return i == 0});
+								
+								
+				var org_width = parseInt(importedNode.getBoundingClientRect().width);				
+				var org_height = parseInt(importedNode.getBoundingClientRect().height);	
+				console.log("org_width: " + org_width);
+				console.log("org_height: " + org_height);
+				
+				
+				//add viewBox
+				
+				treeView.attr("viewBox", "0 0 "+ width + " " + height)
+					.attr("width", width)
+					.attr("height", height)
+					.attr("preserveAspectRatio", "xMinYMin meet");
+				
+				//resize svg
+				ratio = resize(org_width, org_height, width, height);
+				console.log("ratio: " + ratio);
+				treeView.select("g")
+				.attr("transform",  "translate(0, 60) scale(" + ratio +", " + ratio + ")" )
+				
+				//zoom function
+				function onZoom(){					
+					viz.attr("transform", " translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+				}
+				
+				
+				//add pop up dialog
+				var container = $('<div style = "width:150px; height:150px; overflow:auto"></div>');
+				var metadata = $('<a href="#" class="smallPolygonLink"></a>');
+				var photographs = $('<a href="#" class="smallPolygonLink"></a>');
+				var scans = $('<a href="#" class="smallPolygonLink"></a>');
+				metadata.text("metadata")
+				photographs.text("photographs")
+				scans.text("scans")
+                        
+				container.append(metadata);
+				container.append(photographs);
+				container.append(scans);
+				
+				//d3.select("#viz").on("contextmenu", function(data, index){return false;});
+				d3.selectAll("text")
+							.attr("id", "context-menu-one");
+				/*
+				d3.selectAll("text").on("contextmenu", function(data, index){
+					    $.contextMenu({
+							selector: '.context-menu-one', 
+							callback: function(key, options) {
+										var m = "clicked: " + key;
+										window.console && console.log(m) || alert(m); 
+										},
+							items: {
+								"edit": {name: "Edit", icon: "edit"},
+								"cut": {name: "Cut", icon: "cut"},
+								"copy": {name: "Copy", icon: "copy"},
+								"paste": {name: "Paste", icon: "paste"},
+								"delete": {name: "Delete", icon: "delete"},
+								"sep1": "---------",
+								"quit": {name: "Quit", icon: "quit"}
+								}
+						});
+				
+				});
+				*/
+				
+				// Mouseover pop up menu
+				/*
+				nodes = d3.selectAll("text").on("mouseover", function(d){
+													var position = d3.mouse(this);
+													div.transition()        
+														.duration(200)      
+														.style("opacity", .9); 
+													var left = d3.event.pageX -$("#viz").offset().left -28;
+													var top = d3.event.pageY -$("#viz").offset().top - 28;
+													div.html('<a href="#">rawdata</a>' + '<br/>'+
+															   '<a href="#">photographs</a>'+ '<br/>'+
+																'<a href="http://www.w3schools.com">scans</a>')
+														.style("left", left + "px")     
+														.style("top", top + "px");													
+												})
+										     .on("mouseout", function(d){											 
+														div.transition()        
+															.duration(500)      
+															.style("opacity", 0);  																						
+											});
+				
+				*/
+										 															
+			
+			});
+			
+			
+			
+
+    
+    
+</script> 
+
+{% endblock %}
+
+{% block right_panel_twitter %}
+	<div class="panel panel-default">
+		<div class="panel-body">
+		{% block right_panel %}
+		<div>
+			<ul>
+				<li>Geneology 1</li>
+				<li>Geneology 2</li>
+			</ul>
+		</div>
+		{% endblock %}
+		</div>
+	</div>
+{% endblock %}
