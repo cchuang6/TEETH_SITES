@@ -3,6 +3,7 @@
 *.db
 .DS_Store
 .coverage
-wsgi.conf
+apache/*
+!apache/wsgi.py
 /static/*
 !/static/media
