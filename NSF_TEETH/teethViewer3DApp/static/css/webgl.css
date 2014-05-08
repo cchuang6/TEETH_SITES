@@ -1933,6 +1933,26 @@ body {
     -webkit-box-shadow:rgba(0, 0, 0, 0.15) 2px 2px 2px;
     box-shadow:rgba(0, 0, 0, 0.15) 2px 2px 2px
 }
+.lightcontrol {
+    font-family:Arial, Helvetica, sans-serif!important;
+    color:white!important;
+    font-weight:bold;
+    -moz-border-radius:2px;
+    -webkit-border-radius:2px;
+    border-radius:2px;  
+    cursor:pointer;
+    text-align:center;
+    vertical-align:middle;
+    -webkit-transition:all .2s ease-in;
+    padding:4px;
+    font-size:11px;
+    -moz-border-radius:2px;
+    -webkit-border-radius:2px;
+    border-radius:2px;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+    filter:alpha(opacity=75);
+    opacity:.75
+}
 .bluebutton {
     font-family:Arial, Helvetica, sans-serif!important;
     color:white!important;
