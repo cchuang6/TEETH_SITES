@@ -233,6 +233,7 @@ TEMPLATE_DIRS = (os.path.join(PROJECT_ROOT, "templates"),)
 INSTALLED_APPS = (
     "theme",
     "mapApp",
+    "teethViewer3DApp",
     "mezzanine_pagedown",
     "django.contrib.admin",
     "django.contrib.auth",

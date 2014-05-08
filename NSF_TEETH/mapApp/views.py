@@ -1,6 +1,9 @@
+"""
+@author: chiayuanchuang
+@app: mapApp
+@class: views
 
-# Create your views here.
-# Create your views here.
+"""
 
 from djgeojson.views import GeoJSONLayerView
 

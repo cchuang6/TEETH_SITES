@@ -5,6 +5,7 @@ from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 import mezzanine_pagedown.urls
 from mezzanine.core.views import direct_to_template
+import teethViewer3DApp
 
 
 admin.autodiscover()
@@ -48,6 +49,8 @@ urlpatterns += patterns('',
 
     url("^$", "mezzanine.pages.views.page", {"slug": "/"}, name="home"),
     url(r'^map/', include('mapApp.urls')),
+    url(r'^3dViewer/', include('teethViewer3DApp.urls')),
+    
 
     # HOMEPAGE FOR A BLOG-ONLY SITE
     # -----------------------------

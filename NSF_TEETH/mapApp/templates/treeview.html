@@ -1,11 +1,10 @@
-{% extends "pages/page.html" %}
+{% extends "pages/leftColPage.html" %}
 
 {% load pages_tags mezzanine_tags staticfiles %}
 {% load leaflet_tags %}
+
+
 {% block main %}
-
-
-
 <head>
 {% leaflet_css %}
 <script src="{% static "js/d3.min.js" %}"></script>
@@ -14,18 +13,7 @@
 <link href="{% static "css/jquery.contextMenu.css" %}" rel="stylesheet" type="text/css" />
 
 <style type= "text/css">
-div.tooltip {
-  position: absolute;-
-  text-align: center;
-  width: 90px;
-  height: 60px;
-  padding: 2px;
-  font: 14px sans-serif;
-  background: lightsteelblue;
-  border: 0px;
-  border-radius: 8px;
-  pointer-events: none;
-}
+
 #zoomReset{
 	background-image: url('/static/leaflet/images/reset-view.png');
 }
@@ -36,10 +24,53 @@ div.tooltip {
 	background-image: url('/static/leaflet/images/zoom-out.png');
 }
 
+#{margin:0;}
+
+
+
+#panel{
+  -moz-transition: right 0.4s ease-in-out;
+  -ms-transition: right 0.4s ease-in-out;
+  -o-transition: right 0.4s ease-in-out;
+  -webkit-transition: right 0.4s ease-in-out;
+  background:#444;
+  color:#fff;
+  height:100%;
+  position:fixed;
+  right:-330px;
+  transition: right 0.4s ease-in-out;
+  width:330px; 
+}
+
+#panel h2, #panel p{
+  padding:25px;
+}
+#panelCaller{
+  position:absolute;
+  top:50px;
+  right:300px;
+  width:110px;
+  padding:20px 10px;
+  background:#444; 
+  transform: rotate(90deg);
+  -webkit-transform: rotate(90deg);
+  -moz-transform:rotate(90deg);
+}
+#panel:hover{
+	
+  right:0px;
+}
+
 
 </style>
 </head>
-
+  <div id="panel">
+    <div id="panelCaller">Genealogy List    
+    </div>    
+    <h2>Panel</h2>
+    <p>Content</p>
+    <p><a href="#">test</a></p>    
+  </div>
 
 <div class="leaflet-top leaflet-left">
 	<div class="leaflet-control-zoom leaflet-bar leaflet-control">
@@ -49,7 +80,6 @@ div.tooltip {
 	<div class = "leaflet-control-zoom leaflet-bar leaflet-control">		
 		<a class="leaflet-control-zoom-out leaflet-bar-part" href="#" title="Reset view" id="zoomReset"></a>
 	</div>
-
 </div>
 
 <div id="viz"></div>
@@ -58,8 +88,9 @@ div.tooltip {
 	// svg url
 	var svg_url = "/static/media/uploads/galleries/family_tree/family_s1.svg";
 	//width, height variables
-	var width = $(".col-md-8.left").width();
+	var width = $(".col-md-12.left").width();
 	var height = 400;
+	var zoomBox_width = 26;
 	//var ratio
 	var ratio;
 	var viz;
@@ -79,7 +110,7 @@ div.tooltip {
 					e.preventDefault();
 					zoom.scale(1);
 					zoom.translate([0,0]);					
-					viz.attr("transform", "translate(" + zoom.translate() + ") scale(" + zoom.scale() + ")");
+					viz.attr("transform", "translate(" + zoom.translate() + ") scale(" + zoom.scale() + ")");					
 										
 				});
 				
@@ -109,7 +140,13 @@ div.tooltip {
 	}
 	
 	scanCallback = function(){
-		alert('Click scans!!');
+		//alert('Click scans!!');
+		//var dataurlPolygon = '{% url 'dataPolygon' %}';  
+		var teethViewer3D = '{% url 'teethViewer3DHome' %}'; 
+		console.log("url: " + teethViewer3D);
+		window.location.replace(teethViewer3D);
+		
+
 	}
 	
 	//context menu
@@ -130,8 +167,8 @@ div.tooltip {
 				//initialize parameters
 				
 				
-				console.log("col width: " +$(".col-md-8.left").width());
-				console.log("col height: " + $(".col-md-8.left").height());
+				console.log("col width: " +$(".col-md-12.left").width());
+				console.log("col height: " + $(".col-md-12.left").height());
 				
 				
 				//load treeview as node
@@ -178,10 +215,10 @@ div.tooltip {
 					.attr("preserveAspectRatio", "xMinYMin meet");
 				
 				//resize svg
-				ratio = resize(org_width, org_height, width, height);
+				ratio = resize(org_width, org_height, width-zoomBox_width, height);
 				console.log("ratio: " + ratio);
 				treeView.select("g")
-				.attr("transform",  "translate(0, 60) scale(" + ratio +", " + ratio + ")" )
+				.attr("transform",  "translate(" + zoomBox_width+ ", 0) scale(" + ratio +", " + ratio + ")" );
 				
 				//zoom function
 				function onZoom(){					
@@ -262,17 +299,9 @@ div.tooltip {
 
 {% endblock %}
 
-{% block right_panel_twitter %}
-	<div class="panel panel-default">
-		<div class="panel-body">
-		{% block right_panel %}
-		<div>
-			<ul>
-				<li>Geneology 1</li>
-				<li>Geneology 2</li>
-			</ul>
-		</div>
-		{% endblock %}
-		</div>
-	</div>
-{% endblock %}
+
+
+
+
+
+

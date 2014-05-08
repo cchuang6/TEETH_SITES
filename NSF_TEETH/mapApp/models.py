@@ -1,3 +1,10 @@
+"""
+@author: chiayuanchuang
+@app: mapApp
+@class: models
+
+"""
+
 from django.db import models
 
 # Create your models here.

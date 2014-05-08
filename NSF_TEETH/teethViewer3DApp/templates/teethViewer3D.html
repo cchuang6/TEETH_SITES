@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0067)https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1 -->
+<html lang="en">
+{% load staticfiles %}
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Teeth 3D Model Viewer</title>
+    <meta charset="utf-8" content="chrome=1" http-equiv="X-UA-Compatible">{% load staticfiles %}
+
+    <!-- <script type="text/javascript" src="{% static "js/f66f2da77988943ff926fe325e7b7f24c55b9010.1.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/i.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/ga.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/webgl.js" %}"></script> -->
+
+    <!-- <script type="text/javascript" src="{% static "js/jquery.min.js" %}"></script> -->
+    <!-- <script src="{% static "js/three.min.js" %}"></script> -->
+    <!-- <script src="{% static "js/libs/system.min.js" %}"></script>
+    <script src="{% static "js/controls/EditorControls.js" %}"></script>
+    <script src="{% static "js/controls/TransformControls.js" %}"></script>
+    <script src="{% static "js/loaders/BabylonLoader.js" %}"></script>
+    <script src="{% static "js/loaders/ColladaLoader.js" %}"></script>
+    <script src="{% static "js/loaders/OBJLoader.js" %}"></script>
+    <script src="{% static "js/loaders/PLYLoader.js" %}"></script>
+    
+    <script src="{% static "js/loaders/UTF8Loader.js" %}"></script>
+    <script src="{% static "js/loaders/VRMLLoader.js" %}"></script>
+    <script src="{% static "js/loaders/VTKLoader.js" %}"></script>
+    <script src="{% static "js/loaders/ctm/lzma.js" %}"></script>
+    <script src="{% static "js/loaders/ctm/ctm.js" %}"></script>
+    <script src="{% static "js/loaders/ctm/CTMLoader.js" %}"></script>
+    <script src="{% static "js/exporters/SceneExporter.js" %}"></script>
+    <script src="{% static "js/exporters/OBJExporter.js" %}"></script>
+    <script src="{% static "js/exporters/STLExporter.js" %}"></script>
+    <script src="{% static "js/renderers/RaytracingRenderer.js" %}"></script>
+    <script src="{% static "js/renderers/SoftwareRenderer.js" %}"></script>
+    <script src="{% static "js/renderers/SVGRenderer.js" %}"></script> -->
+    <!-- WIP -->
+<!--     <script src="{% static "js/BufferGeometryUtils.js" %}"></script>
+    <script src="{% static "js/exporters/BufferGeometryExporter.js" %}"></script>
+    <script src="{% static "js/exporters/TypedGeometryExporter.js" %}"></script>
+    <script src="{% static "js/exporters/GeometryExporter.js" %}"></script>
+    <script src="{% static "js/exporters/MaterialExporter.js" %}"></script>
+    <script src="{% static "js/exporters/ObjectExporter.js" %}"></script>
+    <script src="{% static "js/renderers/WebGLRenderer3.js" %}"></script>
+    <script src="{% static "js/libs/signals.min.js" %}"></script>
+    <script src="{% static "js/libs/ui.js" %}"></script>
+    <script src="{% static "js/libs/ui.editor.js" %}"></script>
+    <script src="{% static "js/libs/ui.three.js" %}"></script>
+    <script src="{% static "js/Storage.js" %}"></script>
+    <script src="{% static "js/Editor.js" %}"></script>
+    <script src="{% static "js/Config.js" %}"></script>
+    <script src="{% static "js/Loader.js" %}"></script>
+    <script src="{% static "js/Menubar.js" %}"></script>
+    <script src="{% static "js/Menubar.File.js" %}"></script>
+    <script src="{% static "js/Menubar.Edit.js" %}"></script>
+    <script src="{% static "js/Menubar.Add.js" %}"></script>
+    <script src="{% static "js/Menubar.View.js" %}"></script>
+    <script src="{% static "js/Menubar.Help.js" %}"></script>
+    <script src="{% static "js/Sidebar.js" %}"></script>
+    <script src="{% static "js/Sidebar.Renderer.js" %}"></script>
+    <script src="{% static "js/Sidebar.Scene.js" %}"></script>
+    <script src="{% static "js/Sidebar.Object3D.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Animation.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.BoxGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.CircleGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.CylinderGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.IcosahedronGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.PlaneGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.SphereGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.TorusGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Geometry.TorusKnotGeometry.js" %}"></script>
+    <script src="{% static "js/Sidebar.Material.js" %}"></script>
+    <script src="{% static "js/Toolbar.js" %}"></script> -->
+    
+    <link href="{% static "css/webgl.css" %}" media="screen" rel="stylesheet" type="text/css">
+
+    <body>
+                
+
+        <div id="system_message">
+            <div class="dib mr5" id="msg_text"></div>
+        </div>
+        <div class="textdisable" id="tpDRcontainer">
+            <div id="tpModelCanvasHolder">
+                <canvas id="dmCanvas"></canvas>
+                <canvas id="colorCanvas"></canvas>
+                <div id="teethContainer" class="tp_viewer" style="width: 1680px; height: 906px;">
+                    <div id="progress" style="width: 504px; height: 25px; left: 588px; top: 440.5px; visibility: hidden;">
+                        <div id="message" style="top: 2.5px; left: 151.2px;">Building 3D models ...</div>
+                        <div id="indicator" style="width: 0%;"></div>
+                        <div id="spinner" style="top: 2.5px; left: 2px; visibility: hidden;"></div>
+                    </div>
+                    <!-- <canvas width="1680" height="906"></canvas> -->
+                </div>
+            </div>
+            <div class="textdisable" id="tpDRHeader" style="display: block;">
+                <div id="tpToolbar">
+                    <div id="tpTitle">left_maxillary_molar.obj
+                        <span class="versioninfo">(v1)</span>
+                    </div>
+                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance">
+                        <span class="ui-button-icon-primary ui-icon icon-fdist"></span>
+                        <span class="ui-button-text">3D Distance</span>
+                    </button>
+                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="ndistbtn" role="button" aria-disabled="false" title="Normal Distance">
+                        <span class="ui-button-icon-primary ui-icon icon-ndist"></span>
+                        <span class="ui-button-text">Normal Distance</span>
+                    </button>
+                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="anglebtn" role="button" aria-disabled="false" title="Angle">
+                        <span class="ui-button-icon-primary ui-icon icon-angle"></span>
+                        <span class="ui-button-text">Angle</span>
+                    </button>
+                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen">
+                        <span class="ui-button-icon-primary ui-icon icon-camera"></span>
+                        <span class="ui-button-text">Save Screen</span>
+                    </button>
+                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="downloadstlbtn" role="button" aria-disabled="false" title="Download STL">
+                        <span class="ui-button-icon-primary ui-icon icon-stl"></span>
+                        <span class="ui-button-text">Download STL</span>
+                    </button>
+                    <button id="changeradbtn" style="display: none;">Change Rad of Scan</button>
+                </div>
+            </div>
+            <div id="tpTreeWrapper">
+                <div id="tpTreeHandle">Assembly Tree</div>
+                <div class="textdisable" id="tpTree"></div>
+            </div>
+            <div class="textdisable" id="tpContextmenuOnTree">
+                <ul class="contextMenu" id="tpTreeMenuOnTree">
+                    <li class="hide">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#hide">Hide</a>
+                    </li>
+                    <li class="show">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#show">Show</a>
+                    </li>
+                    <li class="trans">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#trans">Transparent</a>
+                    </li>
+                    <li class="opaque">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#opaque">Opaque</a>
+                    </li>
+                    <li class="hideothers">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#hideothers">Hide Others</a>
+                    </li>
+                    <li class="setcamera">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#setcamera">Set Rotate Center</a>
+                    </li>
+                    <li class="downloadstl">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#downloadstl">Download STL</a>
+                    </li>
+                    <li class="showall separator">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#showall">Show All</a>
+                    </li>
+                    <li class="resetcamera">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#resetcamera">Reset Rotate Center</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="textdisable" id="tpContextmenuOnModel">
+                <ul class="contextMenu" id="tpTreeMenuOnModel">
+                    <li class="hide">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#hide">Hide</a>
+                    </li>
+                    <li class="trans">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#trans">Transparent</a>
+                    </li>
+                    <li class="opaque">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#opaque">Opaque</a>
+                    </li>
+                    <li class="hideothers">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#hideothers">Hide Others</a>
+                    </li>
+                    <li class="setcamera">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#setcamera">Set Rotate Center</a>
+                    </li>
+                    <li class="downloadstl">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#downloadstl">Download STL</a>
+                    </li>
+                    <li class="showall separator">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#showall">Show All</a>
+                    </li>
+                    <li class="resetcamera">
+                        <a href="https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1#resetcamera">Reset Rotate Center</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="textdisable" id="tpViewPoints" style="display: block;">
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView0" style="top: 10px; right: 20px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName0"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView1" style="top: 50px; right: 60px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName1"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView2" style="top: 50px; right: 20px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName2"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView3" style="top: 90px; right: 60px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName3"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView4" style="top: 90px; right: 20px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName4"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView5" style="top: 130px; right: 60px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName5"></div>
+                </div>
+                <div class="tp3DStandardView textdisable" id="tp3DStandardView6" style="top: 130px; right: 20px;">
+                    <div class="tp3DStandardViewName" id="tp3DStandardViewName6"></div>
+                </div>
+                <input class="bluebutton" type="button" value="Save View" id="saveviewbtn">
+                <input class="bluebutton" type="button" value="Set File Icon" id="setthmb">                
+            </div>
+            <div  class="lightcontrol" id="lightControl" > </div>
+            <div class="textdisable" id="partInfoOnMouse"></div>
+            <div class="textdisable" id="tpModelInfo" style="display: block;">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="valueName right">Facet count:</span>
+                            </td>
+                            <td>
+                                <span class="numbervalue left">73,500</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="xvalue right">X-width:</span>
+                            </td>
+                            <td>
+                                <span class="xvalue left">24.25</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="yvalue right">Y-height:</span>
+                            </td>
+                            <td>
+                                <span class="yvalue left">73.98</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="zvalue right">Z-depth:</span>
+                            </td>
+                            <td>
+                                <span class="zvalue left">13.34</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="valueName right">Mesh surface:</span>
+                            </td>
+                            <td>
+                                <span class="numbervalue left">618.29</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="valueName right">Mesh volume:</span>
+                            </td>
+                            <td>
+                                <span class="numbervalue left">1,015.70</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="tpMousePointer"></div>
+        </div>
+
+        <div id="tpMousePositionInfo" class="textdisable" style="visibility: hidden;"></div>
+        <div id="tpDimInfo" class="textdisable" style="visibility: hidden;"></div>
+        <div id="tpOpHelp" class="textdisable" style="visibility: hidden;"></div>        
+    </body>
+
+        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/three.min.57.js" %}"></script>
+        <!--<script type="text/javascript" src="../../lib/utils.js"></script>-->
+        
+       
+        
+        <script src="{% static "js/Editor.js" %}"></script>
+    
+        
+
+        
+        <script src="{% static "js/Viewport.js" %}"></script>
+        
+        <script type="text/javascript" src="{% static "js/libs/Coordinates.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/uclass_BeveledBlockGeometry.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/uclass_TeapotGeometry.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/stats.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}"></script>
+        
+        
+        <script src="{% static "js/loaders/STLLoader2.js" %}"></script>
+
+        <script type="text/x-glsl" id="vertex">
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+
+            void main() {
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                vNormal = normalize( normalMatrix * normal );
+                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                vViewPosition = -mvPosition.xyz;
+            }
+        </script>
+
+        <script type="text/x-glsl" id="fragment">
+            uniform vec3 uMaterialColor;
+            uniform vec3 uSpecularColor;
+            
+            uniform vec3 uDirLightPos;
+            uniform vec3 uDirLightColor;
+            
+            uniform vec3 uAmbientLightColor;
+            
+            uniform float uKd;
+            uniform float uKs;
+            uniform float shininess;
+            
+            uniform float uDropoff;
+            
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            
+            void main() {
+
+                // ambient
+                gl_FragColor = vec4( uAmbientLightColor, 1.0 );
+            
+                // compute direction to light
+                vec4 lDirection = viewMatrix * vec4( uDirLightPos, 0.0 );
+                vec3 lVector = normalize( lDirection.xyz );
+            
+                vec3 normal = normalize( vNormal );
+                
+                // diffuse: N * L. Normal must be normalized, since it's interpolated.
+                float diffuse = max( dot( normal, lVector ), 0.0);
+            
+                // This can give a hard termination to the highlight, but it's better than some weird sparkle.
+                if (diffuse <= 0.0) {
+                    return;
+                }
+
+                gl_FragColor.rgb += uKd * uMaterialColor * uDirLightColor * diffuse;
+
+                // specular: N * H to a power. H is light vector + view vector
+                vec3 viewPosition = normalize( vViewPosition );
+                vec3 pointHalfVector = normalize( lVector + viewPosition );
+                float pointDotNormalHalf = max( dot( normal, pointHalfVector ), 0.0 );
+                float specular = pow( pointDotNormalHalf, shininess );
+                specular *= diffuse*(2.0 + shininess)/8.0;
+                
+                // Student: add test here, when specular < uDropoff, set to 0.0, else to 1.0
+
+                gl_FragColor.rgb += uDirLightColor * uSpecularColor * uKs * specular;
+            }
+        </script>
+        <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
+
+
+
+
+</html>
