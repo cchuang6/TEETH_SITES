@@ -26,7 +26,7 @@ function init() {
 	var canvasRatio = canvasWidth / canvasHeight;
 	console.log(canvasWidth + ", " + canvasHeight);
 	// LIGHTS
-	ambientLight = new THREE.AmbientLight(0x333333); // 0.2
+	ambientLight = new THREE.AmbientLight(0xffffff); // 0.2
 
 	light = new THREE.DirectionalLight(0xffffff, 1.0);
 	light.position.set(700, 3000, 1200);
@@ -51,7 +51,7 @@ function init() {
 	// Note: setting per pixel off does not affect the specular highlight;
 	// it affects only whether the light direction is recalculated each pixel.
 	var materialColor = new THREE.Color();
-	materialColor.setRGB(1.0, 0.8, 0.6);
+	materialColor.setRGB(1.0, 1.0, 1.0);
 
 	phongBalancedMaterial = createShaderMaterial("phongBalanced", light, ambientLight);
 	phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
@@ -74,22 +74,22 @@ function createShaderMaterial(id, light, ambientLight) {
 				"uDirLightPos":	{ type: "v3", value: new THREE.Vector3() },
 				"uDirLightColor": { type: "c", value: new THREE.Color( 0xffffff ) },
 
-				"uAmbientLightColor": { type: "c", value: new THREE.Color( 0x050505 ) },
+				"uAmbientLightColor": { type: "c", value: new THREE.Color( 0xffffff ) },
 
 				"uMaterialColor":  { type: "c", value: new THREE.Color( 0xffffff ) },
 				"uSpecularColor":  { type: "c", value: new THREE.Color( 0xffffff ) },
 
 				uKd: {
 					type: "f",
-					value: 0.7
+					value: 0.1
 				},
 				uKs: {
 					type: "f",
-					value: 0.3
+					value: 1.0
 				},
 				shininess: {
 					type: "f",
-					value: 100.0
+					value: 80.0
 				},
 				uDropoff: {
 					type: "f",
@@ -124,20 +124,20 @@ function setupGui() {
 
 	effectController = {
 
-		shininess: 100.0,
-		dropoff: 0.5,
-		ka: 0.2,
-		kd: 0.4,
-		ks: 0.35,
+		shininess: 128.0,
+		dropoff: 0.62,
+		ka: 0.92,
+		kd: 0.66,
+		ks: 0.5,
 		metallic: false,
 
-		hue: 0.09,
-		saturation: 0.46,
-		lightness: 0.7,
+		hue: 0.54,
+		saturation: 0.0,
+		lightness: 0.65,
 
-		lhue: 0.04,
-		lsaturation: 0.0,
-		llightness: 0.7,
+		lhue: 0.176,
+		lsaturation: 0.21,
+		llightness: 0.5,
 
 		// bizarrely, if you initialize these with negative numbers, the sliders
 		// will not show any decimal places.
@@ -156,7 +156,7 @@ function setupGui() {
 
 	h = gui.addFolder("Material control");
 
-	h.add(effectController, "shininess", 1.0, 1000.0, 1.0).name("shininess");
+	h.add(effectController, "shininess", 1.0, 128.0, 32.0).name("shininess");
 	h.add(effectController, "dropoff", 0.0, 2.0, 0.025).name("dropoff");
 	h.add(effectController, "ka", 0.0, 1.0, 0.025).name("Ka");
 	h.add(effectController, "kd", 0.0, 1.0, 0.025).name("Kd");
@@ -305,7 +305,7 @@ function fillScene() {
 
 	//plane.receiveShadow = true;
 	
-	loadSTL("/static/media/uploads/teethModels/asu_inf.stl");
+	loadSTL(file_url);
 	//editor.setScene(scene);
 	// teapot = new THREE.Mesh(
 	// 	new THREE.TeapotGeometry(teapotSize, tess, true, true, true, true), phongBalancedMaterial);
