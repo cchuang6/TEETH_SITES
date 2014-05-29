@@ -1182,7 +1182,7 @@ var // currently active contextMenu trigger
             // add transparent layer for click area
             // filter and background for Internet Explorer, Issue #23
             var $layer = opt.$layer = $('<div id="context-menu-layer" style="position:fixed; z-index:' + zIndex + '; top:0; left:0; opacity: 0; filter: alpha(opacity=0); background-color: #000;"></div>')
-                .css({height: $win.height(), width: $win.width(), display: 'block'})
+                .css({height: $win.height() -10 , width: $win.width() -10, display: 'block'})
                 .data('contextMenuRoot', opt)
                 .insertBefore(this)
                 .on('contextmenu', handle.abortevent)
