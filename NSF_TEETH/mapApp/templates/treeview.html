@@ -1,8 +1,8 @@
 {% extends "pages/leftColPage.html" %}
 
 {% load pages_tags mezzanine_tags staticfiles %}
-{% load leaflet_tags %}
-
+{% load leaflet_tags fb_tags %}
+ 
 
 {% block main %}
 <head>
@@ -81,6 +81,7 @@
 		<a class="leaflet-control-zoom-out leaflet-bar-part" href="#" title="Reset view" id="zoomReset"></a>
 	</div>
 </div>
+<a href="{% url "view3D" %}?filename=asu_inf1.stl" target="_blank">Test</a>
 
 <div id="viz"></div>
     <script type="text/javascript">
@@ -140,12 +141,14 @@
 	}
 	
 	scanCallback = function(){
-		//alert('Click scans!!');
-		//var dataurlPolygon = '{% url 'dataPolygon' %}';  
-		var teethViewer3D = '{% url 'teethViewer3DHome' %}'; 
-		console.log("url: " + teethViewer3D);
-		window.location.replace(teethViewer3D);
 		
+		//To Do: combine with view.py
+
+		//Get filenmae first.
+		var filename = this[0].lastChild.nodeValue + '.stl';		
+		var query_url = '{% url "view3D" %}' + '?filename=' + filename
+		window.open(query_url)
+								
 
 	}
 	
@@ -239,30 +242,10 @@
 				container.append(photographs);
 				container.append(scans);
 				
-				//d3.select("#viz").on("contextmenu", function(data, index){return false;});
+				
 				d3.selectAll("text")
 							.attr("id", "context-menu-one");
-				/*
-				d3.selectAll("text").on("contextmenu", function(data, index){
-					    $.contextMenu({
-							selector: '.context-menu-one', 
-							callback: function(key, options) {
-										var m = "clicked: " + key;
-										window.console && console.log(m) || alert(m); 
-										},
-							items: {
-								"edit": {name: "Edit", icon: "edit"},
-								"cut": {name: "Cut", icon: "cut"},
-								"copy": {name: "Copy", icon: "copy"},
-								"paste": {name: "Paste", icon: "paste"},
-								"delete": {name: "Delete", icon: "delete"},
-								"sep1": "---------",
-								"quit": {name: "Quit", icon: "quit"}
-								}
-						});
 				
-				});
-				*/
 				
 				// Mouseover pop up menu
 				/*

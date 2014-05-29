@@ -49,7 +49,7 @@ urlpatterns += patterns('',
 
     url("^$", "mezzanine.pages.views.page", {"slug": "/"}, name="home"),
     url(r'^map/', include('mapApp.urls')),
-    url(r'^3dViewer/', include('teethViewer3DApp.urls')),
+    #url(r'^teethViewer3D/', include('teethViewer3DApp.urls')),
     
 
     # HOMEPAGE FOR A BLOG-ONLY SITE

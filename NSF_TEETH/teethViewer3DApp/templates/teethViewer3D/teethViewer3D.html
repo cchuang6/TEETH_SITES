@@ -5,7 +5,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Teeth 3D Model Viewer</title>
+    <title>{{title}}</title>
     <meta charset="utf-8" content="chrome=1" http-equiv="X-UA-Compatible">{% load staticfiles %}
 
     <!-- <script type="text/javascript" src="{% static "js/f66f2da77988943ff926fe325e7b7f24c55b9010.1.js" %}"></script>
@@ -98,7 +98,7 @@
             </div>
             <div class="textdisable" id="tpDRHeader" style="display: block;">
                 <div id="tpToolbar">
-                    <div id="tpTitle">left_maxillary_molar.obj
+                    <div id="tpTitle">{{filename}}
                         <span class="versioninfo">(v1)</span>
                     </div>
                     <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance">
@@ -283,9 +283,6 @@
        
         
         <script src="{% static "js/Editor.js" %}"></script>
-    
-        
-
         
         <script src="{% static "js/Viewport.js" %}"></script>
         
@@ -363,9 +360,10 @@
                 gl_FragColor.rgb += uDirLightColor * uSpecularColor * uKs * specular;
             }
         </script>
+        <script type = "text/javascript">
+            var file_url = "{{file_url}}";
+            console.log(file_url);
+        </script>
         <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
-
-
-
 
 </html>

@@ -302,7 +302,7 @@ MIDDLEWARE_CLASSES = (
 
 # Store these package names here as they may change in the future since
 # at the moment we are using custom forks of them.
-PACKAGE_NAME_FILEBROWSER = "filebrowser_safe"
+PACKAGE_NAME_FILEBROWSER = "filebrowser3D_safe"
 PACKAGE_NAME_GRAPPELLI = "grappelli_safe"
 
 #########################
