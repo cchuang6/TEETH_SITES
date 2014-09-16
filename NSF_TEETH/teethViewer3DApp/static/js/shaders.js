@@ -21,31 +21,38 @@ function init() {
 
 	container = $('#teethContainer');
 
+	// CAMERA
 	var canvasWidth = container.width(); 
 	var canvasHeight = container.height();
 	var canvasRatio = canvasWidth / canvasHeight;
-	console.log(canvasWidth + ", " + canvasHeight);
+	var viewAngle = 45;
+	var near = 0.1;
+	var far = 20000;
+	camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
+	camera.position.set(0, 150, 400);
+	
 	// LIGHTS
 	ambientLight = new THREE.AmbientLight(0xffffff); // 0.2
 
 	light = new THREE.DirectionalLight(0xffffff, 1.0);
-	light.position.set(700, 3000, 1200);
+	light.position.set(0, 0, 0);
 
 	// RENDERER
-	renderer = new THREE.WebGLRenderer({ antialias: true });
+	if ( Detector.webgl )
+		renderer = new THREE.WebGLRenderer( {antialias:true} );
+	else
+		renderer = new THREE.CanvasRenderer(); 
 	renderer.setSize(canvasWidth, canvasHeight);
+
 	//renderer.setClearColorHex(0xFFFFFF, 0.8);
-	renderer.setClearColorHex(0xBBBBBB, 1.0);
+	renderer.setClearColor(0xFFFFFF, 1.0);
 	renderer.gammaInput = true;
 	renderer.gammaOutput = true;
 
-	// CAMERA
-	camera = new THREE.PerspectiveCamera(45, canvasRatio, 1, 80000);
-	camera.position.set(-1246, 35, -439);
 
 	// CONTROLS
 	cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
-	cameraControls.target.set(0, -436, 0);
+	cameraControls.target.set(0, 0, 0);
 
 	// MATERIALS
 	// Note: setting per pixel off does not affect the specular highlight;
@@ -143,7 +150,7 @@ function setupGui() {
 		// will not show any decimal places.
 		lx: -0.65,
 		ly: 0.43,
-		lz: -0.35,
+		lz: 0.35,
 		newTess: 10
 	};
 
@@ -203,7 +210,8 @@ function render() {
 
 	var delta = clock.getDelta();
 
-	cameraControls.update(delta);
+	// cameraControls.update(delta);
+	cameraControls.update();
 
 	if (effectController.newTess !== tess ) {
 		tess = effectController.newTess;
@@ -251,6 +259,7 @@ function loadSTL(url){
 	
 		
 	var fileName = url.split('/').pop();
+	console.log('File name: ' + fileName);		
 	console.log('File extention: ' + extension);		
 	console.log('start load file');
 
@@ -263,22 +272,44 @@ function loadSTL(url){
 					var geometry = event.content;
 					
 					var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
-					mesh.name = fileName;
+					// mesh.name = fileName;
+					mesh.name = 'teeth1';
 					console.log('mesh.name: ' + mesh.name);
-					mesh.rotation.z =  Math.PI/2;
-					mesh.position.y = -300;
-					mesh.position.x = -500;
-					mesh.position.z = -150;
-					mesh.scale.x = 2.5;
-					mesh.scale.y = 2.5;
-					mesh.scale.z = 2.5;
+
+					//compute boundingbox
+					geometry.computeBoundingBox();
+					var boundingBox = geometry.boundingBox.clone();
+					var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
+					var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
+					var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
+    				console.log('bounding box center: ' + 
+        					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
+					// var max = bbox.max;
+					// var min = bbox.min;
+					// console.log('bbox max: ');
+					// console.log(max);
+					// console.log('bbox min: ');
+					// console.log(min);
+
+					mesh.rotation.y =  Math.PI;
+					
+					mesh.position.x = -c_x;
+					mesh.position.y = - boundingBox.min.y + c_y - boundingBox.min.y;
+					mesh.position.z = -c_z;
+					mesh.scale.x = 1.5;
+					mesh.scale.y = 1.5;
+					mesh.scale.z = 1.5;
 					
 					scene.add(mesh);
+
+
+					var hex  = 0xff0000;
+					
 					console.log('load file successful');
 
 				}, false );
 				
-	loader.load(url);
+	loader.load(url);	
 				
 }
 
@@ -291,10 +322,16 @@ function fillScene() {
 	//scene.fog = new THREE.Fog(0x808080, 2000, 4000);
 
 	scene.add(camera);
-
+	camera.lookAt(scene.position);
 	scene.add(ambientLight);
 	scene.add(light);
 
+	//Floor
+	
+	var helper = new THREE.GridHelper( 300, 10 );
+	helper.setColors( 0x000000, 0x808080 );
+	helper.position.y = - 0.5;
+	scene.add( helper );
 	// var plane = new THREE.Mesh( new THREE.PlaneGeometry( 40, 40 ), new THREE.MeshPhongMaterial( { ambient: 0x999999, color: 0x999999, specular: 0x101010 } ) );
 	// plane.position.y = -500;
 	// plane.position.x = -300;
@@ -306,6 +343,13 @@ function fillScene() {
 	//plane.receiveShadow = true;
 	
 	loadSTL(file_url);
+	console.log('start mesh_test');
+	// var mesh_test = scene.getObjectByName('teeth');
+	console.log(scene);
+	// var hex  = 0xff0000;
+	// var bbox = new THREE.BoundingBoxHelper(mesh, hex);
+	// bbox.update();
+	// scene.add(bbox);
 	//editor.setScene(scene);
 	// teapot = new THREE.Mesh(
 	// 	new THREE.TeapotGeometry(teapotSize, tess, true, true, true, true), phongBalancedMaterial);

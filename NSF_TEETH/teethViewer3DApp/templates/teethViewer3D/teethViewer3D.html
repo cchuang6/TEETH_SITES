@@ -2,6 +2,7 @@
 <!-- saved from url=(0067)https://teamplatform.com/webgl/file3d?id=567962&is_texture=true&v=1 -->
 <html lang="en">
 {% load staticfiles %}
+{% load compress %}
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -87,7 +88,7 @@
             <div id="tpModelCanvasHolder">
                 <canvas id="dmCanvas"></canvas>
                 <canvas id="colorCanvas"></canvas>
-                <div id="teethContainer" class="tp_viewer" style="width: 1680px; height: 906px;">
+                <div id="teethContainer" class="tp_viewer" style="width: 100vw; height: 100vh;">
                     <div id="progress" style="width: 504px; height: 25px; left: 588px; top: 440.5px; visibility: hidden;">
                         <div id="message" style="top: 2.5px; left: 151.2px;">Building 3D models ...</div>
                         <div id="indicator" style="width: 0%;"></div>
@@ -277,24 +278,25 @@
     </body>
 
         <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/three.min.57.js" %}"></script>
-        <!--<script type="text/javascript" src="../../lib/utils.js"></script>-->
+        <script type="text/javascript" src="{% static "js/three.min.68.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/three.min.68.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/Detector.js" %}"></script>
+        <script src="{% static "js/Viewport.68.js" %}"></script>
+
+        <!--<script src="{% static "js/Editor.js" %}"></script>        
+        <script src="{% static "js/Viewport.js" %}"></script>-->
         
-       
-        
-        <script src="{% static "js/Editor.js" %}"></script>
-        
-        <script src="{% static "js/Viewport.js" %}"></script>
-        
-        <script type="text/javascript" src="{% static "js/libs/Coordinates.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/Coordinates.js" %}"></script>        
+        <<script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.new.js" %}"></script>
+        <!--<script type="text/javascript" src="{% static "js/libs/OrbitControlsTouch.js" %}"></script>-->
+        <!--<script type="text/javascript" src="{% static "js/libs/TrackballControls.js" %}"></script>-->
         <script type="text/javascript" src="{% static "js/libs/uclass_BeveledBlockGeometry.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/uclass_TeapotGeometry.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/stats.min.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}"></script>
         
         
-        <script src="{% static "js/loaders/STLLoader2.js" %}"></script>
+        <script src="{% static "js/loaders/STLLoader.68.js" %}"></script>
 
         <script type="text/x-glsl" id="vertex">
             varying vec3 vNormal;
@@ -362,8 +364,10 @@
         </script>
         <script type = "text/javascript">
             var file_url = "{{file_url}}";
-            console.log(file_url);
+            console.log("teethViewer3D.html file_url" + file_url);
         </script>
-        <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
+        {% compress js %}
+            <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
+        {% endcompress %}
 
 </html>

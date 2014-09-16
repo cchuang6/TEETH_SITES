@@ -453,7 +453,7 @@ def view3D(request):
     
     path = get_path(query.get('dir', ''))
     filename = query.get('filename', '')
-
+    
     if path is None or filename is None:
         if path is None:
             msg = _('The requested Folder does not exist.')
@@ -461,10 +461,19 @@ def view3D(request):
             msg = _('The requested File does not exist.')
         messages.add_message(request, messages.ERROR, msg)
         return HttpResponseRedirect(reverse("fb_browse"))
-    file_url = django_settings.MEDIA_URL + get_directory() + path + "/" + filename
+
+    print 'filebrowser.views.py: path', path
+    print 'filebrowser.views.py: filename', filename
+
+    file_url = os.path.join(django_settings.MEDIA_URL, get_directory(),path,filename)
+    #deal with escape string
+    file_url = str(file_url).encode('string_escape')
     abs_path = os.path.join(MEDIA_ROOT, get_directory(), path)
     file_extension = os.path.splitext(filename)[1].lower()
 
+    print 'filebrowser.views.py: file_url', file_url
+    print 'filebrowser.views.py: abs_path', abs_path
+    
     return render_to_response('teethViewer3D/teethViewer3D.html', {        
         'query': query,
         'filename': _(u'%s') % filename,

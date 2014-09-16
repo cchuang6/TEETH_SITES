@@ -110,8 +110,7 @@ def url_join(*args):
 def get_path(path):
     """
     Get Path.
-    """
-
+    """    
     if path.startswith('.') or os.path.isabs(path) or not default_storage.isdir(os.path.join(get_directory(), path)):
         return None
     return path
@@ -121,6 +120,8 @@ def get_file(path, filename):
     """
     Get File.
     """
+    if filename is None:
+        return None
     if not default_storage.exists(os.path.join(get_directory(), path, filename)):
         return None
     return filename
