@@ -14,6 +14,7 @@ var phongBalancedMaterial;
 var container;
 var editor;
 var viewport;
+var enableShader;
 
 
 function init() {
@@ -57,12 +58,19 @@ function init() {
 	// MATERIALS
 	// Note: setting per pixel off does not affect the specular highlight;
 	// it affects only whether the light direction is recalculated each pixel.
-	var materialColor = new THREE.Color();
-	materialColor.setRGB(1.0, 1.0, 1.0);
+	var extension = getFileAttributes(file_url).extension;
+	if(extension == 'stl')
+		enableShader = true;
+	else
+		enableShader = false;
 
-	phongBalancedMaterial = createShaderMaterial("phongBalanced", light, ambientLight);
-	phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
-	phongBalancedMaterial.side = THREE.DoubleSide;
+	if(enableShader){
+		var materialColor = new THREE.Color();
+		materialColor.setRGB(1.0, 1.0, 1.0);
+		phongBalancedMaterial = createShaderMaterial("phongBalanced", light, ambientLight);
+		phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
+		phongBalancedMaterial.side = THREE.DoubleSide;
+	}
 
 }
 
@@ -219,54 +227,41 @@ function render() {
 		fillScene();
 	}
 
-	phongBalancedMaterial.uniforms.shininess.value = effectController.shininess;
-	phongBalancedMaterial.uniforms.uDropoff.value = effectController.dropoff;
-	phongBalancedMaterial.uniforms.uKd.value = effectController.kd;
-	phongBalancedMaterial.uniforms.uKs.value = effectController.ks;
+	if(enableShader){
+		phongBalancedMaterial.uniforms.shininess.value = effectController.shininess;
+		phongBalancedMaterial.uniforms.uDropoff.value = effectController.dropoff;
+		phongBalancedMaterial.uniforms.uKd.value = effectController.kd;
+		phongBalancedMaterial.uniforms.uKs.value = effectController.ks;
 
-	var materialColor = new THREE.Color();
-	materialColor.setHSL(effectController.hue, effectController.saturation, effectController.lightness);
-	phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
+		var materialColor = new THREE.Color();
+		materialColor.setHSL(effectController.hue, effectController.saturation, effectController.lightness);
+		phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
 
-	if (!effectController.metallic) {
-		materialColor.setRGB(1, 1, 1);
+		if (!effectController.metallic) {
+			materialColor.setRGB(1, 1, 1);
+		}
+		phongBalancedMaterial.uniforms.uSpecularColor.value.copy(materialColor);
+
+		// Ambient is just material's color times ka, light color is not involved
+		ambientLight.color.setHSL(effectController.hue, effectController.saturation, effectController.lightness * effectController.ka);
+		light.position.set(effectController.lx, effectController.ly, effectController.lz);
+		light.color.setHSL(effectController.lhue, effectController.lsaturation, effectController.llightness);
 	}
-	phongBalancedMaterial.uniforms.uSpecularColor.value.copy(materialColor);
+	else
+		light.position.set(effectController.lx, effectController.ly, effectController.lz);
 
-	// Ambient is just material's color times ka, light color is not involved
-	ambientLight.color.setHSL(effectController.hue, effectController.saturation, effectController.lightness * effectController.ka);
-
-	light.position.set(effectController.lx, effectController.ly, effectController.lz);
-
-	light.color.setHSL(effectController.lhue, effectController.lsaturation, effectController.llightness);
+	
 
 	renderer.render(scene, camera);
 
 }
 
-function loadSTL(url){
-	//check file extension first
-	console.log('load url file');
-	console.log(url);
-	var extension_array = url.split('.');
-		
-	if(extension_array.length < 2){
-		console.log("Error: No extension!");
-		return null;
-	}
-	else
-		var extension = extension_array.pop().toLowerCase();
-	
-		
-	var fileName = url.split('/').pop();
-	console.log('File name: ' + fileName);		
-	console.log('File extention: ' + extension);		
-	console.log('start load file');
 
-	if(extension !== "stl")
-		return null;
-	var loader = new THREE.STLLoader()
-	
+// Load STL file
+function loadSTL(url){
+	console.log('Start loading STL file');
+
+	var loader = new THREE.STLLoader();		
 	loader.addEventListener( 'load', function ( event ) {
 					
 					var geometry = event.content;
@@ -284,15 +279,9 @@ function loadSTL(url){
 					var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
     				console.log('bounding box center: ' + 
         					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-					// var max = bbox.max;
-					// var min = bbox.min;
-					// console.log('bbox max: ');
-					// console.log(max);
-					// console.log('bbox min: ');
-					// console.log(min);
-
-					mesh.rotation.y =  Math.PI;
 					
+					//rotate 
+					mesh.rotation.y =  Math.PI;					
 					mesh.position.x = -c_x;
 					mesh.position.y = - boundingBox.min.y + c_y - boundingBox.min.y;
 					mesh.position.z = -c_z;
@@ -302,15 +291,115 @@ function loadSTL(url){
 					
 					scene.add(mesh);
 
-
 					var hex  = 0xff0000;
 					
 					console.log('load file successful');
 
 				}, false );
 				
-	loader.load(url);	
-				
+	loader.load(url);
+
+}
+
+
+//Load OBJ file
+function loadOBJ(url){
+	//TO DO:
+	console.log('Start loading OBJ file');
+
+	// texture
+	var manager = new THREE.LoadingManager();
+	manager.onProgress = function ( item, loaded, total ) {
+		console.log( item, loaded, total );
+	};
+
+	
+
+	var fileAttributes = getFileAttributes(url);
+	var filePath = fileAttributes.filePath;
+	var fileName = fileAttributes.fileName;
+	var pureFileName = fileName.substring(0, fileName.lastIndexOf('.'));	
+	var textureFile = filePath + pureFileName + '_color.png';
+
+
+
+
+	//debug
+	console.log('Texture file: ' + textureFile);
+	
+	// model
+
+	var loader = new THREE.OBJLoader( manager );
+
+	//loading
+	loader.load( url, function ( object ) {
+			console.log('Call load function at obj loader');
+			object.traverse( function ( child ) 
+			{
+				if ( child instanceof THREE.Mesh ) {
+					child.material.map = THREE.ImageUtils.loadTexture(textureFile);
+					console.log('load texture successful');	
+					child.material.needsUpdate = true;
+
+					var geometry = child.geometry;
+					geometry.computeBoundingBox();
+					var boundingBox = geometry.boundingBox.clone();
+					var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
+					var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
+					var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
+    				console.log('bounding box center: ' + 
+     		    		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
+					
+					//rotate 
+					child.rotation.y =  Math.PI;					
+					child.position.x = -c_x;
+					child.position.y = - boundingBox.min.y + c_y - boundingBox.min.y;
+					child.position.z = -c_z;
+					child.scale.x = 1.5;
+					child.scale.y = 1.5;
+					child.scale.z = 1.5;					
+					
+				}
+			} );
+					
+			scene.add(object);
+			console.log('load file successful');			
+
+	});
+
+	console.log('load file successful2');
+}
+
+
+function getFileAttributes(url){
+	
+	//Debug info
+	console.log('load url file');
+	console.log(url);
+
+	var extension_array = url.split('.');
+		
+	if(extension_array.length < 2){
+		console.log("Error: No extension!");
+		return null;
+	}
+	else{
+		var extension = extension_array.pop().toLowerCase();
+		//debug info
+		var fileName = url.split('/').pop();
+		var filePath = url.substring(0, url.lastIndexOf('/') + 1)
+		//console.log('File name: ' + fileName);		
+		//console.log('File extention: ' + extension);				
+		return {
+			extension: extension,
+			fileName: fileName,
+			filePath: filePath
+		};
+	}
+	
+	return null;
+	
+
 }
 
 function fillScene() {
@@ -332,30 +421,31 @@ function fillScene() {
 	helper.setColors( 0x000000, 0x808080 );
 	helper.position.y = - 0.5;
 	scene.add( helper );
-	// var plane = new THREE.Mesh( new THREE.PlaneGeometry( 40, 40 ), new THREE.MeshPhongMaterial( { ambient: 0x999999, color: 0x999999, specular: 0x101010 } ) );
-	// plane.position.y = -500;
-	// plane.position.x = -300;
-	// plane.rotation.x = - Math.PI/2;
 	
 
-	//scene.add( plane );
+	//Check file extension and select coorrect loader
+	console.log('start get extension');
+	var extension = getFileAttributes(file_url).extension;
+	console.log('finish get extension');
 
-	//plane.receiveShadow = true;
-	
-	loadSTL(file_url);
-	console.log('start mesh_test');
-	// var mesh_test = scene.getObjectByName('teeth');
-	console.log(scene);
-	// var hex  = 0xff0000;
-	// var bbox = new THREE.BoundingBoxHelper(mesh, hex);
-	// bbox.update();
-	// scene.add(bbox);
-	//editor.setScene(scene);
-	// teapot = new THREE.Mesh(
-	// 	new THREE.TeapotGeometry(teapotSize, tess, true, true, true, true), phongBalancedMaterial);
-	// teapot.position.y = -teapotSize;
+	if (extension == 'stl'){
+		
+		loadSTL(file_url);
 
-	// scene.add(teapot);
+		//debug info
+		//console.log(scene);
+	}
+	else if (extension == 'obj'){
+		
+		loadOBJ(file_url);
+		//debug info
+		//console.log(scene);
+	}
+	else{
+		console.log('cannot load file extension: ' + extension);
+	}
+
+
 }
 
 
