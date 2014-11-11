@@ -26,11 +26,11 @@ function init() {
 	var canvasWidth = container.width(); 
 	var canvasHeight = container.height();
 	var canvasRatio = canvasWidth / canvasHeight;
-	var viewAngle = 45;
+	var viewAngle = 30;
 	var near = 0.1;
 	var far = 20000;
 	camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
-	camera.position.set(0, 150, 400);
+	camera.position.set(0, 0, 500);
 	
 	// LIGHTS
 	ambientLight = new THREE.AmbientLight(0xffffff); // 0.2
@@ -59,7 +59,7 @@ function init() {
 	// Note: setting per pixel off does not affect the specular highlight;
 	// it affects only whether the light direction is recalculated each pixel.
 	var extension = getFileAttributes(file_url).extension;
-	if(extension == 'stl')
+	if(extension == 'stl' || extension == 'dae')
 		enableShader = true;
 	else
 		enableShader = false;
@@ -139,16 +139,16 @@ function setupGui() {
 
 	effectController = {
 
-		shininess: 128.0,
-		dropoff: 0.62,
-		ka: 0.92,
-		kd: 0.66,
-		ks: 0.5,
+		shininess: 1.0,
+		dropoff: 0.0,
+		ka: 0.76,
+		kd: 1.0,
+		ks: 1.0,
 		metallic: false,
 
-		hue: 0.54,
+		hue: 0.11,
 		saturation: 0.0,
-		lightness: 0.65,
+		lightness: 0.6,
 
 		lhue: 0.176,
 		lsaturation: 0.21,
@@ -156,9 +156,10 @@ function setupGui() {
 
 		// bizarrely, if you initialize these with negative numbers, the sliders
 		// will not show any decimal places.
-		lx: -0.65,
-		ly: 0.43,
-		lz: 0.35,
+
+		lx: 0.0,
+		ly: 0.15,
+		lz: 1.0,
 		newTess: 10
 	};
 
@@ -267,32 +268,13 @@ function loadSTL(url){
 					var geometry = event.content;
 					
 					var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
-					// mesh.name = fileName;
-					mesh.name = 'teeth1';
-					console.log('mesh.name: ' + mesh.name);
+					var centMesh = getCenteralizedMesh(mesh);
+					//set cmaera fov
+					camera.fov = centMesh.fov;	
+					camera.updateProjectionMatrix();
 
-					//compute boundingbox
-					geometry.computeBoundingBox();
-					var boundingBox = geometry.boundingBox.clone();
-					var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
-					var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
-					var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
-    				console.log('bounding box center: ' + 
-        					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-					
-					//rotate 
-					mesh.rotation.y =  Math.PI;					
-					mesh.position.x = -c_x;
-					mesh.position.y = - boundingBox.min.y + c_y - boundingBox.min.y;
-					mesh.position.z = -c_z;
-					mesh.scale.x = 1.5;
-					mesh.scale.y = 1.5;
-					mesh.scale.z = 1.5;
-					
-					scene.add(mesh);
-
-					var hex  = 0xff0000;
-					
+					//add mesh to scene
+					scene.add(centMesh.mesh);
 					console.log('load file successful');
 
 				}, false );
@@ -301,6 +283,90 @@ function loadSTL(url){
 
 }
 
+function loadDAE(url){
+
+	console.log('Start loading DAE file');
+	var manager = new THREE.LoadingManager();
+	manager.onProgress = function ( item, loaded, total ) {
+		console.log( item, loaded, total );
+	};
+
+
+	var loader = new THREE.ColladaLoader( manager );
+
+	
+	//loading
+	loader.load( url, function ( object ) {
+			console.log('Call load function at DAE loader');
+			daeSceneObj = object.scene;			
+			daeSceneObj.traverse( function(child) {
+				
+				if(child instanceof THREE.Mesh){
+					console.log('find child as mesh');
+					// // child is the mesh
+					var centMesh = getCenteralizedMesh(child);
+					//set cmaera fov
+					camera.fov = centMesh.fov;	
+					camera.updateProjectionMatrix();
+					//set basic material
+					centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );										
+				}
+			});
+			//simple test
+			//add scene
+			
+			scene.add(daeSceneObj);
+			console.log('load file successful');								
+	});
+
+
+
+}
+
+function getCenteralizedMesh(mesh){
+	//compute boundingbox
+	var geometry = mesh.geometry;
+	geometry.computeBoundingBox();
+	var boundingBox = geometry.boundingBox.clone();
+	var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
+	var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
+	var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
+	var height = boundingBox.max.y - boundingBox.min.y;
+	var depth = boundingBox.max.z - boundingBox.min.z;
+    console.log('bounding box center: ' + 
+       		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
+	
+	//rotate 
+	mesh.rotation.y =  Math.PI;					
+
+	//set position
+	mesh.position.x = -c_x;	
+	mesh.position.y = -c_y - height / 8.0;
+	mesh.position.z = -c_z;
+	console.log('mesh x'+ mesh.position.y);
+	console.log('mesh y'+ mesh.position.z);
+	console.log('depth '+ depth);
+	
+	//scale mesh
+	mesh.scale.x = 0.6;
+	mesh.scale.y = 0.6;
+	mesh.scale.z = 0.6;
+	//effectController.lx = 0.0;
+	//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y; 
+	//effectController.lz = 1.0;
+	var dist = Math.sqrt(Math.pow(camera.position.x, 2) + 
+						Math.pow(camera.position.y , 2)+ 
+						Math.pow(camera.position.z - depth, 2));
+	
+	
+	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+
+	// add mesh into scene
+	return{
+		fov: fov,
+		mesh: mesh
+	};	
+}
 
 //Load OBJ file
 function loadOBJ(url){
@@ -321,7 +387,8 @@ function loadOBJ(url){
 	var pureFileName = fileName.substring(0, fileName.lastIndexOf('.'));	
 	var textureFile = filePath + pureFileName + '_color.png';
 
-
+	var mtl_url = url+'.mtl';
+	console.log('mtl: ' + mtl_url)
 
 
 	//debug
@@ -329,42 +396,67 @@ function loadOBJ(url){
 	
 	// model
 
-	var loader = new THREE.OBJLoader( manager );
+	//var loader = new THREE.OBJMTLLoader( manager );
+	//var loader = new THREE.OBJLoader( manager );
+	var loader = new THREE.OBJMTLLoader( manager );
 
 	//loading
-	loader.load( url, function ( object ) {
+	loader.load( url, mtl_url, function ( object ) {
 			console.log('Call load function at obj loader');
-			object.traverse( function ( child ) 
-			{
-				if ( child instanceof THREE.Mesh ) {
-					child.material.map = THREE.ImageUtils.loadTexture(textureFile);
-					console.log('load texture successful');	
-					child.material.needsUpdate = true;
+			// object.traverse( function ( child ) 
+			// {
+			// 	if ( child instanceof THREE.Mesh ) {
+			// 		//child.material.map = THREE.ImageUtils.loadTexture(textureFile);
+			// 		//console.log('load texture successful');	
+			// 		//child.material.needsUpdate = true;
 
-					var geometry = child.geometry;
-					geometry.computeBoundingBox();
-					var boundingBox = geometry.boundingBox.clone();
-					var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
-					var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
-					var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
-    				console.log('bounding box center: ' + 
-     		    		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
+			// 		//compute boundingbox
+			// 		var geometry = child.geometry;
+			// 		geometry.computeBoundingBox();
+			// 		var boundingBox = geometry.boundingBox.clone();
+			// 		var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
+			// 		var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
+			// 		var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
+			// 		var height = boundingBox.max.y - boundingBox.min.y;
+			// 		var depth = boundingBox.max.z - boundingBox.min.z;
+   //  				console.log('bounding box center: ' + 
+   //      					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
 					
-					//rotate 
-					child.rotation.y =  Math.PI;					
-					child.position.x = -c_x;
-					child.position.y = - boundingBox.min.y + c_y - boundingBox.min.y;
-					child.position.z = -c_z;
-					child.scale.x = 1.5;
-					child.scale.y = 1.5;
-					child.scale.z = 1.5;					
+			// 		//rotate 
+			// 		child.rotation.y =  Math.PI;					
+			// 		child.position.x = -c_x;
+			// 		//mesh.position.y = - boundingBox.min.y + (c_y - boundingBox.min.y)/2.0;
+			// 		child.position.y = -c_y - height / 8.0;
+			// 		child.position.z = -c_z;
+
+			// 		console.log('mesh x'+ child.position.y)
+			// 		console.log('mesh y'+ child.position.z)
+			// 		console.log('depth '+ depth);
 					
-				}
-			} );
-					
+			// 		child.scale.x = 0.6;
+			// 		child.scale.y = 0.6;
+			// 		child.scale.z = 0.6;
+
+			// 		//effectController.lx = 0.0;
+			// 		//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y; 
+			// 		//effectController.lz = 1.0;
+			// 		var dist = Math.sqrt(Math.pow(camera.position.x, 2) + 
+			// 							Math.pow(camera.position.y , 2)+ 
+			// 							Math.pow(camera.position.z - depth, 2));
+
+			// 		var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+			// 		camera.fov = fov;
+			// 		//camera.position.y = - boundingBox.min.y + (c_y - boundingBox.min.y);
+			// 		//camera.position.y = 300;
+			// 		camera.updateProjectionMatrix();
+			// 		scene.add(child);
+			// 		console.log('load file successful');								
+			// 	}
+			// } );
+			
+			//simple test
 			scene.add(object);
-			console.log('load file successful');			
-
+			console.log('load file successful');								
 	});
 
 	console.log('load file successful2');
@@ -397,7 +489,7 @@ function getFileAttributes(url){
 		};
 	}
 	
-	return null;
+	return nu
 	
 
 }
@@ -417,10 +509,10 @@ function fillScene() {
 
 	//Floor
 	
-	var helper = new THREE.GridHelper( 300, 10 );
-	helper.setColors( 0x000000, 0x808080 );
-	helper.position.y = - 0.5;
-	scene.add( helper );
+	// var helper = new THREE.GridHelper( 300, 10 );
+	// helper.setColors( 0x000000, 0x808080 );
+	// helper.position.y = - 0.5;
+	// scene.add( helper );
 	
 
 	//Check file extension and select coorrect loader
@@ -441,6 +533,10 @@ function fillScene() {
 		//debug info
 		//console.log(scene);
 	}
+	else if(extension == 'dae'){
+		loadDAE(file_url);
+	}
+
 	else{
 		console.log('cannot load file extension: ' + extension);
 	}
@@ -449,21 +545,10 @@ function fillScene() {
 }
 
 
-function addToDOM() {
-    // var container = document.getElementById('container');
-    // var canvas = container.getElementsByTagName('canvas');
-    // if (canvas.length>0) {
-    //     container.removeChild(canvas[0]);
-    // }    
-    //container.append( editor.dom );
-    container.append( renderer.domElement );
-    //window.addEventListener( 'resize', onWindowResize, false );
-
+function addToDOM() {    
+    container.append( renderer.domElement );    
 }
 
-// var onWindowResize = function(event){
-// 	editor.signals.onWindowResize.dispatch();
-// }
 
 try {
   init();

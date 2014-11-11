@@ -64,7 +64,7 @@ FILEBROWSER_EXTENSIONS = {
     'Document': ['.pdf','.doc','.rtf','.txt','.xls','.csv', '.docx'],
     'Video': ['.mov','.wmv','.mpeg','.mpg','.avi','.rm'],
     'Audio': ['.mp3','.mp4','.wav','.aiff','.midi','.m4p'],
-    'Mesh': ['.stl', '.obj'],
+    'Mesh': ['.stl', '.obj', '.dae'],
 }
 
 FILEBROWSER_SELECT_FORMATS = {
