@@ -2,14 +2,18 @@
 // Sharp specular
 ////////////////////////////////////////////////////////////////////////////////
 /*global THREE, requestAnimationFrame, dat, $ */
-var camera, scene, renderer;
+
+
+
+
+var scene, renderer;
 var cameraControls;
 var effectController;
 var clock = new THREE.Clock();
 var teapotSize = 600;
 var tess = -1;	// force initialization
 var ambientLight, light;
-var teapot;
+var defaultCamPos;
 var phongBalancedMaterial;
 var container;
 var editor;
@@ -25,12 +29,15 @@ function init() {
 	// CAMERA
 	var canvasWidth = container.width(); 
 	var canvasHeight = container.height();
+	console.log('width: ' + canvasWidth)
+	console.log('height: ' + canvasHeight)
 	var canvasRatio = canvasWidth / canvasHeight;
 	var viewAngle = 30;
 	var near = 0.1;
 	var far = 20000;
-	camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
-	camera.position.set(0, 0, 500);
+	defaultCamPos = new THREE.Vector3(0, 0, 500)
+	var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
+	camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 	
 	// LIGHTS
 	ambientLight = new THREE.AmbientLight(0xffffff); // 0.2
@@ -53,6 +60,7 @@ function init() {
 
 	// CONTROLS
 	cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
+	//cameraControls.minPolarAngle = -1.0 * Math.PI;
 	cameraControls.target.set(0, 0, 0);
 
 	// MATERIALS
@@ -146,6 +154,7 @@ function setupGui() {
 		ks: 1.0,
 		metallic: false,
 
+		curvature: false,
 		hue: 0.11,
 		saturation: 0.0,
 		lightness: 0.6,
@@ -184,6 +193,7 @@ function setupGui() {
 
 	h = gui.addFolder("Material color");
 
+	h.add(effectController, "curvature").name("Display Curvature");
 	h.add(effectController, "hue", 0.0, 1.0, 0.025).name("m_hue");
 	h.add(effectController, "saturation", 0.0, 1.0, 0.025).name("m_saturation");
 	h.add(effectController, "lightness", 0.0, 1.0, 0.025).name("m_lightness");
@@ -253,7 +263,7 @@ function render() {
 
 	
 
-	renderer.render(scene, camera);
+	renderer.render(scene, cameraControls.object);
 
 }
 
@@ -270,6 +280,7 @@ function loadSTL(url){
 					var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
 					var centMesh = getCenteralizedMesh(mesh);
 					//set cmaera fov
+					var camera = cameraControls.object;
 					camera.fov = centMesh.fov;	
 					camera.updateProjectionMatrix();
 
@@ -306,6 +317,7 @@ function loadDAE(url){
 					// // child is the mesh
 					var centMesh = getCenteralizedMesh(child);
 					//set cmaera fov
+					var camera = cameraControls.object;
 					camera.fov = centMesh.fov;	
 					camera.updateProjectionMatrix();
 					//set basic material
@@ -333,33 +345,48 @@ function getCenteralizedMesh(mesh){
 	var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
 	var height = boundingBox.max.y - boundingBox.min.y;
 	var depth = boundingBox.max.z - boundingBox.min.z;
-    console.log('bounding box center: ' + 
-       		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
+	// console.log('Before setting position');
+ //    console.log('bounding box center: ' + 
+ //       		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
 	
 	//rotate 
-	mesh.rotation.y =  Math.PI;					
-
+	mesh.rotation.y =  Math.PI;
+					
 	//set position
 	mesh.position.x = -c_x;	
 	mesh.position.y = -c_y - height / 8.0;
-	mesh.position.z = -c_z;
-	console.log('mesh x'+ mesh.position.y);
-	console.log('mesh y'+ mesh.position.z);
-	console.log('depth '+ depth);
+	mesh.position.z = c_z/2.0;
+	//mesh.position.set(0, 0, 0);
+
+	console.log('After setting position');
+	console.log('mesh x'+ mesh.position.x);
+	console.log('mesh y'+ mesh.position.y);
+	console.log('mesh z'+ mesh.position.z);
+	// console.log('depth '+ depth);
+	
 	
 	//scale mesh
 	mesh.scale.x = 0.6;
 	mesh.scale.y = 0.6;
 	mesh.scale.z = 0.6;
-	//effectController.lx = 0.0;
-	//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y; 
-	//effectController.lz = 1.0;
+	//set camera
+	var camera = cameraControls.object;
+	// defaultCamPos = new THREE.Vector3(mesh.position.x, 
+	// 									mesh.position.y, defaultCamPos.z)
+	// camera.position.x = defaultCamPos.x
+	// camera.position.y = defaultCamPos.y
+	// camera.position.z = defaultCamPos.z
 	var dist = Math.sqrt(Math.pow(camera.position.x, 2) + 
 						Math.pow(camera.position.y , 2)+ 
 						Math.pow(camera.position.z - depth, 2));
 	
 	
 	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+	//var target = new THREE.Vector3(0, 0, -c_z/2.0);
+	//cameraControls.target = target
+
+
+
 
 	// add mesh into scene
 	return{
@@ -489,7 +516,7 @@ function getFileAttributes(url){
 		};
 	}
 	
-	return nu
+	return null;
 	
 
 }
@@ -501,9 +528,9 @@ function fillScene() {
 	scene = new THREE.Scene();
 
 	//scene.fog = new THREE.Fog(0x808080, 2000, 4000);
-
+	var camera = cameraControls.object;
 	scene.add(camera);
-	camera.lookAt(scene.position);
+	//camera.lookAt(scene.position);
 	scene.add(ambientLight);
 	scene.add(light);
 
@@ -561,3 +588,78 @@ try {
   var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
   $('#container').append(errorReport+e);
 }
+
+
+$(function(){
+
+	//Not sure
+	$('#tp3DStandardViewName0').click(function(){ 
+		console.log("clicked tp3DStandardViewName0");
+		
+	});
+
+	// top 
+	$('#tp3DStandardViewName1').click(function(){ 
+		console.log("Rotate to top1");
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		
+		// camera.target = new THREE.Vector3();
+		//TODO: animation
+		cameraControls.update();
+		
+
+	});
+
+
+	//bottom 
+	$('#tp3DStandardViewName2').click(function(){ 
+		console.log("Rotate to bottom");
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.rotateLeft(Math.PI);
+		cameraControls.update();
+	});
+
+
+	//left 
+	$('#tp3DStandardViewName3').click(function(){ 
+		console.log("Rotate to left");
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.rotateLeft(Math.PI/2.0);
+		cameraControls.update();
+	});
+
+
+	//right
+	$('#tp3DStandardViewName4').click(function(){ 
+		console.log("Rotate to right");
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
+		cameraControls.update();
+	});
+
+
+	//back
+	$('#tp3DStandardViewName5').click(function(){ 
+		console.log("Rotate to back")
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
+		cameraControls.update();
+	});
+
+
+	//front
+	$('#tp3DStandardViewName6').click(function(){ 
+		console.log("Rotate to front")
+		var camera = cameraControls.object;
+		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.rotateLeft(Math.PI);
+		cameraControls.rotateUp(Math.PI/2.0);
+		cameraControls.update();
+	});
+
+});

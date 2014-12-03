@@ -1656,6 +1656,13 @@ body {
     -o-user-select:none;
     user-select:none
 }
+.textenable{
+    -webkit-user-select:all;
+    -khtml-user-select:all;
+    -moz-user-select:all;
+    -o-user-select:all;
+    user-select:all   
+}
 .p18 {
     font-size:18px
 }
@@ -2006,27 +2013,27 @@ body {
     padding:0 0 37px 0
 }
 #tp3DStandardViewName1 {
-    background:url(images/webgl/top36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/top36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tp3DStandardViewName2 {
-    background:url(images/webgl/bottom36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/bottom36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tp3DStandardViewName3 {
-    background:url(images/webgl/front36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/front36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tp3DStandardViewName4 {
-    background:url(images/webgl/back36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/back36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tp3DStandardViewName5 {
-    background:url(images/webgl/left36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/left36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tp3DStandardViewName6 {
-    background:url(images/webgl/right36.png?1398816184) no-repeat scroll 0 100% transparent;
+    background:url(images/webgl/right36.png) no-repeat scroll 0 100% transparent;
     padding:0 0 37px 0
 }
 #tpActionToolbar input[type="button"] {
