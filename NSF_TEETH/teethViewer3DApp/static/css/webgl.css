@@ -1561,15 +1561,52 @@ button.ui-button::-moz-focus-inner {
     width:200px;
     height:200px
 }
+/*
 .ui-progressbar {
     height:2em;
     text-align:left;
     overflow:hidden
 }
+*/
+.ui-progress {
+    height: 300px;
+    width: 300px;
+    font-size: 18px;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    /* bring your own prefixes */
+    -webkit-transform: translate(-50%, 50%);
+    transform: translate(-50%, 50%);
+    display:block;
+}
+.ui-progress > svg {
+    background-color: white;
+    height: 100%;
+    /*position: fixed;
+    top: 50%;
+    left: 50%;*/
+    /* bring your own prefixes */
+    /*transform: translate(-50%, -50%);*/
+    /*display: block;*/
+}
+/*#progress.progressbar-text {
+    font-size: 60px;
+}*/
+/*.ui-progress.progressbar-text{
+    position: relative;
+    top: 0%;
+    left: 0%
+    -webkit-transform: translate(0%, 0%);
+    transform: translate(0%, 0%);
+
+}*/
+/*
 .ui-progressbar .ui-progressbar-value {
     margin:-1px;
     height:100%
 }
+*/
 .contextMenu {
     position:absolute;
     width:180px;
