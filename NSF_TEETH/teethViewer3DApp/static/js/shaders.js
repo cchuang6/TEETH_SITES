@@ -19,6 +19,7 @@ var container;
 var editor;
 var viewport;
 var enableShader;
+var rogress_circle;
 
 
 function init() {
@@ -193,7 +194,7 @@ function setupGui() {
 
 	h = gui.addFolder("Material color");
 
-	h.add(effectController, "curvature").name("Display Curvature");
+	h.add(effectController, "curvature").name("Curvature");
 	h.add(effectController, "hue", 0.0, 1.0, 0.025).name("m_hue");
 	h.add(effectController, "saturation", 0.0, 1.0, 0.025).name("m_saturation");
 	h.add(effectController, "lightness", 0.0, 1.0, 0.025).name("m_lightness");
@@ -214,6 +215,19 @@ function setupGui() {
 	h.add(effectController, "ly", -1.0, 1.0, 0.025).name("y");
 	h.add(effectController, "lz", -1.0, 1.0, 0.025).name("z");
 
+
+	//test progress bar
+	progress_circle = new ProgressBar.Circle('#progress', {
+ 		color: '#FCB03C',
+ 		strokeWidth: 3,
+    	trailWidth: 1
+     	//    text: {
+     	//    	value: '0'
+    	// }
+    	// step: function(state, bar) {
+     	//    	bar.setText((bar.value() * 100).toFixed(0));
+    	// }
+	});
 }
 
 //
@@ -232,12 +246,14 @@ function render() {
 	// cameraControls.update(delta);
 	cameraControls.update();
 
+	//This may cause problem of z fighting
 	if (effectController.newTess !== tess ) {
 		tess = effectController.newTess;
-
 		fillScene();
 	}
 
+	updateCurvatureSettings();
+	
 	if(enableShader){
 		phongBalancedMaterial.uniforms.shininess.value = effectController.shininess;
 		phongBalancedMaterial.uniforms.uDropoff.value = effectController.dropoff;
@@ -267,12 +283,39 @@ function render() {
 
 }
 
+function updateCurvatureSettings(){
+	if(effectController.curvature){
+		
+		// enable shader
+
+		//enable material color
+
+	}
+	else{
+		//disable material color
+
+		//enable shader
+
+
+	}
+
+}
 
 // Load STL file
 function loadSTL(url){
 	console.log('Start loading STL file');
+	$('#progress').hide();
+	$('#tpDRHeader').show();
+	$('#teethContainer').show();
+	var manager = new THREE.LoadingManager();
+	manager.onProgress = function ( item, loaded, total ) {	
+		console.log( item, loaded, total);
+	};
 
-	var loader = new THREE.STLLoader();		
+	//TODO: fix the problem of STL loading
+	// Use manager
+	var loader = new THREE.STLLoader(manager);
+
 	loader.addEventListener( 'load', function ( event ) {
 					
 					var geometry = event.content;
@@ -294,42 +337,66 @@ function loadSTL(url){
 
 }
 
+
+// This is the loader which visualize curvature
+
 function loadDAE(url){
 
-	console.log('Start loading DAE file');
+	console.log('Start loading DAE1 file');
 	var manager = new THREE.LoadingManager();
-	manager.onProgress = function ( item, loaded, total ) {
-		console.log( item, loaded, total );
+	manager.onProgress = function ( item, loaded, total ) {	
+		console.log( item, loaded, total);
 	};
 
+	var onLoad = function(object){
+		console.log('Call load function at DAE loader');		
+		daeSceneObj = object.scene;			
+		daeSceneObj.traverse( function(child) {	
+			if(child instanceof THREE.Mesh){
+				console.log('find child as mesh');
+				// // child is the mesh
+				var centMesh = getCenteralizedMesh(child);
+				//set cmaera fov
+				var camera = cameraControls.object;
+				camera.fov = centMesh.fov;	
+				camera.updateProjectionMatrix();
+				//set basic material
+				centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );										
+			}
+		});
+		//simple test
+		//add scene
+		scene.add(daeSceneObj);
+		console.log('load file successful');
+		
+		$('#progress').hide();
+		$('#tpDRHeader').show();
+		$('#teethContainer').show();
 
-	var loader = new THREE.ColladaLoader( manager );
+	};
 
-	
+	var onProgress = function ( object ) {					
+		if ( $.isNumeric(object.loaded) && $.isNumeric(object.total) )
+		{
+			var complete = object.loaded / object.total;
+			progress_circle.set(complete);
+			var percentComplete = Math.round(complete * 100, 2);
+			progress_circle.setText(percentComplete + '% downloaded')
+			console.log( percentComplete + '% downloaded' );
+		}
+		else{
+			console.log(object);
+		}
+	};
+
+	var onError = function ( object ) {
+		console.log("Error!");
+		cosole.log(object);
+	};
+
 	//loading
-	loader.load( url, function ( object ) {
-			console.log('Call load function at DAE loader');
-			daeSceneObj = object.scene;			
-			daeSceneObj.traverse( function(child) {
-				
-				if(child instanceof THREE.Mesh){
-					console.log('find child as mesh');
-					// // child is the mesh
-					var centMesh = getCenteralizedMesh(child);
-					//set cmaera fov
-					var camera = cameraControls.object;
-					camera.fov = centMesh.fov;	
-					camera.updateProjectionMatrix();
-					//set basic material
-					centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );										
-				}
-			});
-			//simple test
-			//add scene
-			
-			scene.add(daeSceneObj);
-			console.log('load file successful');								
-	});
+	var loader = new THREE.ColladaLoader( manager );
+	loader.load( url, onLoad, onProgress, onError);
 
 
 
@@ -579,7 +646,7 @@ function addToDOM() {
 
 try {
   init();
-  fillScene();
+  //fillScene();
   setupGui();
   addToDOM();
 //  onWindowResize();
