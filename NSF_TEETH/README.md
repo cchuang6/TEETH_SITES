@@ -15,9 +15,7 @@ Features
 Requirements
 ============
 
-* Django
-* Python Imaging Library
-* Mezzanine
+Please refer requirement.txt
 
 If you do not get PIL to work (_pillow_ is a replacement package that works
 with virtulalenvs), use FileField instead of ImageField in
@@ -26,10 +24,13 @@ fileupload/models.py as commented in the file.
 Installation
 ============
 
-* pip install -r requirements.txt (will install django and pillow)
-* python manage.py syncdb
-* python manage.py runserver
-* go to localhost:8000/upload/new/ and upload some files
+Please read INSTALLATION.txt
+
+Backup Data
+============
+
+"python manage.py dumpdata --indent=4 -e contenttypes -e auth.Permission > file.json"
+
 
 License
 =======
