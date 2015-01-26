@@ -1,0 +1,142 @@
+Installation guide for windows user
+--------------------------------------------------------------------------
+1. Install Anaconda
+
+2. Create a virtual env
+    conda create -n nsf_teeth django
+
+3. Activate the virtualenv
+    activate nsf_teeth
+
+4. Install dependency
+    Mezzanine==3.0.9
+    psycopg2==2.5.2
+    git+https://github.com/cchuang6/mezzanine-pagedown.git
+    Pygments==1.6
+    django-leaflet==0.11.1
+    django-geojson==2.3.0
+    django-compressor==1.3
+
+5. Install Apache
+
+5. Install Postgres SQL with PostGIS on Django
+   https://docs.djangoproject.com/en/1.7/ref/contrib/gis/install/
+
+----------------------------------------------------------------
+
+Mac installation
+
+1. Install Anaconda
+
+2. Install Postgres SQL with PostGIS
+
+* Download Postgress.app from http://postgresapp.com/
+* Install the downloaded file
+
+3. Install virtualenvwrapper
+
+* Type the following commands to install and create a virtual env
+
+$ pip install virtualenvwrapper
+
+* copy & paste the following command under "~/.bash_profile"
+
+#source virtualenvwrapper
+PYTHON_LOCATION=`which python`
+PYTHON_FOLDER=${PYTHON_LOCATION%/*}
+source $PYTHON_FOLDER/virtualenvwrapper.sh
+
+* Restart your termianl
+
+4. Create a virtual env
+
+* virtual environment will be automatically activated 
+
+$ mkvirtualenv nsf_teeth
+
+
+5. Install dependency
+
+* Before installing all dependencies, you need to export pg_config under Postgress on PATH
+
+$ POSTGRES_BIN=`find /Applications/Postgres.app/ -name "pg_config"`
+$ POSTGRES_BIN=${POSTGRES_BIN%/*}
+$ export PATH=$POSTGRES_BIN:$PATH
+
+* Go into the directory where you pull down your code. 
+* Under the folder with requirement.txt execute the following command to install all depedencies.
+
+$ pip install -r requirement.txt
+
+6. Createa a template gis database
+
+    # Get POSTGIS SQL PATH
+$ POSTGIS_SQL_PATH=`find /Applications/Postgres.app/ -name "postgis.sql"`
+$ POSTGIS_SQL_PATH=${POSTGIS_SQL_PATH%/*}
+    # Creating the template spatial database.
+$ createdb -E UTF8 template_postgis
+$ createlang -d template_postgis plpgsql # Adding PLPGSQL language support.
+    # Allows non-superusers the ability to create from this template
+$ psql -d postgres -c "UPDATE pg_database SET datistemplate='true' WHERE datname='template_postgis';"
+    # Loading the PostGIS SQL routines
+$ psql -d template_postgis -f $POSTGIS_SQL_PATH/postgis.sql
+$ psql -d template_postgis -f $POSTGIS_SQL_PATH/spatial_ref_sys.sql
+    # Enabling users to alter spatial tables.
+$ psql -d template_postgis -c "GRANT ALL ON geometry_columns TO PUBLIC;"
+$ psql -d template_postgis -c "GRANT ALL ON geography_columns TO PUBLIC;"
+$ psql -d template_postgis -c "GRANT ALL ON spatial_ref_sys TO PUBLIC;"
+
+7. Create your own database
+* Note: Your role name and password should be the same as local_settings.py
+*   DATABASES = {
+*       "default": {
+*           # Ends with "postgresql_psycopg2", "mysql", "sqlite3" or "oracle".
+*           "ENGINE": "django.contrib.gis.db.backends.postgis",
+*           # DB name or path to database file if using sqlite3.
+*           "NAME": "Database_Name",
+*           # Not used with sqlite3.
+*           "USER": "role_name",
+*           # Not used with sqlite3.
+*           "PASSWORD": "your_pw",
+*           # Set to empty string for localhost. Not used with sqlite3.
+*           "HOST": "localhost",
+*           # Set to empty string for default. Not used with sqlite3.
+*           "PORT": "5432",
+*       }
+*    }
+
+* Create a role
+* Log into the psql terminal. Type in following codes
+* Note : You can change role_name and pssword
+
+$ create role role_name with login encrypted password 'your_pw';
+
+* Create a database from template
+* You can change Database Name here
+
+$ CREATE DATABASE Database_Name OWNER role_name TEMPLATE template_postgis;
+
+8. Configure Django System
+
+* Copy static files
+* Under /NSF_TEETH, run the following command
+
+$ python manage.py collectstatic
+
+* Load database schema
+* Under /NSF_TEETH, run the following command
+
+$ python manage.py syncdb
+
+* You will create a power user for the django site
+
+9. Load data fixture
+
+* You should change data.json to the most recent data
+
+python manage.py loaddata data.json
+
+10. Run server
+
+python manage.py runserver
+

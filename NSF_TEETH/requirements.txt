@@ -1,7 +1,0 @@
-Mezzanine==3.0.9
-psycopg2==2.5.2
-git+https://github.com/cchuang6/mezzanine-pagedown.git
-Pygments==1.6
-django-leaflet==0.11.1
-django-geojson==2.3.0
-django-compressor==1.3
