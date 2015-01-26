@@ -74,57 +74,54 @@
     <script src="{% static "js/Sidebar.Geometry.TorusGeometry.js" %}"></script>
     <script src="{% static "js/Sidebar.Geometry.TorusKnotGeometry.js" %}"></script>
     <script src="{% static "js/Sidebar.Material.js" %}"></script>
-    <script src="{% static "js/Toolbar.js" %}"></script> -->
-    
+    <script src="{% static "js/Toolbar.js" %}"></script> -->    
     <link href="{% static "css/webgl.css" %}" media="screen" rel="stylesheet" type="text/css">
 
     <body>
-                
-
         <div id="system_message">
             <div class="dib mr5" id="msg_text"></div>
         </div>
         <div class="textdisable" id="tpDRcontainer">
             <div id="tpModelCanvasHolder">
                 <canvas id="dmCanvas"></canvas>
-                <canvas id="colorCanvas"></canvas>
-                <div id="teethContainer" class="tp_viewer" style="width: 100vw; height: 100vh;">
-                    <div id="progress" style="width: 504px; height: 25px; left: 588px; top: 440.5px; visibility: hidden;">
+                <canvas id="colorCanvas"></canvas>          
+                <div id="teethContainer" class="tp_viewer" style="width: 100vw; height: 100vh; display:block;">
+                    <!-- <div id="progress" style="width: 504px; height: 25px; left: 588px; top: 440.5px; visibility: hidden;">
                         <div id="message" style="top: 2.5px; left: 151.2px;">Building 3D models ...</div>
                         <div id="indicator" style="width: 0%;"></div>
-                        <div id="spinner" style="top: 2.5px; left: 2px; visibility: hidden;"></div>
-                    </div>
-                    <!-- <canvas width="1680" height="906"></canvas> -->
+                        <div id="spinner" style="top: 2.5px; left: 2px; visibility: hidden;"></div> -->
                 </div>
+                <div class="ui-progress" id="progress"></div>
             </div>
-            <div class="textdisable" id="tpDRHeader" style="display: block;">
-                <div id="tpToolbar">
-                    <div id="tpTitle">{{filename}}
-                        <span class="versioninfo">(v1)</span>
-                    </div>
-                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance">
-                        <span class="ui-button-icon-primary ui-icon icon-fdist"></span>
-                        <span class="ui-button-text">3D Distance</span>
-                    </button>
-                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="ndistbtn" role="button" aria-disabled="false" title="Normal Distance">
-                        <span class="ui-button-icon-primary ui-icon icon-ndist"></span>
-                        <span class="ui-button-text">Normal Distance</span>
-                    </button>
-                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="anglebtn" role="button" aria-disabled="false" title="Angle">
-                        <span class="ui-button-icon-primary ui-icon icon-angle"></span>
-                        <span class="ui-button-text">Angle</span>
-                    </button>
-                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen">
-                        <span class="ui-button-icon-primary ui-icon icon-camera"></span>
-                        <span class="ui-button-text">Save Screen</span>
-                    </button>
-                    <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="downloadstlbtn" role="button" aria-disabled="false" title="Download STL">
-                        <span class="ui-button-icon-primary ui-icon icon-stl"></span>
-                        <span class="ui-button-text">Download STL</span>
-                    </button>
-                    <button id="changeradbtn" style="display: none;">Change Rad of Scan</button>
+        </div>
+        <div class="textdisable" id="tpDRHeader" style="display: block;">
+            <div id="tpToolbar">
+                <div id="tpTitle">{{filename}}
+                    <span class="versioninfo">(v1)</span>
                 </div>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance">
+                    <span class="ui-button-icon-primary ui-icon icon-fdist"></span>
+                    <span class="ui-button-text">3D Distance</span>
+                </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="ndistbtn" role="button" aria-disabled="false" title="Normal Distance">
+                    <span class="ui-button-icon-primary ui-icon icon-ndist"></span>
+                    <span class="ui-button-text">Normal Distance</span>
+                </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="anglebtn" role="button" aria-disabled="false" title="Angle">
+                    <span class="ui-button-icon-primary ui-icon icon-angle"></span>
+                    <span class="ui-button-text">Angle</span>
+                </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen">
+                    <span class="ui-button-icon-primary ui-icon icon-camera"></span>
+                    <span class="ui-button-text">Save Screen</span>
+                </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="downloadstlbtn" role="button" aria-disabled="false" title="Download STL">
+                    <span class="ui-button-icon-primary ui-icon icon-stl"></span>
+                    <span class="ui-button-text">Download STL</span>
+                </button>
+                <button id="changeradbtn" style="display: none;">Change Rad of Scan</button>
             </div>
+        </div>
             <!--
             <div id="tpTreeWrapper">
                 <div id="tpTreeHandle">Assembly Tree</div>
@@ -195,90 +192,88 @@
             </div>
             -->
             <!-- TODO: activate different view from javascript -->
-            <div class="textdisable" id="tpViewPoints" style="display: block;">
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView0" style="top: 10px; right: 20px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName0"></button>
-                </div>
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView1" style="top: 50px; right: 60px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName1"></button>
-                </div>
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView2" style="top: 50px; right: 20px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName2"></button>
-                </div>
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView3" style="top: 90px; right: 60px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName3"></button>
-                </div>
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView4" style="top: 90px; right: 20px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName4"></button>
-                </div>`
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView5" style="top: 130px; right: 60px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName5"></button>
-                </div>
-                <div class="tp3DStandardView textdisable" id="tp3DStandardView6" style="top: 130px; right: 20px;">
-                    <button class="tp3DStandardViewName" id="tp3DStandardViewName6"></button>
-                </div>
-                <input class="bluebutton" type="button" value="Save View" id="saveviewbtn">
-                <input class="bluebutton" type="button" value="Set File Icon" id="setthmb">                
+        <div class="textdisable" id="tpViewPoints" style="display: block;">
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView0" style="top: 10px; right: 20px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName0"></button>
             </div>
-            <div  class="dg ac" id="lightControl"> </div>
-            <div class="textdisable" id="partInfoOnMouse"></div>
-            <div class="textdisable" id="tpModelInfo" style="display: block;">
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <span class="valueName right">Facet count:</span>
-                            </td>
-                            <td>
-                                <span class="numbervalue left">73,500</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="xvalue right">X-width:</span>
-                            </td>
-                            <td>
-                                <span class="xvalue left">24.25</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="yvalue right">Y-height:</span>
-                            </td>
-                            <td>
-                                <span class="yvalue left">73.98</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="zvalue right">Z-depth:</span>
-                            </td>
-                            <td>
-                                <span class="zvalue left">13.34</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="valueName right">Mesh surface:</span>
-                            </td>
-                            <td>
-                                <span class="numbervalue left">618.29</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="valueName right">Mesh volume:</span>
-                            </td>
-                            <td>
-                                <span class="numbervalue left">1,015.70</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView1" style="top: 50px; right: 60px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName1"></button>
             </div>
-            <div id="tpMousePointer"></div>
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView2" style="top: 50px; right: 20px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName2"></button>
+            </div>
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView3" style="top: 90px; right: 60px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName3"></button>
+            </div>
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView4" style="top: 90px; right: 20px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName4"></button>
+            </div>`
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView5" style="top: 130px; right: 60px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName5"></button>
+            </div>
+            <div class="tp3DStandardView textdisable" id="tp3DStandardView6" style="top: 130px; right: 20px;">
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName6"></button>
+            </div>
+            <input class="bluebutton" type="button" value="Save View" id="saveviewbtn">
+            <input class="bluebutton" type="button" value="Set File Icon" id="setthmb">              
         </div>
-
+        <div  class="dg ac" id="lightControl"> </div>
+        <div class="textdisable" id="partInfoOnMouse"></div>
+        <div class="textdisable" id="tpModelInfo" style="display: block;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span class="valueName right">Facet count:</span>
+                        </td>
+                        <td>
+                            <span class="numbervalue left">73,500</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="xvalue right">X-width:</span>
+                        </td>
+                        <td>
+                            <span class="xvalue left">24.25</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="yvalue right">Y-height:</span>
+                        </td>
+                        <td>
+                            <span class="yvalue left">73.98</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="zvalue right">Z-depth:</span>
+                        </td>
+                        <td>
+                            <span class="zvalue left">13.34</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="valueName right">Mesh surface:</span>
+                        </td>
+                        <td>
+                            <span class="numbervalue left">618.29</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="valueName right">Mesh volume:</span>
+                        </td>
+                        <td>
+                            <span class="numbervalue left">1,015.70</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="tpMousePointer"></div>        
         <div id="tpMousePositionInfo" class="textdisable" style="visibility: hidden;"></div>
         <div id="tpDimInfo" class="textdisable" style="visibility: hidden;"></div>
         <div id="tpOpHelp" class="textdisable" style="visibility: hidden;"></div>        
@@ -286,21 +281,16 @@
 
         <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>
         <script type="text/javascript" src="{% static "js/three.min.68.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/three.min.68.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/Detector.js" %}"></script>
-        <script src="{% static "js/Viewport.68.js" %}"></script>
-
-        <!--<script src="{% static "js/Editor.js" %}"></script>        
-        <script src="{% static "js/Viewport.js" %}"></script>-->
+        <script type="text/javascript" src="{% static "js/Viewport.68.js" %}"></script>
         
         <script type="text/javascript" src="{% static "js/libs/Coordinates.js" %}"></script>        
-        <<script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.new.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.new.js" %}"></script>
         <!--<script type="text/javascript" src="{% static "js/libs/OrbitControlsTouch.js" %}"></script>-->
         <!--<script type="text/javascript" src="{% static "js/libs/TrackballControls.js" %}"></script>-->
-        <script type="text/javascript" src="{% static "js/libs/uclass_BeveledBlockGeometry.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/uclass_TeapotGeometry.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/stats.min.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/progressbar/progressbar.js" %}"></script>
         
         <!--STL and OBJ file loader -->
         <script src="{% static "js/loaders/STLLoader.68.js" %}"></script>
@@ -322,6 +312,7 @@
             }
         </script>
 
+        <!-- TODO: check code here -->
         <script type="text/x-glsl" id="fragment">
             uniform vec3 uMaterialColor;
             uniform vec3 uSpecularColor;
@@ -374,6 +365,8 @@
             }
         </script>
         <script type = "text/javascript">
+            $('#tpDRHeader').hide();
+            $('#teethContainer').hide();
             var file_url = "{{file_url}}";
             console.log("teethViewer3D.html file_url" + file_url);
         </script>
