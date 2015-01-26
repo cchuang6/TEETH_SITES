@@ -134,7 +134,7 @@ $ python manage.py syncdb
 
 * You should change data.json to the most recent data
 
-python manage.py loaddata data.json
+python manage.py loaddata ./bacp_data/data_Jan_2015_2.json
 
 10. Run server
 
