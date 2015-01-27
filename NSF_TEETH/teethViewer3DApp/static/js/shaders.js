@@ -15,11 +15,13 @@ var tess = -1;	// force initialization
 var ambientLight, light;
 var defaultCamPos;
 var phongBalancedMaterial;
+var orgMaterial;
 var container;
 var editor;
 var viewport;
 var enableShader;
 var rogress_circle;
+var showCurvature;
 
 
 function init() {
@@ -47,10 +49,14 @@ function init() {
 	light.position.set(0, 0, 0);
 
 	// RENDERER
-	if ( Detector.webgl )
+	if ( Detector.webgl ){
+		console.log("Render by webgl");
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
-	else
+	}
+	else{
+		console.log("Render by CanvasRenderer");
 		renderer = new THREE.CanvasRenderer(); 
+	}
 	renderer.setSize(canvasWidth, canvasHeight);
 
 	//renderer.setClearColorHex(0xFFFFFF, 0.8);
@@ -233,10 +239,8 @@ function setupGui() {
 //
 
 function animate() {
-
-	requestAnimationFrame(animate);
 	render();
-
+	requestAnimationFrame(animate);
 }
 
 function render() {
@@ -350,7 +354,8 @@ function loadDAE(url){
 
 	var onLoad = function(object){
 		console.log('Call load function at DAE loader');		
-		daeSceneObj = object.scene;			
+		daeSceneObj = object.scene;
+		daeSceneObj.name = "daeObj";			
 		daeSceneObj.traverse( function(child) {	
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
@@ -360,8 +365,16 @@ function loadDAE(url){
 				var camera = cameraControls.object;
 				camera.fov = centMesh.fov;	
 				camera.updateProjectionMatrix();
-				//set basic material
-				centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );										
+				centMesh.mesh.material = phongBalancedMaterial;
+				//orgMaterial = centMesh.mesh.material.clone();
+				//centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+				centMesh.mesh.material.needsUpdate = true;				
+				centMesh.mesh.geometry.buffersNeedUpdate = true;
+				centMesh.mesh.geometry.uvsNeedUpdate = true;
+				centMesh.mesh.geometry.verticesNeedUpdate = true;
+				centMesh.mesh.geometry.normalsNeedUpdate = true;
+				centMesh.mesh.geometry.colorsNeedUpdate = true;
+				showCurvature = false;
 			}
 		});
 		//simple test
@@ -727,6 +740,79 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.rotateUp(Math.PI/2.0);
 		cameraControls.update();
+	});
+
+	//show curvature  showcurvaturelbtn
+	$('#curvaturebtn').click(function(){ 
+		console.log("curvature switch");
+		var className = $(this).children()[0].className
+		matched = className.match(/^on | on | on$|^off | off | off$/ );		
+
+
+		
+		if (matched[0] == "on "){
+			className = className.replace(/^on /, "off ");
+			showCurvature = false;
+		}
+		else if(matched[0] == " on "){
+			className = className.replace(/ on /, " off ");
+			showCurvature = false;
+		}
+		else if(matched[0] == " on"){
+			className = className.replace(/ on$/, " off");
+			showCurvature = false;
+		}
+		else if(matched[0] == "off "){
+			className = className.replace(/^off /, " on");
+			showCurvature = true;
+		}
+		else if(matched[0] == " off "){
+			className = className.replace(/ off /, " on ");
+			showCurvature = true;
+		}
+		else{
+			className = className.replace(/ off$/, " on");
+			showCurvature = true;
+		}
+
+		var object = scene.getObjectByName( "daeObj" );
+		//turn on vertex color
+		if (showCurvature){
+			
+			object.traverse( function(child) {	
+				if(child instanceof THREE.Mesh){
+					console.log('find child as mesh');
+					// // child is the mesh
+					child.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+					child.material.needsUpdate = true;
+					child.geometry.buffersNeedUpdate = true;
+					child.geometry.uvsNeedUpdate = true;
+					child.geometry.verticesNeedUpdate = true;
+					child.geometry.normalsNeedUpdate = true;
+					child.geometry.colorsNeedUpdate = true;
+				}
+			});
+		}  //turn off vertex color
+		else{		
+			object.traverse( function(child) {	
+				if(child instanceof THREE.Mesh){
+					console.log('find child as mesh');				
+					child.material = phongBalancedMaterial;
+					//child.material.vertexColors = +THREE.FaceColors;
+					//child.material.vertexColors = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+					child.material.needsUpdate = true;
+					child.geometry.buffersNeedUpdate = true;
+					child.geometry.uvsNeedUpdate = true;
+					child.geometry.verticesNeedUpdate = true;
+					child.geometry.normalsNeedUpdate = true;
+					child.geometry.colorsNeedUpdate = true;
+				}
+			});
+		}
+		//change image
+		console.log("class: " + className);
+		$(this).children()[0].className = className;		
 	});
 
 });

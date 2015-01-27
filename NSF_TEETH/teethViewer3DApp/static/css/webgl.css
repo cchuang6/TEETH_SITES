@@ -2221,6 +2221,18 @@ body {
     background-size:90% Auto;
     left:8px!important
 }
+.icon-curvature{
+    width:48px;
+    height:48px;
+    background-size:70% Auto;
+    left:8px!important
+}
+.on{
+    background-image:url(images/webgl/teeth_curvature_on.jpg)!important;
+}
+.off{
+    background-image:url(images/webgl/teeth_curvature_off.jpg)!important;
+}
 #sectionmenus {
     position:absolute;
     padding:5px 0;
