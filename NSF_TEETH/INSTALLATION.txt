@@ -50,7 +50,7 @@ source $PYTHON_FOLDER/virtualenvwrapper.sh
 
 4. Create a virtual env
 
-* virtual environment will be automatically activated 
+* virtual environment will be automatically activated
 
 $ mkvirtualenv nsf_teeth
 
@@ -63,7 +63,7 @@ $ POSTGRES_BIN=`find /Applications/Postgres.app/ -name "pg_config"`
 $ POSTGRES_BIN=${POSTGRES_BIN%/*}
 $ export PATH=$POSTGRES_BIN:$PATH
 
-* Go into the directory where you pull down your code. 
+* Go into the directory where you pull down your code.
 * Under the folder with requirement.txt execute the following command to install all depedencies.
 
 $ pip install -r requirement.txt
@@ -134,7 +134,7 @@ $ python manage.py syncdb
 
 * You should change data.json to the most recent data
 
-python manage.py loaddata ./bacp_data/data_Jan_2015_2.json
+python manage.py loaddata ./backup_data/data_Jan_2015.json
 
 10. Run server
 
