@@ -308,35 +308,55 @@ function updateCurvatureSettings(){
 // Load STL file
 function loadSTL(url){
 	console.log('Start loading STL file');
-	$('#progress').hide();
-	$('#tpDRHeader').show();
-	$('#teethContainer').show();
+	
 	var manager = new THREE.LoadingManager();
 	manager.onProgress = function ( item, loaded, total ) {	
 		console.log( item, loaded, total);
 	};
-
-	//TODO: fix the problem of STL loading
-	// Use manager
 	var loader = new THREE.STLLoader(manager);
 
+	//Load Event
 	loader.addEventListener( 'load', function ( event ) {
+		var geometry = event.content;
 					
-					var geometry = event.content;
-					
-					var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
-					var centMesh = getCenteralizedMesh(mesh);
-					//set cmaera fov
-					var camera = cameraControls.object;
-					camera.fov = centMesh.fov;	
-					camera.updateProjectionMatrix();
+		var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
+		var centMesh = getCenteralizedMesh(mesh);
+		//set cmaera fov
+		var camera = cameraControls.object;
+		camera.fov = centMesh.fov;	
+		camera.updateProjectionMatrix();
 
-					//add mesh to scene
-					scene.add(centMesh.mesh);
-					console.log('load file successful');
+		//add mesh to scene
+		scene.add(centMesh.mesh);
+		console.log('load file successful');
+		$('#progress').hide();
+		$('#tpDRHeader').show();
+		$('#teethContainer').show();
 
-				}, false );
-				
+	}, false );
+	//progress event
+	loader.addEventListener( 'progress', function( event ){
+		if ( $.isNumeric(event.loaded) && $.isNumeric(event.total) )
+		{
+			var complete = event.loaded / event.total;
+			progress_circle.set(complete);
+			var percentComplete = Math.round(complete * 100, 2);
+			progress_circle.setText(percentComplete + '% downloaded')
+			console.log( percentComplete + '% downloaded' );
+		}
+		else{
+			console.log(event);
+		}
+	}, false);
+
+	//error event
+	loader.addEventListener('error', function(event){
+		console.log("Load STL Error!!");
+		console.log(event);
+	}, false);
+
+
+	
 	loader.load(url);
 
 }
