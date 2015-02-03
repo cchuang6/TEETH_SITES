@@ -789,15 +789,11 @@ $(function(){
 	// download stl click event listener
 	$("#downloadstlbtn").click(function(){
 		console.log("STL Downloader");
-		var object = scene.getObjectByName( "daeObj" );
-		var verts;
-		var tris;
+		var object = scene.getObjectByName( "daeObj" );		
 		object.traverse( function(child) {	
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');	
-				var centMesh = getCenteralizedMesh(child);				
-				verts = centMesh.mesh.geometry.vertices;
-				tris = centMesh.mesh.geometry.faces;
+				var centMesh = getCenteralizedMesh(child);								
 				BinaryStlWriter.save(centMesh.mesh.geometry, 'export.stl');
 			}
 		});						

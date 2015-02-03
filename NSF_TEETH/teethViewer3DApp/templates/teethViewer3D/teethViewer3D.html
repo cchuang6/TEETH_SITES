@@ -120,6 +120,14 @@
                     <span class="ui-button-text">Download STL</span>
                 </button>
                 <button id="changeradbtn" style="display: none;">Change Rad of Scan</button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="rotationControl" role="button" aria-disabled="false" title="Rotation Control">
+                    <span class="ui-button-icon-primary ui-icon icon-rotate"></span>
+                    <span class="ui-button-text">Rotation Control</span>
+                </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="getPointVal" role="button" aria-disabled="false" title="Point Pick">
+                    <span class="ui-button-icon-primary ui-icon icon-pointpick icon-disabled"></span>
+                    <span class="ui-button-text">Point Pick</span>
+                </button>
             </div>
         </div>
             <!--
@@ -218,7 +226,7 @@
             <input class="bluebutton" type="button" value="Set File Icon" id="setthmb">              
         </div>
         <div  class="dg ac" id="lightControl"> </div>
-        <div class="textdisable" id="partInfoOnMouse"></div>
+        <div class="textdisable" id="partInfoOnMouse"></div>        
         <div class="textdisable" id="tpModelInfo" style="display: block;">
             <table>
                 <tbody>
@@ -276,10 +284,17 @@
         <div id="tpMousePointer"></div>        
         <div id="tpMousePositionInfo" class="textdisable" style="visibility: hidden;"></div>
         <div id="tpDimInfo" class="textdisable" style="visibility: hidden;"></div>
-        <div id="tpOpHelp" class="textdisable" style="visibility: hidden;"></div>        
+        <div id="tpOpHelp" class="textdisable" style="visibility: hidden;"></div>   
+        <div id="pointsPickedInfo" class="textdisable" style="display: none;">
+            <h3>
+                Points Picked
+            </h3>
+            <div style="text-align:left; height:200px; overflow-y: scroll;">            
+            </div>
+        </div>                
     </body>
 
-        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>        
         <script type="text/javascript" src="{% static "js/fileSaver.js" %}"></script>
         <script type="text/javascript" src="{% static "js/three.min.68.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/Detector.js" %}"></script>
@@ -373,6 +388,7 @@
         </script>
         {% compress js %}
             <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
+            <script type="text/javascript" src="{% static "js/editor_teeth.js" %}"></script>
         {% endcompress %}
 
 </html>
