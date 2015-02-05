@@ -22,6 +22,8 @@ var viewport;
 var enableShader;
 var rogress_circle;
 var showCurvature;
+var originalPosition
+
 
 
 function init() {
@@ -323,6 +325,7 @@ function loadSTL(url){
 		camera.updateProjectionMatrix();
 
 		//add mesh to scene
+
 		scene.add(centMesh.mesh);
 		console.log('load file successful');
 		$('#progress').hide();
@@ -371,7 +374,7 @@ function loadDAE(url){
 	var onLoad = function(object){
 		console.log('Call load function at DAE loader');
 		daeSceneObj = object.scene;
-		daeSceneObj.name = "daeObj";
+		daeSceneObj.name = "teethObj";
 		daeSceneObj.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
@@ -396,6 +399,8 @@ function loadDAE(url){
 		//simple test
 		//add scene
 		scene.add(daeSceneObj);
+		storeOriginPosition(cameraControls.object)
+
 		console.log('load file successful');
 
 		$('#progress').hide();
@@ -429,6 +434,10 @@ function loadDAE(url){
 
 
 
+}
+
+function storeOriginPosition(object){
+	originalPosition = object.position;
 }
 
 function getCenteralizedMesh(mesh){
@@ -755,7 +764,7 @@ $(function(){
 		console.log("Rotate to top1");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-
+		cameraControls.target.set(0,0,0);
 		// camera.target = new THREE.Vector3();
 		//TODO: animation
 		cameraControls.update();
@@ -770,6 +779,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(Math.PI);
+		cameraControls.target.set(0,0,0);
 		cameraControls.update();
 	});
 
@@ -780,6 +790,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(Math.PI/2.0);
+		cameraControls.target.set(0,0,0);
 		cameraControls.update();
 	});
 
@@ -790,6 +801,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
+		cameraControls.target.set(0,0,0);
 		cameraControls.update();
 	});
 
@@ -800,6 +812,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
+		cameraControls.target.set(0,0,0);
 		cameraControls.update();
 	});
 
@@ -811,6 +824,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.rotateUp(Math.PI/2.0);
+		cameraControls.target.set(0,0,0);
 		cameraControls.update();
 	});
 
@@ -847,7 +861,7 @@ $(function(){
 			showCurvature = true;
 		}
 
-		var object = scene.getObjectByName( "daeObj" );
+		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
 		if (showCurvature){
 
@@ -889,7 +903,7 @@ $(function(){
 	// download stl click event listener
 	$("#downloadstlbtn").click(function(){
 		console.log("STL Downloader");
-		var object = scene.getObjectByName( "daeObj" );
+		var object = scene.getObjectByName( "teethObj" );
 		object.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
