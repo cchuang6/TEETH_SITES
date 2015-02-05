@@ -30,7 +30,7 @@ function init() {
 	container = $('#teethContainer');
 
 	// CAMERA
-	var canvasWidth = container.width(); 
+	var canvasWidth = container.width();
 	var canvasHeight = container.height();
 	console.log('width: ' + canvasWidth)
 	console.log('height: ' + canvasHeight)
@@ -41,7 +41,7 @@ function init() {
 	defaultCamPos = new THREE.Vector3(0, 0, 500)
 	var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
 	camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-	
+
 	// LIGHTS
 	ambientLight = new THREE.AmbientLight(0xffffff); // 0.2
 
@@ -52,7 +52,7 @@ function init() {
 	if ( Detector.webgl )
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
 	else
-		renderer = new THREE.CanvasRenderer(); 
+		renderer = new THREE.CanvasRenderer();
 	renderer.setSize(canvasWidth, canvasHeight);
 
 	//renderer.setClearColorHex(0xFFFFFF, 0.8);
@@ -177,7 +177,7 @@ function setupGui() {
 
 	var h;
 
-	 
+
 	var gui = new dat.GUI({autoPlace: false});
 	$('#lightControl').append(gui.domElement);
 	// material (attributes)
@@ -253,7 +253,7 @@ function render() {
 	}
 
 	updateCurvatureSettings();
-	
+
 	if(enableShader){
 		phongBalancedMaterial.uniforms.shininess.value = effectController.shininess;
 		phongBalancedMaterial.uniforms.uDropoff.value = effectController.dropoff;
@@ -277,7 +277,7 @@ function render() {
 	else
 		light.position.set(effectController.lx, effectController.ly, effectController.lz);
 
-	
+
 
 	renderer.render(scene, cameraControls.object);
 
@@ -285,7 +285,7 @@ function render() {
 
 function updateCurvatureSettings(){
 	if(effectController.curvature){
-		
+
 		// enable shader
 
 		//enable material color
@@ -304,9 +304,9 @@ function updateCurvatureSettings(){
 // Load STL file
 function loadSTL(url){
 	console.log('Start loading STL file');
-	
+
 	var manager = new THREE.LoadingManager();
-	manager.onProgress = function ( item, loaded, total ) {	
+	manager.onProgress = function ( item, loaded, total ) {
 		console.log( item, loaded, total);
 	};
 	var loader = new THREE.STLLoader(manager);
@@ -314,12 +314,12 @@ function loadSTL(url){
 	//Load Event
 	loader.addEventListener( 'load', function ( event ) {
 		var geometry = event.content;
-					
+
 		var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
 		var centMesh = getCenteralizedMesh(mesh);
 		//set cmaera fov
 		var camera = cameraControls.object;
-		camera.fov = centMesh.fov;	
+		camera.fov = centMesh.fov;
 		camera.updateProjectionMatrix();
 
 		//add mesh to scene
@@ -352,7 +352,7 @@ function loadSTL(url){
 	}, false);
 
 
-	
+
 	loader.load(url);
 
 }
@@ -364,27 +364,27 @@ function loadDAE(url){
 
 	console.log('Start loading DAE1 file');
 	var manager = new THREE.LoadingManager();
-	manager.onProgress = function ( item, loaded, total ) {	
+	manager.onProgress = function ( item, loaded, total ) {
 		console.log( item, loaded, total);
 	};
 
 	var onLoad = function(object){
-		console.log('Call load function at DAE loader');		
+		console.log('Call load function at DAE loader');
 		daeSceneObj = object.scene;
-		daeSceneObj.name = "daeObj";			
-		daeSceneObj.traverse( function(child) {	
+		daeSceneObj.name = "daeObj";
+		daeSceneObj.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
 				// // child is the mesh
 				var centMesh = getCenteralizedMesh(child);
 				//set cmaera fov
 				var camera = cameraControls.object;
-				camera.fov = centMesh.fov;	
+				camera.fov = centMesh.fov;
 				camera.updateProjectionMatrix();
 				centMesh.mesh.material = phongBalancedMaterial;
 				//orgMaterial = centMesh.mesh.material.clone();
 				//centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-				centMesh.mesh.material.needsUpdate = true;				
+				centMesh.mesh.material.needsUpdate = true;
 				centMesh.mesh.geometry.buffersNeedUpdate = true;
 				centMesh.mesh.geometry.uvsNeedUpdate = true;
 				centMesh.mesh.geometry.verticesNeedUpdate = true;
@@ -397,14 +397,14 @@ function loadDAE(url){
 		//add scene
 		scene.add(daeSceneObj);
 		console.log('load file successful');
-		
+
 		$('#progress').hide();
 		$('#tpDRHeader').show();
 		$('#teethContainer').show();
 
 	};
 
-	var onProgress = function ( object ) {					
+	var onProgress = function ( object ) {
 		if ( $.isNumeric(object.loaded) && $.isNumeric(object.total) )
 		{
 			var complete = object.loaded / object.total;
@@ -442,14 +442,14 @@ function getCenteralizedMesh(mesh){
 	var height = boundingBox.max.y - boundingBox.min.y;
 	var depth = boundingBox.max.z - boundingBox.min.z;
 	// console.log('Before setting position');
- //    console.log('bounding box center: ' + 
+ //    console.log('bounding box center: ' +
  //       		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-	
-	//rotate 
+
+	//rotate
 	mesh.rotation.y =  Math.PI;
-					
+
 	//set position
-	mesh.position.x = -c_x;	
+	mesh.position.x = -c_x;
 	mesh.position.y = -c_y - height / 8.0;
 	mesh.position.z = c_z/2.0;
 	//mesh.position.set(0, 0, 0);
@@ -459,24 +459,24 @@ function getCenteralizedMesh(mesh){
 	console.log('mesh y'+ mesh.position.y);
 	console.log('mesh z'+ mesh.position.z);
 	// console.log('depth '+ depth);
-	
-	
+
+
 	//scale mesh
 	mesh.scale.x = 0.6;
 	mesh.scale.y = 0.6;
 	mesh.scale.z = 0.6;
 	//set camera
 	var camera = cameraControls.object;
-	// defaultCamPos = new THREE.Vector3(mesh.position.x, 
+	// defaultCamPos = new THREE.Vector3(mesh.position.x,
 	// 									mesh.position.y, defaultCamPos.z)
 	// camera.position.x = defaultCamPos.x
 	// camera.position.y = defaultCamPos.y
 	// camera.position.z = defaultCamPos.z
-	var dist = Math.sqrt(Math.pow(camera.position.x, 2) + 
-						Math.pow(camera.position.y , 2)+ 
+	var dist = Math.sqrt(Math.pow(camera.position.x, 2) +
+						Math.pow(camera.position.y , 2)+
 						Math.pow(camera.position.z - depth, 2));
-	
-	
+
+
 	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
 	//var target = new THREE.Vector3(0, 0, -c_z/2.0);
 	//cameraControls.target = target
@@ -488,7 +488,7 @@ function getCenteralizedMesh(mesh){
 	return{
 		fov: fov,
 		mesh: mesh
-	};	
+	};
 }
 
 //Load OBJ file
@@ -502,12 +502,12 @@ function loadOBJ(url){
 		console.log( item, loaded, total );
 	};
 
-	
+
 
 	var fileAttributes = getFileAttributes(url);
 	var filePath = fileAttributes.filePath;
 	var fileName = fileAttributes.fileName;
-	var pureFileName = fileName.substring(0, fileName.lastIndexOf('.'));	
+	var pureFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 	var textureFile = filePath + pureFileName + '_color.png';
 
 	var mtl_url = url+'.mtl';
@@ -516,7 +516,7 @@ function loadOBJ(url){
 
 	//debug
 	console.log('Texture file: ' + textureFile);
-	
+
 	// model
 
 	//var loader = new THREE.OBJMTLLoader( manager );
@@ -526,11 +526,11 @@ function loadOBJ(url){
 	//loading
 	loader.load( url, mtl_url, function ( object ) {
 			console.log('Call load function at obj loader');
-			// object.traverse( function ( child ) 
+			// object.traverse( function ( child )
 			// {
 			// 	if ( child instanceof THREE.Mesh ) {
 			// 		//child.material.map = THREE.ImageUtils.loadTexture(textureFile);
-			// 		//console.log('load texture successful');	
+			// 		//console.log('load texture successful');
 			// 		//child.material.needsUpdate = true;
 
 			// 		//compute boundingbox
@@ -542,11 +542,11 @@ function loadOBJ(url){
 			// 		var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
 			// 		var height = boundingBox.max.y - boundingBox.min.y;
 			// 		var depth = boundingBox.max.z - boundingBox.min.z;
-   //  				console.log('bounding box center: ' + 
+   //  				console.log('bounding box center: ' +
    //      					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-					
-			// 		//rotate 
-			// 		child.rotation.y =  Math.PI;					
+
+			// 		//rotate
+			// 		child.rotation.y =  Math.PI;
 			// 		child.position.x = -c_x;
 			// 		//mesh.position.y = - boundingBox.min.y + (c_y - boundingBox.min.y)/2.0;
 			// 		child.position.y = -c_y - height / 8.0;
@@ -555,16 +555,16 @@ function loadOBJ(url){
 			// 		console.log('mesh x'+ child.position.y)
 			// 		console.log('mesh y'+ child.position.z)
 			// 		console.log('depth '+ depth);
-					
+
 			// 		child.scale.x = 0.6;
 			// 		child.scale.y = 0.6;
 			// 		child.scale.z = 0.6;
 
 			// 		//effectController.lx = 0.0;
-			// 		//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y; 
+			// 		//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y;
 			// 		//effectController.lz = 1.0;
-			// 		var dist = Math.sqrt(Math.pow(camera.position.x, 2) + 
-			// 							Math.pow(camera.position.y , 2)+ 
+			// 		var dist = Math.sqrt(Math.pow(camera.position.x, 2) +
+			// 							Math.pow(camera.position.y , 2)+
 			// 							Math.pow(camera.position.z - depth, 2));
 
 			// 		var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
@@ -573,13 +573,13 @@ function loadOBJ(url){
 			// 		//camera.position.y = 300;
 			// 		camera.updateProjectionMatrix();
 			// 		scene.add(child);
-			// 		console.log('load file successful');								
+			// 		console.log('load file successful');
 			// 	}
 			// } );
-			
+
 			//simple test
 			scene.add(object);
-			console.log('load file successful');								
+			console.log('load file successful');
 	});
 
 	console.log('load file successful2');
@@ -587,13 +587,13 @@ function loadOBJ(url){
 
 
 function getFileAttributes(url){
-	
+
 	//Debug info
 	console.log('load url file');
 	console.log(url);
 
 	var extension_array = url.split('.');
-		
+
 	if(extension_array.length < 2){
 		console.log("Error: No extension!");
 		return null;
@@ -603,23 +603,23 @@ function getFileAttributes(url){
 		//debug info
 		var fileName = url.split('/').pop();
 		var filePath = url.substring(0, url.lastIndexOf('/') + 1)
-		//console.log('File name: ' + fileName);		
-		//console.log('File extention: ' + extension);				
+		//console.log('File name: ' + fileName);
+		//console.log('File extention: ' + extension);
 		return {
 			extension: extension,
 			fileName: fileName,
 			filePath: filePath
 		};
 	}
-	
+
 	return null;
-	
+
 
 }
 
 function fillScene() {
-	
-	
+
+
 	//viewport = new viewport(editor).setId('viewport');
 	scene = new THREE.Scene();
 
@@ -631,12 +631,12 @@ function fillScene() {
 	scene.add(light);
 
 	//Floor
-	
+
 	// var helper = new THREE.GridHelper( 300, 10 );
 	// helper.setColors( 0x000000, 0x808080 );
 	// helper.position.y = - 0.5;
 	// scene.add( helper );
-	
+
 
 	//Check file extension and select coorrect loader
 	console.log('start get extension');
@@ -644,14 +644,14 @@ function fillScene() {
 	console.log('finish get extension');
 
 	if (extension == 'stl'){
-		
+
 		loadSTL(file_url);
 
 		//debug info
 		//console.log(scene);
 	}
 	else if (extension == 'obj'){
-		
+
 		loadOBJ(file_url);
 		//debug info
 		//console.log(scene);
@@ -668,8 +668,8 @@ function fillScene() {
 }
 
 
-function addToDOM() {    
-    container.append( renderer.domElement );    
+function addToDOM() {
+    container.append( renderer.domElement );
 }
 
 // Binary Stl converter, needs geometry
@@ -677,34 +677,34 @@ function addToDOM() {
 
 var BinaryStlWriter = (function() {
   var that = {};
- 
+
   var writeVector = function(dataview, offset, vector, isLittleEndian) {
     offset = writeFloat(dataview, offset, vector.x, isLittleEndian);
     offset = writeFloat(dataview, offset, vector.y, isLittleEndian);
     return writeFloat(dataview, offset, vector.z, isLittleEndian);
   };
- 
+
   var writeFloat = function(dataview, offset, float, isLittleEndian) {
     dataview.setFloat32(offset, float, isLittleEndian);
     return offset + 4;
   };
- 
+
   var geometryToDataView = function(geometry) {
     var tris = geometry.faces;
     var verts = geometry.vertices;
-    
+
     var isLittleEndian = true; // STL files assume little endian, see wikipedia page
-    
+
     var bufferSize = 84 + (50 * tris.length);
     var buffer = new ArrayBuffer(bufferSize);
     var dv = new DataView(buffer);
     var offset = 0;
- 
+
     offset += 80; // Header is empty
- 
+
     dv.setUint32(offset, tris.length, isLittleEndian);
     offset += 4;
- 
+
     for(var n = 0; n < tris.length; n++) {
       offset = writeVector(dv, offset, tris[n].normal, isLittleEndian);
       offset = writeVector(dv, offset, verts[tris[n].a], isLittleEndian);
@@ -712,18 +712,18 @@ var BinaryStlWriter = (function() {
       offset = writeVector(dv, offset, verts[tris[n].c], isLittleEndian);
       offset += 2; // unused 'attribute byte count' is a Uint16
     }
- 
+
     return dv;
   };
- 
+
   var save = function(geometry, filename) {
     var dv = geometryToDataView(geometry);
     var blob = new Blob([dv], {type: 'application/octet-binary'});
-    
+
     // FileSaver.js defines `saveAs` for saving files out of the browser
     saveAs(blob, filename);
   };
- 
+
   that.save = save;
   return that;
 }());
@@ -745,27 +745,27 @@ try {
 $(function(){
 
 	//Not sure
-	$('#tp3DStandardViewName0').click(function(){ 
+	$('#tp3DStandardViewName0').click(function(){
 		console.log("clicked tp3DStandardViewName0");
-		
+
 	});
 
-	// top 
-	$('#tp3DStandardViewName1').click(function(){ 
+	// top
+	$('#tp3DStandardViewName1').click(function(){
 		console.log("Rotate to top1");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-		
+
 		// camera.target = new THREE.Vector3();
 		//TODO: animation
 		cameraControls.update();
-		
+
 
 	});
 
 
-	//bottom 
-	$('#tp3DStandardViewName2').click(function(){ 
+	//bottom
+	$('#tp3DStandardViewName2').click(function(){
 		console.log("Rotate to bottom");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
@@ -774,8 +774,8 @@ $(function(){
 	});
 
 
-	//left 
-	$('#tp3DStandardViewName3').click(function(){ 
+	//left
+	$('#tp3DStandardViewName3').click(function(){
 		console.log("Rotate to left");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
@@ -785,7 +785,7 @@ $(function(){
 
 
 	//right
-	$('#tp3DStandardViewName4').click(function(){ 
+	$('#tp3DStandardViewName4').click(function(){
 		console.log("Rotate to right");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
@@ -795,7 +795,7 @@ $(function(){
 
 
 	//back
-	$('#tp3DStandardViewName5').click(function(){ 
+	$('#tp3DStandardViewName5').click(function(){
 		console.log("Rotate to back")
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
@@ -805,7 +805,7 @@ $(function(){
 
 
 	//front
-	$('#tp3DStandardViewName6').click(function(){ 
+	$('#tp3DStandardViewName6').click(function(){
 		console.log("Rotate to front")
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
@@ -815,13 +815,13 @@ $(function(){
 	});
 
 	//show curvature  showcurvaturelbtn
-	$('#curvaturebtn').click(function(){ 
+	$('#curvaturebtn').click(function(){
 		console.log("curvature switch");
 		var className = $(this).children()[0].className
-		matched = className.match(/^on | on | on$|^off | off | off$/ );		
+		matched = className.match(/^on | on | on$|^off | off | off$/ );
 
 
-		
+
 		if (matched[0] == "on "){
 			className = className.replace(/^on /, "off ");
 			showCurvature = false;
@@ -850,8 +850,8 @@ $(function(){
 		var object = scene.getObjectByName( "daeObj" );
 		//turn on vertex color
 		if (showCurvature){
-			
-			object.traverse( function(child) {	
+
+			object.traverse( function(child) {
 				if(child instanceof THREE.Mesh){
 					console.log('find child as mesh');
 					// // child is the mesh
@@ -866,10 +866,10 @@ $(function(){
 				}
 			});
 		}  //turn off vertex color
-		else{		
-			object.traverse( function(child) {	
+		else{
+			object.traverse( function(child) {
 				if(child instanceof THREE.Mesh){
-					console.log('find child as mesh');				
+					console.log('find child as mesh');
 					child.material = phongBalancedMaterial;
 					//child.material.vertexColors = +THREE.FaceColors;
 					//child.material.vertexColors = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
@@ -884,19 +884,18 @@ $(function(){
 		}
 		//change image
 		console.log("class: " + className);
-		$(this).children()[0].className = className;		
+		$(this).children()[0].className = className;
+	});
 	// download stl click event listener
 	$("#downloadstlbtn").click(function(){
 		console.log("STL Downloader");
-		var object = scene.getObjectByName( "daeObj" );		
-		object.traverse( function(child) {	
+		var object = scene.getObjectByName( "daeObj" );
+		object.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
-				console.log('find child as mesh');	
-				var centMesh = getCenteralizedMesh(child);								
+				console.log('find child as mesh');
+				var centMesh = getCenteralizedMesh(child);
 				BinaryStlWriter.save(centMesh.mesh.geometry, 'export.stl');
 			}
-		});						
-	  	
+		});
 	});
-
 });
