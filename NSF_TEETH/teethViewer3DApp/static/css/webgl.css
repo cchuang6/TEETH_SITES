@@ -2157,6 +2157,25 @@ body {
 #tpTreeWrapper #tpTreeHandle:hover {
     cursor:move
 }
+#pointsPickedInfo{
+    position: absolute;
+    bottom: 15px;
+    padding: 10px;
+    left: 5px;
+    height: 300px;
+    width: 250px;
+    text-align: center;
+    color: black;
+    background-color: #dfdfdf;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+    filter: alpha(opacity=75);
+    opacity: .75;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
+    box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
+}
 .icon-fdist {
     width:48px;
     height:48px;
@@ -2232,6 +2251,27 @@ body {
 }
 .off{
     background-image:url(images/webgl/teeth_curvature_off.jpg)!important;
+}
+.icon-rotate {
+    width:48px;
+    height:48px;
+    background-image:url(images/webgl/rotation.png?1398816184)!important;
+    background-size:60% Auto;
+    margin-top: -3px !important;
+    margin-left: -5px !important;
+    opacity: 1.0;
+}
+.icon-pointpick {
+    width:48px;
+    height:48px;
+    background-image:url(images/webgl/pointPick.png?1398816184)!important;
+    background-size:40% Auto;
+    margin-top: 0px !important;
+    margin-left: -7px !important;
+    opacity: 1.0;
+}
+.icon-disabled{
+    opacity: 0.3;
 }
 #sectionmenus {
     position:absolute;
