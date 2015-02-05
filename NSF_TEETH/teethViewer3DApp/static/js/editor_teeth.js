@@ -1,6 +1,7 @@
 var rotationState = "enabled";
 var getPointValMode = "disabled";
-
+var pointsPicked = [];
+var pointsPickedCounter = -1;
 
 // function to toggle rotation
 $('#rotationControl').click(function(){
@@ -57,24 +58,84 @@ function onDocumentMouseDown( event ) {
 		var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
 		var intersects = raycaster.intersectObjects(scene.children,true);
 		if(intersects.length > 0){
-			// console.log(intersects[0].point);
-			displayPointsOnUI(intersects[0].point);
+			// console.log(intersects[0]);			
+			pointsPickedCounter++;
+			displayPointsOnUI(intersects[0].point,pointsPickedCounter);
+			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point});			
 			var sphereGeometry = new THREE.SphereGeometry( 0.4, 32, 32 );
-			var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#'+Math.random().toString(16).substr(-6), shading: THREE.FlatShading } );
+			var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', shading: THREE.FlatShading } );
 			// intersects[0].object.material.color.setRGB(Math.random(),Math.random(),Math.random());
 			var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
+			sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
 			sphere.position.x = intersects[0].point.x;
 			sphere.position.y = intersects[0].point.y;
 			sphere.position.z = intersects[0].point.z;
-			scene.add(sphere);
+			scene.add(sphere);			
 		}
 	}
 }
 
-function displayPointsOnUI(point){
-	$("#pointsPickedInfo div:first").append("<div style='padding:5px;'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"</span><button style='float:right' onclick='delPoint(this);'>Del</button></div>");
+function displayPointsOnUI(point,pointId){
+	$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
 }
 
-function delPoint(that){
+// function to select particular point
+function selectRow(that){	
+	var selectedPointId = $(that).find('button').data('id');
+	$.each(scene.__webglObjects, function(key,val){
+		if(val[0].object.pointId == selectedPointId){			
+			if(val[0].object.material.color.getStyle() == 'rgb(0,0,0)')
+				val[0].object.material.color.setStyle("red");
+			else if(val[0].object.material.color.getStyle() == 'rgb(255,0,0)')
+				val[0].object.material.color.setStyle("black");
+		}
+	});
+	$(that).toggleClass('selectedPoint');
+}
+
+function delPoint(that){	
+	$.each(scene.__webglObjects, function(key,val){
+		if(val[0].object.pointId == $(that).data('id'))
+			scene.remove(val[0].object);
+	});
 	$(that).parent().remove();
+	$.each(pointsPicked, function(i){
+	    if(pointsPicked[i].pointId === $(that).data('id')) {
+	        pointsPicked.splice(i,1);
+	        return false;
+	    }
+	});	
+	// pointsPickedCounter--;	
+}
+
+function exportPointsToCSV(){
+	// console.log(pointsPicked);
+	var exportArray = [];
+	$.each(pointsPicked,function(index,val){
+		var pointVal = []
+		pointVal.push(val.coordinates.x);
+		pointVal.push(val.coordinates.y);
+		pointVal.push(val.coordinates.z);
+		exportArray.push(pointVal);
+	});	
+	var csvContent = 'X,Y,Z' + "\n";
+	exportArray.forEach(function(coordinatesArray, index){
+		dataString = coordinatesArray.join(",");
+		csvContent += dataString+ "\n";
+	});	
+	var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+	saveAs(blob, "pointsExport.csv");
+}
+
+function deleteAllPoints(){	
+	$("#pointsPickedInfo div").children().remove();
+	$.each(scene.__webglObjects, function(key,val){
+		$.each(pointsPicked, function(i){
+		    if(val[0].object.pointId == pointsPicked[i].pointId) {
+		        scene.remove(val[0].object);
+		    }
+		});			
+	});
+	pointsPickedCounter = -1;
+	pointsPicked = [];
 }
