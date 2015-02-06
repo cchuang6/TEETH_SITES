@@ -15,14 +15,13 @@ var tess = -1;	// force initialization
 var ambientLight, light;
 var defaultCamPos;
 var phongBalancedMaterial;
-var orgMaterial;
 var container;
 var editor;
 var viewport;
 var enableShader;
 var rogress_circle;
 var showCurvature;
-var originalPosition
+
 
 
 
@@ -315,10 +314,12 @@ function loadSTL(url){
 
 	//Load Event
 	loader.addEventListener( 'load', function ( event ) {
+		var sceneObject = new THREE.Object3D();
+		sceneObject.name = "teethObj";
 		var geometry = event.content;
-
 		var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
 		var centMesh = getCenteralizedMesh(mesh);
+		sceneObject.add(centMesh.mesh);
 		//set cmaera fov
 		var camera = cameraControls.object;
 		camera.fov = centMesh.fov;
@@ -326,7 +327,8 @@ function loadSTL(url){
 
 		//add mesh to scene
 
-		scene.add(centMesh.mesh);
+		scene.add(sceneObject);
+		showCurvature = false;
 		console.log('load file successful');
 		$('#progress').hide();
 		$('#tpDRHeader').show();
@@ -385,21 +387,18 @@ function loadDAE(url){
 				camera.fov = centMesh.fov;
 				camera.updateProjectionMatrix();
 				centMesh.mesh.material = phongBalancedMaterial;
-				//orgMaterial = centMesh.mesh.material.clone();
-				//centMesh.mesh.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
 				centMesh.mesh.material.needsUpdate = true;
 				centMesh.mesh.geometry.buffersNeedUpdate = true;
 				centMesh.mesh.geometry.uvsNeedUpdate = true;
 				centMesh.mesh.geometry.verticesNeedUpdate = true;
 				centMesh.mesh.geometry.normalsNeedUpdate = true;
 				centMesh.mesh.geometry.colorsNeedUpdate = true;
-				showCurvature = false;
+				showCurvature = true;
 			}
 		});
 		//simple test
 		//add scene
 		scene.add(daeSceneObj);
-		storeOriginPosition(cameraControls.object)
 
 		console.log('load file successful');
 
@@ -436,9 +435,6 @@ function loadDAE(url){
 
 }
 
-function storeOriginPosition(object){
-	originalPosition = object.position;
-}
 
 function getCenteralizedMesh(mesh){
 	//compute boundingbox
@@ -461,14 +457,6 @@ function getCenteralizedMesh(mesh){
 	mesh.position.x = -c_x;
 	mesh.position.y = -c_y - height / 8.0;
 	mesh.position.z = c_z/2.0;
-	//mesh.position.set(0, 0, 0);
-
-	console.log('After setting position');
-	console.log('mesh x'+ mesh.position.x);
-	console.log('mesh y'+ mesh.position.y);
-	console.log('mesh z'+ mesh.position.z);
-	// console.log('depth '+ depth);
-
 
 	//scale mesh
 	mesh.scale.x = 0.6;
@@ -831,45 +819,47 @@ $(function(){
 	//show curvature  showcurvaturelbtn
 	$('#curvaturebtn').click(function(){
 		console.log("curvature switch");
-		var className = $(this).children()[0].className
+		//check if curvature can be rendered
+		if (showCurvature == false)
+			return;
+		var className = $(this).children()[0].className;
 		matched = className.match(/^on | on | on$|^off | off | off$/ );
-
+		var switchOn = false;
 
 
 		if (matched[0] == "on "){
 			className = className.replace(/^on /, "off ");
-			showCurvature = false;
+			switchOn = false;
 		}
 		else if(matched[0] == " on "){
 			className = className.replace(/ on /, " off ");
-			showCurvature = false;
+			switchOn = false;
 		}
 		else if(matched[0] == " on"){
 			className = className.replace(/ on$/, " off");
-			showCurvature = false;
+			switchOn = false;
 		}
 		else if(matched[0] == "off "){
 			className = className.replace(/^off /, " on");
-			showCurvature = true;
+			switchOn = true;
 		}
 		else if(matched[0] == " off "){
 			className = className.replace(/ off /, " on ");
-			showCurvature = true;
+			switchOn = true;
 		}
 		else{
 			className = className.replace(/ off$/, " on");
-			showCurvature = true;
+			switchOn = true;
 		}
-
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
-		if (showCurvature){
-
-			object.traverse( function(child) {
+		if (switchOn){
+			object.traverse( function(child){
 				if(child instanceof THREE.Mesh){
 					console.log('find child as mesh');
 					// // child is the mesh
 					child.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+					child.material.side = THREE.DoubleSide;
 					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
 					child.material.needsUpdate = true;
 					child.geometry.buffersNeedUpdate = true;
