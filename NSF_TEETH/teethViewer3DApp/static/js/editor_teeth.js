@@ -59,8 +59,38 @@ function onDocumentMouseDown( event ) {
 		var intersects = raycaster.intersectObjects(scene.children,true);
 
 //---------------Here is the code for finding vertex colors-----------------
-		try {
-			var face = intersects[0].face
+		// try {
+		// 	var face = intersects[0].face
+		// 	if (face !== null){
+		// 		var faceColors = face.vertexColors;
+		// 		var blue = 0.0;
+		// 		var green = 0.0;
+		// 		var red = 0.0;
+		// 		for(var i in faceColors){
+		// 			blue += faceColors[i].b;
+		// 			green += faceColors[i].g;
+		// 			red += faceColors[i].r;
+		// 		}
+		// 		blue /= 3.0;
+		// 		green /=3.0;
+		// 		red /= 3.0;
+		// 		console.log("blue: " + blue);
+		// 		console.log("green: " + green);
+		// 		console.log("red: " + red);
+		// 	}
+		// }
+		// catch(e) {
+		// 	var errorReport = "Have an error to find face colors";
+  // 			$('#container').append(errorReport+e);
+		// }
+
+//----------------------The end of code--------------------
+
+
+		if(intersects.length > 0){
+			// console.log(intersects[0]);
+			var colors = "";
+			var face = intersects[0].face;
 			if (face !== null){
 				var faceColors = face.vertexColors;
 				var blue = 0.0;
@@ -74,24 +104,19 @@ function onDocumentMouseDown( event ) {
 				blue /= 3.0;
 				green /=3.0;
 				red /= 3.0;
-				console.log("blue: " + blue);
-				console.log("green: " + green);
-				console.log("red: " + red);
+				// console.log("blue: " + blue);
+				// console.log("green: " + green);
+				// console.log("red: " + red);
+				colors = {"red":red,"green":green,"blue":blue};
 			}
-		}
-		catch(e) {
-			var errorReport = "Have an error to find face colors";
-  			$('#container').append(errorReport+e);
-		}
-
-//----------------------The end of code--------------------
-
-
-		if(intersects.length > 0){
-			// console.log(intersects[0]);
-			pointsPickedCounter++;
-			displayPointsOnUI(intersects[0].point,pointsPickedCounter);
-			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point});
+			pointsPickedCounter++;									
+			if(colors){				
+				pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point,"colors":colors});	
+				displayPointsOnUI(intersects[0].point,pointsPickedCounter,colors);
+			}else{
+				pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point});	
+				displayPointsOnUI(intersects[0].point,pointsPickedCounter);
+			}			
 			var sphereGeometry = new THREE.SphereGeometry( 0.4, 32, 32 );
 			var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', shading: THREE.FlatShading } );
 			// intersects[0].object.material.color.setRGB(Math.random(),Math.random(),Math.random());
@@ -100,13 +125,18 @@ function onDocumentMouseDown( event ) {
 			sphere.position.x = intersects[0].point.x;
 			sphere.position.y = intersects[0].point.y;
 			sphere.position.z = intersects[0].point.z;
-			scene.add(sphere);
+			scene.add(sphere);			
 		}
 	}
 }
 
-function displayPointsOnUI(point,pointId){
-	$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
+function displayPointsOnUI(point,pointId,colors){	
+	// console.log(colors);
+	if(typeof colors != 'undefined'){
+		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"<br>r : "+parseFloat(colors.red).toFixed(3)+" g : "+parseFloat(colors.green).toFixed(3)+" b :"+parseFloat(colors.blue).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
+	}else{
+		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
+	}	
 }
 
 // function to select particular point
@@ -138,17 +168,32 @@ function delPoint(that){
 	// pointsPickedCounter--;
 }
 
-function exportPointsToCSV(){
+function exportPointsToCSV(){	
 	// console.log(pointsPicked);
+	var colorExport = false;
 	var exportArray = [];
 	$.each(pointsPicked,function(index,val){
-		var pointVal = []
+		var pointVal = [];
+		if(val.hasOwnProperty('colors')){
+			colorExport = true;	
+		}		
 		pointVal.push(val.coordinates.x);
 		pointVal.push(val.coordinates.y);
 		pointVal.push(val.coordinates.z);
+		if(colorExport){
+			pointVal.push(val.colors.red);
+			pointVal.push(val.colors.green);
+			pointVal.push(val.colors.blue);
+		}		
 		exportArray.push(pointVal);
 	});
-	var csvContent = 'X,Y,Z' + "\n";
+	var csvContent;
+	if(colorExport){
+		csvContent = 'X,Y,Z,R,G,B' + "\n";
+	}else{
+		csvContent = 'X,Y,Z' + "\n";
+	}
+	
 	exportArray.forEach(function(coordinatesArray, index){
 		dataString = coordinatesArray.join(",");
 		csvContent += dataString+ "\n";
