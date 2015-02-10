@@ -10,7 +10,7 @@ DATABASES = {
         # Ends with "postgresql_psycopg2", "mysql", "sqlite3" or "oracle".
         "ENGINE": "django.contrib.gis.db.backends.postgis",
         # DB name or path to database file if using sqlite3.
-        "NAME": "NSF_TEETH",
+        "NAME": "nsf_teeth",
         # Not used with sqlite3.
         "USER": "cchuang6",
         # Not used with sqlite3.
