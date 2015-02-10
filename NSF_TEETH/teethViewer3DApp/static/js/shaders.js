@@ -854,6 +854,8 @@ $(function(){
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
 		if (switchOn){
+			// show hue helper
+			$("#tpHueHelp").show();
 			object.traverse( function(child){
 				if(child instanceof THREE.Mesh){
 					console.log('find child as mesh');
@@ -871,6 +873,8 @@ $(function(){
 			});
 		}  //turn off vertex color
 		else{
+			// hide hue helper
+			$("#tpHueHelp").hide();
 			object.traverse( function(child) {
 				if(child instanceof THREE.Mesh){
 					console.log('find child as mesh');
