@@ -68,7 +68,9 @@ function onDocumentMouseDown( event ) {
 				var vertex_hue = 0.0;
 				var num_vertices = 0.0;
 				for(var i in faceColors){
-					vertex_hue += faceColors[i].getHSL().h;
+					vertex_hue += rgbToMeanCurvature(faceColors[i].r,
+					                                 faceColors[i].g,
+					                                 faceColors[i].b);
 					num_vertices += 1.0;
 				}
 				mCurvature = vertex_hue/num_vertices;
@@ -91,6 +93,22 @@ function onDocumentMouseDown( event ) {
 			sphere.position.z = intersects[0].point.z;
 			scene.add(sphere);
 		}
+	}
+}
+
+function rgbToMeanCurvature(red, green, blue){
+	var eps = 0.005;
+	if (parseFloat(red) >= (1.0 - eps) && parseFloat(blue) <= eps){
+		return parseFloat(green)/4.0;
+	}
+	if (parseFloat(green) >= (1.0 - eps) && parseFloat(blue) <= eps){
+		return (1-parseFloat(red))/4.0 + 0.25;
+	}
+	if (parseFloat(red) <= eps && parseFloat(green) >= (1.0 - eps)){
+		return parseFloat(blue)/4.0 + 0.5;
+	}
+	if (parseFloat(red) <= eps && parseFloat(blue) >= (1.0 - eps)){
+		return (1-parseFloat(green))/4.0 + 0.75;
 	}
 }
 
