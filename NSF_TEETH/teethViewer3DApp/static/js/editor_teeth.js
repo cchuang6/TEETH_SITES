@@ -56,6 +56,7 @@ document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 // event listener that gets x,y,z on mouse hover
 function onDocumentMouseMove( event ){
 	event.preventDefault();
+	event.stopPropagation();
 	if(getPointValMode == "enabled"){		
 		var canvasWidth = container.width();
 		var canvasHeight = container.height();
@@ -67,7 +68,7 @@ function onDocumentMouseMove( event ){
 		var intersects = raycaster.intersectObjects(scene.children,true);
 		if(intersects.length > 0){
 			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
-			$("#pointPickerDiv p").text(intersects[0].point.x + " " + intersects[0].point.y + " " + intersects[0].point.z);
+			$("#pointPickerDiv p").html("x: " + intersects[0].point.x + "<br>y: " + intersects[0].point.y + "<br>z: " + intersects[0].point.z);
 			// console.log(intersects[0].point);
 		}else{
 			$("#pointPickerDiv").hide();
@@ -236,3 +237,17 @@ function deleteAllPoints(){
 	pointsPickedCounter = -1;
 	pointsPicked = [];
 }
+
+
+// rendering scales
+function createScale(){	
+	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);	
+	var xAxis = d3.svg.axis().scale(axisScale);	
+	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);	
+	var xAxisGroup = svgContainer.append("g").call(xAxis);
+	$("#tpHueHelp svg").css("margin-top","1px");
+	// $("#tpHueHelp svg").css("padding-left","10px");
+	// $("#mCurvatureGradient").css("padding-left","5px");
+}
+
+createScale();
