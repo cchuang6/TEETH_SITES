@@ -21,6 +21,8 @@ var viewport;
 var enableShader;
 var rogress_circle;
 var showCurvature;
+var wireframeState="disabled";
+var curvatureState="disabled";
 
 
 
@@ -819,81 +821,73 @@ $(function(){
 	//show curvature  showcurvaturelbtn
 	$('#curvaturebtn').click(function(){
 		console.log("curvature switch");
-		//check if curvature can be rendered
-		if (showCurvature == false)
+		//check wire frame status
+		if(wireframeState=='enabled'){
+			$('#wireframebtn').trigger("click");
 			return;
-		var className = $(this).children()[0].className;
-		matched = className.match(/^on | on | on$|^off | off | off$/ );
-		var switchOn = false;
-
-
-		if (matched[0] == "on "){
-			className = className.replace(/^on /, "off ");
-			switchOn = false;
 		}
-		else if(matched[0] == " on "){
-			className = className.replace(/ on /, " off ");
-			switchOn = false;
-		}
-		else if(matched[0] == " on"){
-			className = className.replace(/ on$/, " off");
-			switchOn = false;
-		}
-		else if(matched[0] == "off "){
-			className = className.replace(/^off /, " on");
-			switchOn = true;
-		}
-		else if(matched[0] == " off "){
-			className = className.replace(/ off /, " on ");
-			switchOn = true;
-		}
-		else{
-			className = className.replace(/ off$/, " on");
-			switchOn = true;
+		//check if curvature can be rendered
+		if (showCurvature == false){
+			return;
 		}
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
-		if (switchOn){
-			// show hue helper
-			$("#tpHueHelp").show();
-			object.traverse( function(child){
-				if(child instanceof THREE.Mesh){
-					console.log('find child as mesh');
-					// // child is the mesh
-					child.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-					child.material.side = THREE.DoubleSide;
-					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
-					child.material.needsUpdate = true;
-					child.geometry.buffersNeedUpdate = true;
-					child.geometry.uvsNeedUpdate = true;
-					child.geometry.verticesNeedUpdate = true;
-					child.geometry.normalsNeedUpdate = true;
-					child.geometry.colorsNeedUpdate = true;
-				}
-			});
+		if (curvatureState=='disabled'){
+			renderVertextColor(object);
+			
 		}  //turn off vertex color
-		else{
-			// hide hue helper
-			$("#tpHueHelp").hide();
-			object.traverse( function(child) {
-				if(child instanceof THREE.Mesh){
-					console.log('find child as mesh');
-					child.material = phongBalancedMaterial;
-					//child.material.vertexColors = +THREE.FaceColors;
-					//child.material.vertexColors = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-					child.material.needsUpdate = true;
-					child.geometry.buffersNeedUpdate = true;
-					child.geometry.uvsNeedUpdate = true;
-					child.geometry.verticesNeedUpdate = true;
-					child.geometry.normalsNeedUpdate = true;
-					child.geometry.colorsNeedUpdate = true;
-				}
-			});
+		else if (curvatureState=='enabled'){
+			renderPhongShader(object);
 		}
-		//change image
-		console.log("class: " + className);
-		$(this).children()[0].className = className;
+		if (wireframeState=='enabled'){
+			$('#wireframebtn span:first').addClass("icon-disabled");
+		}
 	});
+	
+    function renderVertextColor(object){
+    	// show hue helper
+    	$("#tpHueHelp").show();
+		object.traverse( function(child){
+			if(child instanceof THREE.Mesh){
+				console.log('find child as mesh');
+				// // child is the mesh
+				child.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+				child.material.side = THREE.DoubleSide;
+				//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+				child.material.needsUpdate = true;
+				child.geometry.buffersNeedUpdate = true;
+				child.geometry.uvsNeedUpdate = true;
+				child.geometry.verticesNeedUpdate = true;
+				child.geometry.normalsNeedUpdate = true;
+				child.geometry.colorsNeedUpdate = true;
+			}
+		});
+		curvatureState='enabled'
+		$('#curvaturebtn span:first').removeClass('off');
+		$('#curvaturebtn span:first').addClass('on');
+    }
+    function renderPhongShader(object){
+    	// hide hue helper
+		$("#tpHueHelp").hide();
+		object.traverse( function(child) {
+			if(child instanceof THREE.Mesh){
+				console.log('find child as mesh');
+				child.material = phongBalancedMaterial;
+				//child.material.vertexColors = +THREE.FaceColors;
+				//child.material.vertexColors = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+				child.material.needsUpdate = true;
+				child.geometry.buffersNeedUpdate = true;
+				child.geometry.uvsNeedUpdate = true;
+				child.geometry.verticesNeedUpdate = true;
+				child.geometry.normalsNeedUpdate = true;
+				child.geometry.colorsNeedUpdate = true;
+			}
+		});
+		curvatureState='disabled'
+		$('#curvaturebtn span:first').removeClass('on');
+		$('#curvaturebtn span:first').addClass('off');
+
+    }
 	// download stl click event listener
 	$("#downloadstlbtn").click(function(){
 		console.log("STL Downloader");
@@ -909,23 +903,46 @@ $(function(){
 	//render wire frame
 	$("#wireframebtn").click(function(){
 		console.log("WireFrame");
-		var object = scene.getObjectByName( "teethObj" );
-		object.traverse( function(child){
-				if(child instanceof THREE.Mesh){
-					// // child is the mesh
-					child.material = new THREE.MeshBasicMaterial( { 
-						wireframe: true,
-        				color: 'blue' } );
-					child.material.side = THREE.DoubleSide;
-					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
-					child.material.needsUpdate = true;
-					child.geometry.buffersNeedUpdate = true;
-					child.geometry.uvsNeedUpdate = true;
-					child.geometry.verticesNeedUpdate = true;
-					child.geometry.normalsNeedUpdate = true;
-					child.geometry.colorsNeedUpdate = true;
-				}
-			});
+		if(wireframeState=="disabled"){
+			wireframeState="enabled";
+			var object = scene.getObjectByName( "teethObj" );
+			object.traverse( function(child){
+					if(child instanceof THREE.Mesh){
+						// // child is the mesh
+						child.material = new THREE.MeshBasicMaterial( { 
+							wireframe: true,
+        					color: 'blue' } );
+						child.material.side = THREE.DoubleSide;
+						//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+						child.material.needsUpdate = true;
+						child.geometry.buffersNeedUpdate = true;
+						child.geometry.uvsNeedUpdate = true;
+						child.geometry.verticesNeedUpdate = true;
+						child.geometry.normalsNeedUpdate = true;
+						child.geometry.colorsNeedUpdate = true;
+					}
+				});
+			$("#tpHueHelp").hide();
+			$('#wireframebtn span:first').removeClass("icon-disabled");
+			$('#curvaturebtn span:first').addClass("icon-disabled");
+		}
+		else if(wireframeState=="enabled"){
+			wireframeState="disabled";
+			var object = scene.getObjectByName( "teethObj" );
+			//show phong shader or material based on previous state
+			if (curvatureState=='disabled'){
+				renderPhongShader(object);
+				
+			
+			}  //turn off vertex color
+			else if (curvatureState=='enabled'){
+				renderVertextColor(object);
+			}
+			//show material
+			$('#wireframebtn span:first').addClass("icon-disabled");
+			$('#curvaturebtn span:first').removeClass("icon-disabled");
+
+		}
 	});
 
 });
