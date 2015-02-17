@@ -86,6 +86,16 @@ function init() {
 		phongBalancedMaterial.side = THREE.DoubleSide;
 	}
 
+	//TODO:add windows resize
+	window.addEventListener( 'resize', onWindowResize, false );
+
+}
+
+function onWindowResize() {
+	var camera = cameraControls.object;
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
 function loadShader(shadertype) {
