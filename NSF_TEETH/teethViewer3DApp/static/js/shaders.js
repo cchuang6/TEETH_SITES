@@ -906,4 +906,26 @@ $(function(){
 			}
 		});
 	});
+	//render wire frame
+	$("#wireframebtn").click(function(){
+		console.log("WireFrame");
+		var object = scene.getObjectByName( "teethObj" );
+		object.traverse( function(child){
+				if(child instanceof THREE.Mesh){
+					// // child is the mesh
+					child.material = new THREE.MeshBasicMaterial( { 
+						wireframe: true,
+        				color: 'blue' } );
+					child.material.side = THREE.DoubleSide;
+					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+					child.material.needsUpdate = true;
+					child.geometry.buffersNeedUpdate = true;
+					child.geometry.uvsNeedUpdate = true;
+					child.geometry.verticesNeedUpdate = true;
+					child.geometry.normalsNeedUpdate = true;
+					child.geometry.colorsNeedUpdate = true;
+				}
+			});
+	});
+
 });

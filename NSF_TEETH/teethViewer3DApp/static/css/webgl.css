@@ -2256,19 +2256,29 @@ body {
 .icon-curvature{
     width:48px;
     height:48px;
-    background-size:70% Auto;
+    background-size:60% Auto;
+    margin-top: -5px !important;   
     left:8px!important
 }
 .on{
-    background-image:url(images/webgl/teeth_curvature_on.jpg)!important;
+    background-image:url(images/webgl/teeth_curvature_on.png)!important;
 }
 .off{
-    background-image:url(images/webgl/teeth_curvature_off.jpg)!important;
+    background-image:url(images/webgl/teeth_curvature_off.png)!important;
+}
+.icon-wireframe{
+    width:48px;
+    height:48px;
+    background-image:url(images/webgl/teeth_wireframe.png)!important;
+    background-size:60% Auto;
+    margin-top: -3px !important;
+    margin-left: -5px !important;
+    opacity: 1.0;
 }
 .icon-rotate {
     width:48px;
     height:48px;
-    background-image:url(images/webgl/rotation.png?1398816184)!important;
+    background-image:url(images/webgl/rotation.png)!important;
     background-size:60% Auto;
     margin-top: -3px !important;
     margin-left: -5px !important;
@@ -2277,7 +2287,7 @@ body {
 .icon-pointpick {
     width:70px;
     height:70px;
-    background-image:url(images/webgl/pointPick.png?1398816184)!important;
+    background-image:url(images/webgl/pointPick.png)!important;
     background-size:40% Auto;
     margin-top: -5px !important;    
     opacity: 1.0;
