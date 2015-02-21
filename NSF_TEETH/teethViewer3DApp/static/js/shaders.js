@@ -832,26 +832,57 @@ $(function(){
 	$('#curvaturebtn').click(function(){
 		console.log("curvature switch");
 		//check wire frame status
-		if(wireframeState=='enabled'){
-			$('#wireframebtn').trigger("click");
-			return;
-		}
+		// if(wireframeState=='enabled'){
+		// 	$('#wireframebtn').trigger("click");
+		// 	return;
+		// }
 		//check if curvature can be rendered
-		if (showCurvature == false){
+		if (showCurvature == false){						
 			return;
 		}
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
-		if (curvatureState=='disabled'){
+		if (curvatureState =='disabled' && wireframeState == 'disabled'){
 			renderVertextColor(object);
 			
 		}  //turn off vertex color
-		else if (curvatureState=='enabled'){
+		else if (curvatureState =='enabled' && wireframeState == 'disabled'){
 			renderPhongShader(object);
+			$('#curvaturebtn span:first').removeClass('on');
+			$('#curvaturebtn span:first').removeClass('icon-curvature');
+			$('#curvaturebtn span:first').addClass('icon-wireframe');
+			curvatureState='disabled';	
+			wireframeState="enabled";
+			var object = scene.getObjectByName( "teethObj" );
+			object.traverse( function(child){
+					if(child instanceof THREE.Mesh){
+						// // child is the mesh
+						child.material = new THREE.MeshBasicMaterial( { 
+							wireframe: true,
+        					color: 'blue' } );
+						child.material.side = THREE.DoubleSide;
+						//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+						child.material.needsUpdate = true;
+						child.geometry.buffersNeedUpdate = true;
+						child.geometry.uvsNeedUpdate = true;
+						child.geometry.verticesNeedUpdate = true;
+						child.geometry.normalsNeedUpdate = true;
+						child.geometry.colorsNeedUpdate = true;
+					}
+				});
+			$("#tpHueHelp").hide();		
+			
 		}
-		if (wireframeState=='enabled'){
-			$('#wireframebtn span:first').addClass("icon-disabled");
+		else if(curvatureState == 'disabled' && wireframeState == 'enabled'){
+			renderPhongShader(object);		
+			wireframeState = 'disabled';	
+			$('#curvaturebtn span:first').removeClass('icon-wireframe');
+			$('#curvaturebtn span:first').addClass('icon-curvature');
+			$('#curvaturebtn span:first').addClass('off');
 		}
+		// if (wireframeState=='enabled'){
+		// 	$('#wireframebtn span:first').addClass("icon-disabled");
+		// }
 	});
 	
     function renderVertextColor(object){
@@ -872,7 +903,7 @@ $(function(){
 				child.geometry.colorsNeedUpdate = true;
 			}
 		});
-		curvatureState='enabled'
+		curvatureState='enabled';
 		$('#curvaturebtn span:first').removeClass('off');
 		$('#curvaturebtn span:first').addClass('on');
     }
@@ -892,10 +923,9 @@ $(function(){
 				child.geometry.normalsNeedUpdate = true;
 				child.geometry.colorsNeedUpdate = true;
 			}
-		});
-		curvatureState='disabled'
-		$('#curvaturebtn span:first').removeClass('on');
-		$('#curvaturebtn span:first').addClass('off');
+		});		
+		// $('#curvaturebtn span:first').removeClass('on');
+		// $('#curvaturebtn span:first').addClass('off');
 
     }
 	// download stl click event listener
@@ -911,48 +941,48 @@ $(function(){
 		});
 	});
 	//render wire frame
-	$("#wireframebtn").click(function(){
-		console.log("WireFrame");
-		if(wireframeState=="disabled"){
-			wireframeState="enabled";
-			var object = scene.getObjectByName( "teethObj" );
-			object.traverse( function(child){
-					if(child instanceof THREE.Mesh){
-						// // child is the mesh
-						child.material = new THREE.MeshBasicMaterial( { 
-							wireframe: true,
-        					color: 'blue' } );
-						child.material.side = THREE.DoubleSide;
-						//child.material.vertexColors = +THREE.VertexColors; //Ensure number
-						child.material.needsUpdate = true;
-						child.geometry.buffersNeedUpdate = true;
-						child.geometry.uvsNeedUpdate = true;
-						child.geometry.verticesNeedUpdate = true;
-						child.geometry.normalsNeedUpdate = true;
-						child.geometry.colorsNeedUpdate = true;
-					}
-				});
-			$("#tpHueHelp").hide();
-			$('#wireframebtn span:first').removeClass("icon-disabled");
-			$('#curvaturebtn span:first').addClass("icon-disabled");
-		}
-		else if(wireframeState=="enabled"){
-			wireframeState="disabled";
-			var object = scene.getObjectByName( "teethObj" );
-			//show phong shader or material based on previous state
-			if (curvatureState=='disabled'){
-				renderPhongShader(object);
+	// $("#wireframebtn").click(function(){
+	// 	console.log("WireFrame");
+	// 	if(wireframeState=="disabled"){
+	// 		wireframeState="enabled";
+	// 		var object = scene.getObjectByName( "teethObj" );
+	// 		object.traverse( function(child){
+	// 				if(child instanceof THREE.Mesh){
+	// 					// // child is the mesh
+	// 					child.material = new THREE.MeshBasicMaterial( { 
+	// 						wireframe: true,
+ //        					color: 'blue' } );
+	// 					child.material.side = THREE.DoubleSide;
+	// 					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+	// 					child.material.needsUpdate = true;
+	// 					child.geometry.buffersNeedUpdate = true;
+	// 					child.geometry.uvsNeedUpdate = true;
+	// 					child.geometry.verticesNeedUpdate = true;
+	// 					child.geometry.normalsNeedUpdate = true;
+	// 					child.geometry.colorsNeedUpdate = true;
+	// 				}
+	// 			});
+	// 		$("#tpHueHelp").hide();
+	// 		$('#wireframebtn span:first').removeClass("icon-disabled");
+	// 		$('#curvaturebtn span:first').addClass("icon-disabled");
+	// 	}
+	// 	else if(wireframeState=="enabled"){
+	// 		wireframeState="disabled";
+	// 		var object = scene.getObjectByName( "teethObj" );
+	// 		//show phong shader or material based on previous state
+	// 		if (curvatureState=='disabled'){
+	// 			renderPhongShader(object);
 				
 			
-			}  //turn off vertex color
-			else if (curvatureState=='enabled'){
-				renderVertextColor(object);
-			}
-			//show material
-			$('#wireframebtn span:first').addClass("icon-disabled");
-			$('#curvaturebtn span:first').removeClass("icon-disabled");
+	// 		}  //turn off vertex color
+	// 		else if (curvatureState=='enabled'){
+	// 			renderVertextColor(object);
+	// 		}
+	// 		//show material
+	// 		$('#wireframebtn span:first').addClass("icon-disabled");
+	// 		$('#curvaturebtn span:first').removeClass("icon-disabled");
 
-		}
-	});
+	// 	}
+	// });
 
 });

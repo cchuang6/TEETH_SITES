@@ -2290,6 +2290,7 @@ body {
     background-image:url(images/webgl/pointPick.png)!important;
     background-size:40% Auto;
     margin-top: -5px !important;    
+    margin-left: -5px !important;
     opacity: 1.0;
 }
 .icon-disabled{
