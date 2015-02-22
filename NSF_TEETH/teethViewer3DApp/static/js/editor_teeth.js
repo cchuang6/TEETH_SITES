@@ -75,7 +75,9 @@ function onDocumentMouseMove( event ){
 		var canvasWidth = container.width();
 		var canvasHeight = container.height();
 		var camera = cameraControls.object;
-		var mouseVector = new THREE.Vector3(2*(event.clientX/canvasWidth)-1, 1-2*(event.clientY/canvasHeight));
+		var leftOffset = container.offset().left;
+		var topOffset = container.offset().top;		
+		var mouseVector = new THREE.Vector3(2*((event.clientX-leftOffset)/canvasWidth)-1, 1-2*((event.clientY-topOffset)/canvasHeight));
 		var projector = new THREE.Projector();
 		projector.unprojectVector(mouseVector,camera);
 		var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
@@ -128,8 +130,12 @@ function onDocumentMouseDown( event ) {
 	if(getPointValMode == "enabled"){		
 		var canvasWidth = container.width();
 		var canvasHeight = container.height();
-		var camera = cameraControls.object;
-		var mouseVector = new THREE.Vector3(2*(event.clientX/canvasWidth)-1, 1-2*(event.clientY/canvasHeight));
+		console.log(canvasWidth + " " + canvasHeight);
+		var camera = cameraControls.object;	
+		var leftOffset = container.offset().left;
+		var topOffset = container.offset().top;		
+		console.log(leftOffset + " " + topOffset);
+		var mouseVector = new THREE.Vector3(2*((event.clientX-leftOffset)/canvasWidth)-1, 1-2*((event.clientY-topOffset)/canvasHeight));
 		var projector = new THREE.Projector();
 		projector.unprojectVector(mouseVector,camera);
 		var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
