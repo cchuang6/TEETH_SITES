@@ -2,8 +2,9 @@ var rotationState = "enabled";
 var getPointValMode = "disabled";
 var pointsPicked = [];
 var pointsPickedCounter = -1;
-var test_intersect;
-var selected;
+var selectedPoint;
+var markedPointIds = [];
+var hoverPoint;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -71,26 +72,36 @@ document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 function onDocumentMouseMove( event ){
 	event.preventDefault();
 	event.stopPropagation();
-	if(getPointValMode == "enabled"){		
-		var canvasWidth = container.width();
-		var canvasHeight = container.height();
-		var camera = cameraControls.object;
-		var leftOffset = container.offset().left;
-		var topOffset = container.offset().top;		
-		var mouseVector = new THREE.Vector3(2*((event.clientX-leftOffset)/canvasWidth)-1, 1-2*((event.clientY-topOffset)/canvasHeight));
-		var projector = new THREE.Projector();
-		projector.unprojectVector(mouseVector,camera);
-		var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
-		var intersects = raycaster.intersectObjects(scene.children,true);
-		if(intersects.length > 0){
-			if(selected){
-				selected.position.copy(intersects[0].point);
+
+	if(outCanvas(event.clientX, event.clientY)){
+		$("#pointPickerDiv").hide();
+		return;	
+	} 
+
+	if(getPointValMode == "enabled"){
+		//selected point, ray cast 
+		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+		//var intersect_Id = ((intersects.length - 1) <= 0 )? (intersects.length - 1) : 1;
+		var intersect_Id = 0;
+		if(intersects[intersect_Id].object.pointId != undefined)
+			intersect_Id = ((intersects.length - 1) <= 0 )? (intersects.length - 1) : 1;
+
+		//console.log("intersect_Id: ", intersect_Id);
+		//console.log("intersects.length: ", intersects.length);
+		//console.log(intersects[intersect_Id].object);
+		if(intersect_Id > -1){
+			//copy the moved position to the the selected objec
+			if(selectedPoint){
+				selectedPoint.position.copy(intersects[intersect_Id].point);
 			}else{
-				$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
-				$("#pointPickerDiv p").html("x: " + intersects[0].point.x + "<br>y: " + intersects[0].point.y + "<br>z: " + intersects[0].point.z);
-			}			
-			// console.log(intersects[0].point);			
+				updateHoverStatus(intersects);
+			}
+			$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x + 
+										"<br>y: " + intersects[intersect_Id].point.y +
+										"<br>z: " + intersects[intersect_Id].point.z);
+			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
 		}else{
+			clearHoverPoint(hoverPoint);
 			$("#pointPickerDiv").hide();
 		}
 	}else{
@@ -102,96 +113,167 @@ function onDocumentMouseMove( event ){
 function onDocumentMouseUp( event ){
 	if(rotationState == "enabled"){
 		$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
+		return;
 	}
 	if(getPointValMode == "enabled"){
-		if(selected){
-			console.log(selected.position);
-			var pointId = selected.pointId;
+		if(selectedPoint){
+			var pointId = selectedPoint.pointId;
+			var intersects = getRayCastIntersects(event.clientX, event.clientY);
+			var mCurvature = getMeanCurvature(intersects, intersects.length - 1);
 			$.each($("#pointsPickedInfo div > div"),function(key,val){			
 				if($(val).find("button").data("id") == pointId){
-					// console.log($(val).html());
-					$(val).html('<span>x : '+parseFloat(selected.position.x).toFixed(3)+' y : '+parseFloat(selected.position.y).toFixed(3)+' z :'+parseFloat(selected.position.z).toFixed(3)+'</span><button style="float:right" data-id="0" onclick="delPoint(this);">Del</button>');
-					// parseFloat(point.x).toFixed(3)
-					//<span>x : -0.341 y : 0.405 z :0.395</span><button style="float:right" data-id="0" onclick="delPoint(this);">Del</button>
+					updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
 				}			
 			});
-			selected = null;
+			selectedPoint = null;
 		}		
 		$('html,body').css('cursor','auto');
+		return;
 	}
 }
 
 // event listener that handles point picking using raycaster
 function onDocumentMouseDown( event ) {
-	event.preventDefault();	
+	event.preventDefault();
+
+	if(outCanvas(event.clientX, event.clientY)){
+		$("#pointPickerDiv").hide();
+		return;	
+	}
+
 	if(rotationState == "enabled"){
 		$('html,body').css('cursor','url("/static/css/images/webgl/handpress.png"), auto');
 	}
-	if(getPointValMode == "enabled"){		
-		var canvasWidth = container.width();
-		var canvasHeight = container.height();
-		console.log(canvasWidth + " " + canvasHeight);
-		var camera = cameraControls.object;	
-		var leftOffset = container.offset().left;
-		var topOffset = container.offset().top;		
-		console.log(leftOffset + " " + topOffset);
-		var mouseVector = new THREE.Vector3(2*((event.clientX-leftOffset)/canvasWidth)-1, 1-2*((event.clientY-topOffset)/canvasHeight));
-		var projector = new THREE.Projector();
-		projector.unprojectVector(mouseVector,camera);
-		var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
-		var intersects = raycaster.intersectObjects(scene.children,true);
-		test_intersect = intersects;
-
-		if(intersects.length > 0){		
-			var pointId = intersects[0].object.pointId;
-			if(pointId == undefined){
-				var mCurvature = "";
-				var face = intersects[0].face;
-				if (face !== null){
-					var faceColors = face.vertexColors;
-					var vertex_hue = 0.0;
-					var num_vertices = 0.0;
-					for(var i in faceColors){
-						vertex_hue += rgbToMeanCurvature(faceColors[i].r,
-						                                 faceColors[i].g,
-						                                 faceColors[i].b);
-						num_vertices += 1.0;
-					}
-					mCurvature = vertex_hue/num_vertices;
-				}
-				pointsPickedCounter++;
-				if(mCurvature !== ""){
-					pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point,"mCurvature":mCurvature});
-					displayPointsOnUI(intersects[0].point,pointsPickedCounter,mCurvature);
-				}else{
-					pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":intersects[0].point});
-					displayPointsOnUI(intersects[0].point,pointsPickedCounter);
-				}
-				var sphereGeometry = new THREE.SphereGeometry( 0.1, 32, 32 );
-				var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', shading: THREE.FlatShading } );
-				// intersects[0].object.material.color.setRGB(Math.random(),Math.random(),Math.random());
-				var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
-				sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
-				sphere.position.x = intersects[0].point.x;
-				sphere.position.y = intersects[0].point.y;
-				sphere.position.z = intersects[0].point.z;
-				scene.add(sphere);
-			}else{						
-				if(event.button == 0){
-					selected = intersects[0].object;					
-					$('html,body').css('cursor','move');
-					// pass in a dummy first parameter
-					selectRow("that",pointId);
-				}
-				if(event.button == 2){
-					// pass in a dummy first parameter
-					delPoint("that",pointId);
-				}
+	if(getPointValMode == "enabled"){
+		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+		//return if nothing
+		if (intersects.length < 1) return;
+		var top_id = 0;
+		var pointId = intersects[top_id].object.pointId;
+		//add point onto scene
+		if(pointId == undefined){
+			addPoint(intersects, top_id);
+		}
+		//move or delete point
+		else{						
+			if(event.button == 0){
+				selectedPoint = intersects[top_id].object;
+				$('html,body').css('cursor','move');
+				// pass in a dummy first parameter
+				selectRow("that",pointId);
 			}
-		}				
+			if(event.button == 2){
+				// pass in a dummy first parameter
+				delPoint("that",pointId);
+			}
+		}
 	}
 }
 
+function outCanvas(x, y){
+	var canvasWidth = container.width();
+	var leftOffset = container.offset().left;
+	var topOffset = container.offset().top;
+	return (x - leftOffset < 0 ) || (x - leftOffset - canvasWidth > 0) || (y - topOffset < 0);
+}
+
+function updateHoverStatus(intersects){
+	//point should be the first intersect
+	var pointId = intersects[0].object.pointId;
+	//check if move on a point
+	if(pointId != undefined){
+		if(hoverPoint){
+			// check the intersect point is equal to hover point
+			if(pointId != hoverPoint.pointId){
+				clearHoverPoint(hoverPoint);
+				setHoverPoint(intersects[0].object);	
+			}
+		}
+		// first time, set hover point
+		else{
+			setHoverPoint(intersects[0].object);
+		}
+	}
+	else
+		clearHoverPoint(hoverPoint);
+}
+
+function clearHoverPoint(){
+	//TODO: check logic here
+	if(hoverPoint){
+		//if(selectedPoint)
+		var index = -1;
+		hoverPoint.material.opacity = 1.0;
+		hoverPoint = null;
+	}
+}
+
+function setHoverPoint(point){
+	hoverPoint = point;
+	hoverPoint.material.opacity = 0.4;
+
+}
+
+
+function getRayCastIntersects(x, y){
+	var canvasWidth = container.width();
+	var canvasHeight = container.height();
+	var camera = cameraControls.object;
+	var leftOffset = container.offset().left;
+	var topOffset = container.offset().top;
+	var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1, 
+										1-2*((y -topOffset)/canvasHeight),
+										0.5);
+	var projector = new THREE.Projector();
+	projector.unprojectVector(mouseVector,camera);
+	var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
+	return raycaster.intersectObjects(scene.children,true);
+
+}
+
+//add points into scene
+function addPoint(intersects, index){
+	var mCurvature = getMeanCurvature(intersects, index);
+	var point = intersects[index].point;
+
+	pointsPickedCounter++;
+	if(mCurvature !== ""){
+		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
+		displayPointsOnUI(point,pointsPickedCounter,mCurvature);
+	}else{
+		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point});
+		displayPointsOnUI(point,pointsPickedCounter);
+	}
+
+	//create point
+	var sphereGeometry = new THREE.SphereGeometry( 0.1, 32, 32 );
+	var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', transparent: true, opacity: 1.0 } );
+	var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
+	sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
+	sphere.position.x = point.x;
+	sphere.position.y = point.y;
+	sphere.position.z = point.z;
+	scene.add(sphere);
+}
+
+function getMeanCurvature(intersects, index){
+	var mCurvature = "";
+	var face = intersects[index].face;
+	//get curvature color
+	if (face !== null){
+		var faceColors = face.vertexColors;
+		var vertex_hue = 0.0;
+		var num_vertices = 0.0;
+		for(var i in faceColors){
+			vertex_hue += rgbToMeanCurvature(faceColors[i].r,
+		                                     faceColors[i].g,
+		                                     faceColors[i].b);
+			num_vertices += 1.0;
+		}
+		mCurvature = vertex_hue/num_vertices;
+	}
+	return mCurvature;
+}
 function rgbToMeanCurvature(red, green, blue){
 	var eps = 0.005;
 	if (parseFloat(red) >= (1.0 - eps) && parseFloat(blue) <= eps){
@@ -209,39 +291,85 @@ function rgbToMeanCurvature(red, green, blue){
 }
 
 function displayPointsOnUI(point,pointId,mCurvature){
-	// console.log(mCurvature);
 	if(mCurvature !== undefined){
-		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
+		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+			"<span>x : "+parseFloat(point.x).toFixed(3)+
+			" y : "+parseFloat(point.y).toFixed(3)+
+			" z :"+parseFloat(point.z).toFixed(3)+
+			"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
+			"</span><button style='float:right' data-id='"+pointId+
+			"' onclick='delPoint(this);'>Del</button></div>");
 	}else{
-		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'><span>x : "+parseFloat(point.x).toFixed(3)+" y : "+parseFloat(point.y).toFixed(3)+" z :"+parseFloat(point.z).toFixed(3)+"</span><button style='float:right' data-id='"+pointId+"' onclick='delPoint(this);'>Del</button></div>");
+		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+			"<span>x : "+parseFloat(point.x).toFixed(3)+
+			" y : "+parseFloat(point.y).toFixed(3)+
+			" z :"+parseFloat(point.z).toFixed(3)+
+			"</span><button style='float:right' data-id='"+pointId+
+			"' onclick='delPoint(this);'>Del</button></div>");
 	}
+}
+
+function updatePointsOnUI(item, point, pointId, mCurvature){
+	if(mCurvature !== undefined){
+		item.html("<span>x : "+parseFloat(point.position.x).toFixed(3)+
+				   " y : "+parseFloat(point.position.y).toFixed(3)+
+				   " z :"+parseFloat(point.position.z).toFixed(3)+
+				   "<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
+				   "</span><button style='float:right' data-id="+pointId+
+				   " onclick='delPoint(this);'>Del</button>");
+	}
+	else{
+		item.html("<span>x : "+parseFloat(point.position.x).toFixed(3)+
+			" y : "+parseFloat(point.position.y).toFixed(3)+
+			" z :"+parseFloat(point.position.z).toFixed(3)+
+			"</span><button style='float:right' data-id="+pointId+
+			" onclick='delPoint(this);'>Del</button>");
+
+	}
+
 }
 
 // function to select particular point
 function selectRow(that,pointId){
-	var selectedPointId;	
+	var selectedPointId;
+	//choose from UI
 	if(pointId == undefined){
 		selectedPointId = $(that).find('button').data('id');
-	}else{
+	}else//choose from viewer
+	{
 		selectedPointId = pointId;
-	}	
-	console.log(selectedPointId);
+	}
+	//check if selected before
+	var unmark_index = -1;
+	while(++unmark_index < markedPointIds.length){
+		if(markedPointIds[unmark_index] == selectedPointId) break;
+	}
+
+	console.log("Mousedown point id in selectRow: ", selectedPointId);
+	console.log("markedPointIds length in selectRow: ", markedPointIds.length);
+	console.log("unmark index in selectRow: ", unmark_index);
 	$.each(scene.__webglObjects, function(key,val){
 		if(val[0].object.pointId == selectedPointId){
-			if(val[0].object.material.color.getStyle() == 'rgb(0,0,0)')
-				val[0].object.material.color.setStyle("red");
-			else if(val[0].object.material.color.getStyle() == 'rgb(255,0,0)')
+			//already eixisted
+			if(unmark_index < markedPointIds.length){
 				val[0].object.material.color.setStyle("black");
+				markedPointIds.splice(unmark_index, 1);
+			}
+			else //add into marked points
+			{
+				val[0].object.material.color.setStyle("red");
+				markedPointIds.push(selectedPointId);	
+			}
 		}
 	});
+
 	if(pointId == undefined){
 		$(that).toggleClass('selectedPoint');
 	}else{
 		$.each($("#pointsPickedInfo div > div"),function(key,val){
-			// console.log($(val).find("button").data("id"));
 			if($(val).find("button").data("id") == pointId){
 				$(val).toggleClass('selectedPoint');
-			}			
+			}
 		});
 	}	
 }
@@ -259,6 +387,12 @@ function delPoint(that,pointId){
 	        	return false;
 	    	}
 		});
+		$.each(markedPointIds, function(i){
+	    	if(markedPointIds[i].pointId === pointId) {
+	        	markedPointIds.splice(i,1);
+	        	return false;
+	    	}
+		});
 	}else{
 		$.each(scene.__webglObjects, function(key,val){
 			if(val[0].object.pointId == pointId)
@@ -272,6 +406,12 @@ function delPoint(that,pointId){
 		$.each(pointsPicked, function(i){
 	    	if(pointsPicked[i].pointId === pointId) {
 	        	pointsPicked.splice(i,1);
+	        	return false;
+	    	}
+		});
+		$.each(markedPointIds, function(i){
+	    	if(markedPointIds[i].pointId === pointId) {
+	        	markedPointIds.splice(i,1);
 	        	return false;
 	    	}
 		});
@@ -321,6 +461,7 @@ function deleteAllPoints(){
 	});
 	pointsPickedCounter = -1;
 	pointsPicked = [];
+	markedPointIds = [];
 }
 
 

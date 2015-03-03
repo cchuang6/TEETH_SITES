@@ -52,7 +52,7 @@ function init() {
 	light.position.set(0, 0, 0);
 
 	// RENDERER
-	if ( Detector.webgl )
+	if (Detector.webgl)
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
 	else
 		renderer = new THREE.CanvasRenderer();
@@ -93,9 +93,12 @@ function init() {
 
 function onWindowResize() {
 	var camera = cameraControls.object;
-	camera.aspect = window.innerWidth / window.innerHeight;
+	var canvasWidth = container.width();
+	var canvasHeight = container.height();
+
+	camera.aspect = canvasWidth / canvasHeight;
 	camera.updateProjectionMatrix();
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize(canvasWidth, canvasHeight);
 }
 
 function loadShader(shadertype) {
@@ -344,7 +347,7 @@ function loadSTL(url){
 		console.log('load file successful');
 		$('#progress').hide();
 		$('#tpDRHeader').show();
-		$('#teethContainer').show();
+		container.show();
 
 	}, false );
 	//progress event
@@ -416,7 +419,7 @@ function loadDAE(url){
 
 		$('#progress').hide();
 		$('#tpDRHeader').show();
-		$('#teethContainer').show();
+		container.show();
 
 	};
 
@@ -743,7 +746,7 @@ try {
   //fillScene();
   setupGui();
   addToDOM();
-//  onWindowResize();
+  onWindowResize();
   animate();
 } catch(e) {
   var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
