@@ -100,7 +100,8 @@ function onDocumentMouseMove( event ){
 			//clearHoverPoint(hoverPoint);
 			$("#pointPickerDiv").hide();
 		}
-		updateHoverStatus(intersects);
+		//console.log("Move button: ", event.button || event.which);
+		updateHoverStatus(intersects, event);
 	}else{
 		$("#pointPickerDiv").hide();
 	}
@@ -111,8 +112,14 @@ function onDocumentMouseMove( event ){
 function getIntersectId(intersects){
 	if (intersects.length == 0) return -1;
 	var intersect_Id = 0;
-	if(intersects[intersect_Id].object.pointId != undefined)
+	//check if it is point
+	if(intersects[intersect_Id].object.pointId != undefined){
+		//check if it has at least two elements
 		(intersects.length > 1) ? intersect_Id = 1 : intersect_Id = -1;
+		//check the second is point
+		if(intersect_Id == 1)
+			(intersects[intersect_Id].object.pointId != undefined) ? intersect_Id = -1 : intersect_Id = 1;
+	}
 	return intersect_Id;
 }
 // event listener for mouse up event
@@ -173,18 +180,21 @@ function onDocumentMouseDown( event ) {
 		var pointId = intersects[top_id].object.pointId;
 		//add point onto scene
 		if(pointId == undefined){
-			addPoint(intersects, top_id);
+			if( (event.button || event.which) === 1){
+				//console.log("mouse down button: ", (event.button || event.which) );
+				addPoint(intersects, top_id);
+			}
 		}
 		//move or delete point
 		else{						
-			if(event.button == 0){
+			if( (event.button || event.which) === 1){
 				selectedPoint = intersects[top_id].object;
 				org_cursor = new THREE.Vector2(event.clientX, event.clientY);
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
 				selectRow("that",pointId);
 			}
-			if(event.button == 2){
+			if(event.button === 2){
 				// pass in a dummy first parameter
 				delPoint("that",pointId);
 			}
@@ -199,7 +209,7 @@ function outCanvas(x, y){
 	return (x - leftOffset < 0 ) || (x - leftOffset - canvasWidth > 0) || (y - topOffset < 0);
 }
 
-function updateHoverStatus(intersects){
+function updateHoverStatus(intersects, event){
 	
 	if(intersects.length == 0){
 		clearHoverPoint(hoverPoint);
@@ -211,7 +221,7 @@ function updateHoverStatus(intersects){
 	if(pointId != undefined){
 		if(hoverPoint){
 			// check the intersect point is equal to hover point
-			if(pointId != hoverPoint.pointId){
+			if(pointId != hoverPoint.pointId && (event.button || event.which) != 1){
 				clearHoverPoint(hoverPoint);
 				setHoverPoint(intersects[0].object);	
 			}
@@ -221,8 +231,10 @@ function updateHoverStatus(intersects){
 			setHoverPoint(intersects[0].object);
 		}
 	}
-	else
-		clearHoverPoint(hoverPoint);
+	else{
+		if((event.button || event.which) != 1)
+			clearHoverPoint(hoverPoint);
+	}
 }
 
 function clearHoverPoint(){
@@ -285,6 +297,7 @@ function addPoint(intersects, index){
 
 function getMeanCurvature(intersects, index){
 	var mCurvature = "";
+	if(intersects.length == 0) return mCurvature;
 	var face = intersects[index].face;
 	//get curvature color
 	if (face !== null){
@@ -372,9 +385,9 @@ function selectRow(that,pointId){
 		if(markedPointIds[unmark_index] == selectedPointId) break;
 	}
 
-	console.log("Mousedown point id in selectRow: ", selectedPointId);
-	console.log("markedPointIds length in selectRow: ", markedPointIds.length);
-	console.log("unmark index in selectRow: ", unmark_index);
+	//console.log("Mousedown point id in selectRow: ", selectedPointId);
+	//console.log("markedPointIds length in selectRow: ", markedPointIds.length);
+	//console.log("unmark index in selectRow: ", unmark_index);
 	$.each(scene.__webglObjects, function(key,val){
 		if(val[0].object.pointId == selectedPointId){
 			//already eixisted
