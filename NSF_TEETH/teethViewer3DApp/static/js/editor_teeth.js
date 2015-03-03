@@ -3,8 +3,10 @@ var getPointValMode = "disabled";
 var pointsPicked = [];
 var pointsPickedCounter = -1;
 var selectedPoint;
+var org_cursor;
 var markedPointIds = [];
 var hoverPoint;
+
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -81,34 +83,38 @@ function onDocumentMouseMove( event ){
 	if(getPointValMode == "enabled"){
 		//selected point, ray cast 
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-		//var intersect_Id = ((intersects.length - 1) <= 0 )? (intersects.length - 1) : 1;
-		var intersect_Id = 0;
-		if(intersects[intersect_Id].object.pointId != undefined)
-			intersect_Id = ((intersects.length - 1) <= 0 )? (intersects.length - 1) : 1;
-
-		//console.log("intersect_Id: ", intersect_Id);
-		//console.log("intersects.length: ", intersects.length);
-		//console.log(intersects[intersect_Id].object);
+		var intersect_Id = getIntersectId(intersects);
+		//console.log(intersect_Id);
+		
 		if(intersect_Id > -1){
 			//copy the moved position to the the selected objec
 			if(selectedPoint){
 				selectedPoint.position.copy(intersects[intersect_Id].point);
-			}else{
-				updateHoverStatus(intersects);
 			}
+			//updateHoverStatus(intersects);
 			$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x + 
 										"<br>y: " + intersects[intersect_Id].point.y +
 										"<br>z: " + intersects[intersect_Id].point.z);
 			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
 		}else{
-			clearHoverPoint(hoverPoint);
+			//clearHoverPoint(hoverPoint);
 			$("#pointPickerDiv").hide();
 		}
+		updateHoverStatus(intersects);
 	}else{
 		$("#pointPickerDiv").hide();
 	}
 }
 
+// get the intersect id
+// if no intersection, return -1, others return the point hit on the teeth surface
+function getIntersectId(intersects){
+	if (intersects.length == 0) return -1;
+	var intersect_Id = 0;
+	if(intersects[intersect_Id].object.pointId != undefined)
+		(intersects.length > 1) ? intersect_Id = 1 : intersect_Id = -1;
+	return intersect_Id;
+}
 // event listener for mouse up event
 function onDocumentMouseUp( event ){
 	if(rotationState == "enabled"){
@@ -119,13 +125,28 @@ function onDocumentMouseUp( event ){
 		if(selectedPoint){
 			var pointId = selectedPoint.pointId;
 			var intersects = getRayCastIntersects(event.clientX, event.clientY);
-			var mCurvature = getMeanCurvature(intersects, intersects.length - 1);
-			$.each($("#pointsPickedInfo div > div"),function(key,val){			
-				if($(val).find("button").data("id") == pointId){
-					updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
-				}			
-			});
+			var intersect_Id = getIntersectId(intersects);
+			if(intersect_Id > -1){
+				var mCurvature = getMeanCurvature(intersects, intersect_Id);
+				$.each($("#pointsPickedInfo div > div"),function(key,val){			
+					if($(val).find("button").data("id") == pointId){
+						updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+					}			
+				});
+			}
+			else{
+				var intersects = getRayCastIntersects(org_cursor.x, org_cursor.y);
+				var intersect_Id = getIntersectId(intersects);
+				var mCurvature = getMeanCurvature(intersects, intersect_Id);
+				selectedPoint.position.copy(intersects[intersect_Id].point)
+				$.each($("#pointsPickedInfo div > div"),function(key,val){			
+					if($(val).find("button").data("id") == pointId){
+						updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+					}			
+				});
+			}
 			selectedPoint = null;
+			//org_selectedPoint = null;
 		}		
 		$('html,body').css('cursor','auto');
 		return;
@@ -158,6 +179,7 @@ function onDocumentMouseDown( event ) {
 		else{						
 			if(event.button == 0){
 				selectedPoint = intersects[top_id].object;
+				org_cursor = new THREE.Vector2(event.clientX, event.clientY);
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
 				selectRow("that",pointId);
@@ -178,6 +200,11 @@ function outCanvas(x, y){
 }
 
 function updateHoverStatus(intersects){
+	
+	if(intersects.length == 0){
+		clearHoverPoint(hoverPoint);
+		return;
+	}
 	//point should be the first intersect
 	var pointId = intersects[0].object.pointId;
 	//check if move on a point
