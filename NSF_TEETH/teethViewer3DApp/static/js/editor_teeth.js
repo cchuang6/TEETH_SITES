@@ -3,7 +3,7 @@ var getPointValMode = "disabled";
 var pointsPicked = [];
 var pointsPickedCounter = -1;
 var selectedPoint;
-var org_cursor;
+var org_selectedPoint;
 var markedPointIds = [];
 var hoverPoint;
 
@@ -142,15 +142,7 @@ function onDocumentMouseUp( event ){
 				});
 			}
 			else{
-				var intersects = getRayCastIntersects(org_cursor.x, org_cursor.y);
-				var intersect_Id = getIntersectId(intersects);
-				var mCurvature = getMeanCurvature(intersects, intersect_Id);
-				selectedPoint.position.copy(intersects[intersect_Id].point)
-				$.each($("#pointsPickedInfo div > div"),function(key,val){			
-					if($(val).find("button").data("id") == pointId){
-						updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
-					}			
-				});
+				selectedPoint.position.copy(org_selectedPoint);
 			}
 			selectedPoint = null;
 			//org_selectedPoint = null;
@@ -189,7 +181,10 @@ function onDocumentMouseDown( event ) {
 		else{						
 			if( (event.button || event.which) === 1){
 				selectedPoint = intersects[top_id].object;
-				org_cursor = new THREE.Vector2(event.clientX, event.clientY);
+				if(org_selectedPoint == undefined){
+					org_selectedPoint = new THREE.Vector3();
+				}
+				org_selectedPoint.copy(selectedPoint.position);
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
 				selectRow("that",pointId);
