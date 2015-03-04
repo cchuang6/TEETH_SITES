@@ -130,9 +130,13 @@ function onDocumentMouseUp( event ){
 	}
 	if(getPointValMode == "enabled"){
 		if(selectedPoint){
-			var pointId = selectedPoint.pointId;
-			var intersects = getRayCastIntersects(event.clientX, event.clientY);
-			var intersect_Id = getIntersectId(intersects);
+			intersects_Id = -1;
+			//check if inside canvas
+			if(!outCanvas(event.clientX, event.clientY)){
+				var pointId = selectedPoint.pointId;
+				var intersects = getRayCastIntersects(event.clientX, event.clientY);
+				var intersect_Id = getIntersectId(intersects);
+			}
 			if(intersect_Id > -1){
 				var mCurvature = getMeanCurvature(intersects, intersect_Id);
 				$.each($("#pointsPickedInfo div > div"),function(key,val){			
@@ -145,8 +149,7 @@ function onDocumentMouseUp( event ){
 				selectedPoint.position.copy(org_selectedPoint);
 			}
 			selectedPoint = null;
-			//org_selectedPoint = null;
-		}		
+		}
 		$('html,body').css('cursor','auto');
 		return;
 	}
