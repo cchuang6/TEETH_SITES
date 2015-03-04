@@ -86,6 +86,8 @@ function init() {
 		phongBalancedMaterial.side = THREE.DoubleSide;
 	}
 
+	
+
 	//TODO:add windows resize
 	window.addEventListener( 'resize', onWindowResize, false );
 
@@ -331,7 +333,8 @@ function loadSTL(url){
 	loader.addEventListener( 'load', function ( event ) {
 		var sceneObject = new THREE.Object3D();
 		sceneObject.name = "teethObj";
-		var geometry = event.content;
+		var bufferGeometry = event.content;
+		var geometry = new THREE.Geometry().fromBufferGeometry( bufferGeometry )
 		var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
 		var centMesh = getCenteralizedMesh(mesh);
 		sceneObject.add(centMesh.mesh);
@@ -642,8 +645,14 @@ function fillScene() {
 	scene.add(ambientLight);
 	scene.add(light);
 
-	//Floor
+	//add points obj
+	//create a points object 3D
+	var pointsObj = new THREE.Object3D();
+	pointsObj.name = "pointsObj";
+	scene.add(pointsObj);
 
+
+	//Floor
 	// var helper = new THREE.GridHelper( 300, 10 );
 	// helper.setColors( 0x000000, 0x808080 );
 	// helper.position.y = - 0.5;

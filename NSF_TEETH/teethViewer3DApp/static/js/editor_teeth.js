@@ -258,12 +258,16 @@ function getRayCastIntersects(x, y){
 	var camera = cameraControls.object;
 	var leftOffset = container.offset().left;
 	var topOffset = container.offset().top;
-	var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1, 
-										1-2*((y -topOffset)/canvasHeight),
-										0.5);
-	var projector = new THREE.Projector();
-	projector.unprojectVector(mouseVector,camera);
-	var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
+	//var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1, 
+	//									1-2*((y -topOffset)/canvasHeight),
+	//									0.5);
+	//var projector = new THREE.Projector();
+	//projector.unprojectVector(mouseVector,camera);
+	//var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
+	var mouseVector = new THREE.Vector2(2*((x - leftOffset)/canvasWidth)-1, 
+										1-2*((y -topOffset)/canvasHeight));
+	var raycaster = new THREE.Raycaster();
+	raycaster.setFromCamera(mouseVector, camera);
 	return raycaster.intersectObjects(scene.children,true);
 
 }
@@ -290,7 +294,9 @@ function addPoint(intersects, index){
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
-	scene.add(sphere);
+	var pointsObj = scene.getObjectByName("pointsObj");
+	pointsObj.add(sphere);
+	scene.add(pointsObj);
 }
 
 function getMeanCurvature(intersects, index){
@@ -386,16 +392,16 @@ function selectRow(that,pointId){
 	//console.log("Mousedown point id in selectRow: ", selectedPointId);
 	//console.log("markedPointIds length in selectRow: ", markedPointIds.length);
 	//console.log("unmark index in selectRow: ", unmark_index);
-	$.each(scene.__webglObjects, function(key,val){
-		if(val[0].object.pointId == selectedPointId){
+	$.each(scene.getObjectByName("pointsObj").children, function(key,val){
+		if(val.pointId == selectedPointId){
 			//already eixisted
 			if(unmark_index < markedPointIds.length){
-				val[0].object.material.color.setStyle("black");
+				val.material.color.setStyle("black");
 				markedPointIds.splice(unmark_index, 1);
 			}
 			else //add into marked points
 			{
-				val[0].object.material.color.setStyle("red");
+				val.material.color.setStyle("red");
 				markedPointIds.push(selectedPointId);	
 			}
 		}
@@ -412,11 +418,14 @@ function selectRow(that,pointId){
 	}	
 }
 
-function delPoint(that,pointId){	
+function delPoint(that,pointId){
+	var pointsObj = scene.getObjectByName("pointsObj");
 	if(pointId == undefined){
-		$.each(scene.__webglObjects, function(key,val){
-			if(val[0].object.pointId == $(that).data('id'))
-				scene.remove(val[0].object);
+		$.each(pointsObj.children, function(key,val){
+			if(val.pointId == $(that).data('id')){
+				pointsObj.remove(val);
+				return false;
+			}
 		});	
 		$(that).parent().remove();
 		$.each(pointsPicked, function(i){
@@ -432,13 +441,16 @@ function delPoint(that,pointId){
 	    	}
 		});
 	}else{
-		$.each(scene.__webglObjects, function(key,val){
-			if(val[0].object.pointId == pointId)
-				scene.remove(val[0].object);
+		$.each(pointsObj.children, function(key,val){
+			if(val.pointId == pointId){
+				pointsObj.remove(val);
+				return false;
+			}
 		});	
 		$.each($("#pointsPickedInfo div > div"),function(key,val){			
 			if($(val).find("button").data("id") == pointId){
 				$(val).remove();
+				return false;
 			}			
 		});
 		$.each(pointsPicked, function(i){
@@ -453,7 +465,8 @@ function delPoint(that,pointId){
 	        	return false;
 	    	}
 		});
-	}			
+	}
+	//pointsPickedCounter = pointsObj.children.length -1;
 }
 
 function exportPointsToCSV(){
@@ -490,13 +503,16 @@ function exportPointsToCSV(){
 
 function deleteAllPoints(){
 	$("#pointsPickedInfo div").children().remove();
-	$.each(scene.__webglObjects, function(key,val){
-		$.each(pointsPicked, function(i){
-		    if(val[0].object.pointId == pointsPicked[i].pointId) {
-		        scene.remove(val[0].object);
-		    }
+	var pointsObj = scene.getObjectByName("pointsObj");
+	$.each(pointsPicked, function(i){
+		$.each(pointsObj.children, function(key, val){
+			if(val.pointId == pointsPicked[i].pointId){
+		    	pointsObj.remove(val);
+		    	return false;
+			}
 		});
 	});
+
 	pointsPickedCounter = -1;
 	pointsPicked = [];
 	markedPointIds = [];
