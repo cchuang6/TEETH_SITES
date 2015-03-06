@@ -114,6 +114,10 @@ function getIntersectId(intersects){
 	var intersect_Id = 0;
 	//check if it is point
 	if(intersects[intersect_Id].object.pointId != undefined){
+		//check if hit on the same point
+		if(selectedPoint)
+			if(intersects[intersect_Id].object.pointId != selectedPoint.pointId)
+				return -1;
 		//check if it has at least two elements
 		(intersects.length > 1) ? intersect_Id = 1 : intersect_Id = -1;
 		//check the second is point
@@ -135,7 +139,7 @@ function onDocumentMouseUp( event ){
 			if(!outCanvas(event.clientX, event.clientY)){
 				var pointId = selectedPoint.pointId;
 				var intersects = getRayCastIntersects(event.clientX, event.clientY);
-				var intersect_Id = getIntersectId(intersects);
+				intersect_Id = getIntersectId(intersects);
 			}
 			if(intersect_Id > -1){
 				var mCurvature = getMeanCurvature(intersects, intersect_Id);
