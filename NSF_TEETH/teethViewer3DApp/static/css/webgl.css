@@ -1791,7 +1791,7 @@ body {
     color:gray;
     font-size:11px
 }
-#tpMousePositionInfo, #tpDimInfo, #tpHueHelp {
+#tpMousePositionInfo, #tpDimInfo {
     position:absolute;
     padding:10px;
     color:black;
@@ -1806,6 +1806,19 @@ body {
     z-index:999
 }
 #tpHueHelp {
+    position:absolute;
+    padding:10px;
+    color:black;
+    margin-top:5%;
+    left:2%;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+    filter:alpha(opacity=75);
+    opacity:.75;
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border-radius:5px;
+    width:280px;
+    z-index:999;
     text-align:center;
     top:120px;
     background-color:white;
@@ -2675,3 +2688,15 @@ span.custom1 a
     background: -moz-linear-gradient(right, hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Firefox 3.6 to 15 */
     background: linear-gradient(to right,  hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* Standard syntax (must be last) */
 }
+
+/*.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}*/

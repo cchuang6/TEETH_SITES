@@ -4,8 +4,10 @@ var pointsPicked = [];
 var pointsPickedCounter = -1;
 var selectedPoint;
 var org_selectedPoint;
+var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
+var globalState;
 
 
 // default rotation control is on, set cursor
@@ -69,6 +71,35 @@ $('#rotationControl').click(function(){
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 document.addEventListener( 'mousemove', onDocumentMouseMove, false);
 document.addEventListener( 'mouseup', onDocumentMouseUp, false);
+document.addEventListener( 'keydown', onDocumentKeyDown, false);
+document.addEventListener( 'keyup', onDocumentKeyUp, false);
+document.body.addEventListener( 'mousewheel', mousewheel, false );
+document.body.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+
+// for scaling points on teeth on zoom in/out event
+function mousewheel(e){
+	// console.log(e);
+	var e = window.event || e; // old IE support
+	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));	
+	var pointsObj = scene.getObjectByName("pointsObj");
+	$.each(pointsObj.children,function(index,val){
+		if(delta == -1){ // zoom out, scale up
+			if(val.scale.x < 5)
+				val.scale.x += 0.05;
+			if(val.scale.y < 5)
+				val.scale.y += 0.05;
+			if(val.scale.z < 5)
+				val.scale.z += 0.05;
+		} else { // zoom in, scale down
+			if(val.scale.x >= 1)
+				val.scale.x -= 0.05;
+			if(val.scale.y >= 1)
+				val.scale.y -= 0.05;
+			if(val.scale.z >= 1)
+				val.scale.z -= 0.05;
+		}
+	});
+}
 
 // event listener that gets x,y,z on mouse hover
 function onDocumentMouseMove( event ){
@@ -145,7 +176,11 @@ function onDocumentMouseUp( event ){
 				var mCurvature = getMeanCurvature(intersects, intersect_Id);
 				$.each($("#pointsPickedInfo div > div"),function(key,val){			
 					if($(val).find("button").data("id") == pointId){
-						updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+						if(!isNaN(mCurvature)){
+							updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+						} else {
+							updatePointsOnUI($(val), selectedPoint, pointId);
+						}						
 					}			
 				});
 			}
@@ -202,6 +237,29 @@ function onDocumentMouseDown( event ) {
 			}
 		}
 	}
+}
+
+// event listener to handle keyboard (down) events
+function onDocumentKeyDown(event){	
+	if(event.keyCode == 46 || event.keyCode == 8)
+		deleteSelectedPoint();
+	if(event.keyCode == 17){
+		$("#rotationControl").click();		
+	}
+}
+
+// event listener to handle keyboard (up) events
+function onDocumentKeyUp(event){		
+	if(event.keyCode == 17){
+		$("#rotationControl").click();
+	}
+}
+
+// function to delete point from keyboard
+function deleteSelectedPoint(){
+	var lastSelectedPointId = markedPointIds[markedPointIds.length-1];
+	// pass in a dummy first parameter
+	delPoint("that",lastSelectedPointId);
 }
 
 function outCanvas(x, y){
@@ -281,8 +339,8 @@ function addPoint(intersects, index){
 	var mCurvature = getMeanCurvature(intersects, index);
 	var point = intersects[index].point;
 
-	pointsPickedCounter++;
-	if(mCurvature !== ""){
+	pointsPickedCounter++;		
+	if(!isNaN(mCurvature)){
 		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
 		displayPointsOnUI(point,pointsPickedCounter,mCurvature);
 	}else{
@@ -338,10 +396,10 @@ function rgbToMeanCurvature(red, green, blue){
 	}
 }
 
-function displayPointsOnUI(point,pointId,mCurvature){
+function displayPointsOnUI(point,pointId,mCurvature){	
 	if(mCurvature !== undefined){
 		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
-			"<span>x : "+parseFloat(point.x).toFixed(3)+
+			"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 			" y : "+parseFloat(point.y).toFixed(3)+
 			" z :"+parseFloat(point.z).toFixed(3)+
 			"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
@@ -349,7 +407,7 @@ function displayPointsOnUI(point,pointId,mCurvature){
 			"' onclick='delPoint(this);'>Del</button></div>");
 	}else{
 		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
-			"<span>x : "+parseFloat(point.x).toFixed(3)+
+			"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 			" y : "+parseFloat(point.y).toFixed(3)+
 			" z :"+parseFloat(point.z).toFixed(3)+
 			"</span><button style='float:right' data-id='"+pointId+
@@ -357,9 +415,9 @@ function displayPointsOnUI(point,pointId,mCurvature){
 	}
 }
 
-function updatePointsOnUI(item, point, pointId, mCurvature){
+function updatePointsOnUI(item, point, pointId, mCurvature){		
 	if(mCurvature !== undefined){
-		item.html("<span>x : "+parseFloat(point.position.x).toFixed(3)+
+		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 				   " y : "+parseFloat(point.position.y).toFixed(3)+
 				   " z :"+parseFloat(point.position.z).toFixed(3)+
 				   "<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
@@ -367,7 +425,7 @@ function updatePointsOnUI(item, point, pointId, mCurvature){
 				   " onclick='delPoint(this);'>Del</button>");
 	}
 	else{
-		item.html("<span>x : "+parseFloat(point.position.x).toFixed(3)+
+		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 			" y : "+parseFloat(point.position.y).toFixed(3)+
 			" z :"+parseFloat(point.position.z).toFixed(3)+
 			"</span><button style='float:right' data-id="+pointId+
@@ -404,7 +462,7 @@ function selectRow(that,pointId){
 				markedPointIds.splice(unmark_index, 1);
 			}
 			else //add into marked points
-			{
+			{								
 				val.material.color.setStyle("red");
 				markedPointIds.push(selectedPointId);	
 			}
@@ -525,13 +583,15 @@ function deleteAllPoints(){
 
 // rendering scales
 function createScale(){	
+	// var padding = 30;
 	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);	
+	// var yAxis = d3.svg.axis().scale(axisScale).orient("left");
+	// var svgContainer = d3.select("#tpHueHelp").insert("svg:svg");
+	// svgContainer.append("g").attr("class", "axis").attr("transform", "translate(" + padding + ",0)").call(yAxis);
 	var xAxis = d3.svg.axis().scale(axisScale);	
 	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);	
 	var xAxisGroup = svgContainer.append("g").call(xAxis);
 	$("#tpHueHelp svg").css("margin-top","1px");
-	// $("#tpHueHelp svg").css("padding-left","10px");
-	// $("#mCurvatureGradient").css("padding-left","5px");
 }
 
 createScale();
