@@ -7,8 +7,7 @@ var org_selectedPoint;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
-var globalState;
-
+var globalScale = 1;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -82,23 +81,47 @@ function mousewheel(e){
 	var e = window.event || e; // old IE support
 	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));	
 	var pointsObj = scene.getObjectByName("pointsObj");
-	$.each(pointsObj.children,function(index,val){
-		if(delta == -1){ // zoom out, scale up
-			if(val.scale.x < 5)
-				val.scale.x += 0.05;
-			if(val.scale.y < 5)
-				val.scale.y += 0.05;
-			if(val.scale.z < 5)
-				val.scale.z += 0.05;
-		} else { // zoom in, scale down
-			if(val.scale.x >= 1)
-				val.scale.x -= 0.05;
-			if(val.scale.y >= 1)
-				val.scale.y -= 0.05;
-			if(val.scale.z >= 1)
-				val.scale.z -= 0.05;
-		}
-	});
+	// console.log(pointsObj);	
+	console.log(cameraControls);
+	pointsObj.traverse( function(child) {
+			if(child instanceof THREE.Mesh){
+				if(delta == -1){
+					if(child.scale.x < 6)
+						child.scale.x /= 0.95;
+					if(child.scale.y < 6)
+						child.scale.y /= 0.95;
+					if(child.scale.z < 6)
+						child.scale.z /= 0.95;
+					globalScale = child.scale.x;
+				} else {
+					if(child.scale.x > 1)
+						child.scale.x *= 0.95;
+					if(child.scale.y > 1)
+						child.scale.y *= 0.95;
+					if(child.scale.z > 1)
+						child.scale.z *= 0.95;
+					globalScale = child.scale.x;
+				}			
+			}
+		});	
+
+	// $.each(pointsObj.children,function(index,val){
+	// 	if(delta == -1){ // zoom out, scale up
+	// 		if(val.scale.x < 5)
+	// 			val.scale.x += 0.05;
+	// 		if(val.scale.y < 5)
+	// 			val.scale.y += 0.05;
+	// 		if(val.scale.z < 5)
+	// 			val.scale.z += 0.05;
+	// 	} else { // zoom in, scale down
+	// 		if(val.scale.x >= 1)
+	// 			val.scale.x -= 0.05;
+	// 		if(val.scale.y >= 1)
+	// 			val.scale.y -= 0.05;
+	// 		if(val.scale.z >= 1)
+	// 			val.scale.z -= 0.05;
+	// 	}
+	// });
 }
 
 // event listener that gets x,y,z on mouse hover
@@ -356,6 +379,9 @@ function addPoint(intersects, index){
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
+	sphere.scale.x = globalScale;
+	sphere.scale.y = globalScale;
+	sphere.scale.z = globalScale;
 	var pointsObj = scene.getObjectByName("pointsObj");
 	pointsObj.add(sphere);
 	scene.add(pointsObj);
@@ -415,7 +441,16 @@ function displayPointsOnUI(point,pointId,mCurvature){
 	}
 }
 
-function updatePointsOnUI(item, point, pointId, mCurvature){		
+function updatePointsOnUI(item, point, pointId, mCurvature){	
+	// var material = new THREE.MeshPhongMaterial({
+ //        color: 0xdddddd
+ //    });
+ //    var textGeom = new THREE.TextGeometry( 'Hello World!', {
+ //        font: 'helvetiker' // Must be lowercase!
+ //    });
+ //    var textMesh = new THREE.Mesh( textGeom, material );
+ //    scene.add( textMesh );	
+ //    console.log(scene);
 	if(mCurvature !== undefined){
 		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 				   " y : "+parseFloat(point.position.y).toFixed(3)+
