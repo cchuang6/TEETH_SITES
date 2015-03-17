@@ -9,6 +9,7 @@ var markedPointIds = [];
 var hoverPoint;
 var pointScale = 6.0;
 var orgPointScale = 12;
+var holdKey = false;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -98,7 +99,7 @@ function mousewheel(e){
 		var scale = (distance * scaleUnit)* orgPointScale;
 		pointScale = scale;
 	}
-	console.log(scale);
+	//console.log(scale);
 	pointsObj.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				child.scale.x = scale;
@@ -128,6 +129,7 @@ function onDocumentMouseMove( event ){
 			//copy the moved position to the the selected objec
 			if(selectedPoint){
 				selectedPoint.position.copy(intersects[intersect_Id].point);
+				//make the point selected
 			}
 		}
 		//console.log("Move button: ", event.button || event.which);
@@ -182,10 +184,14 @@ function onDocumentMouseUp( event ){
 						}						
 					}			
 				});
+				
 			}
 			else{
+				//updateSelectedPoints();
 				selectedPoint.position.copy(org_selectedPoint);
 			}
+			//change selected point color 
+			updateSelectedPoints();
 			selectedPoint = null;
 		}
 		$('html,body').css('cursor','auto');
@@ -214,7 +220,6 @@ function onDocumentMouseDown( event ) {
 		//add point onto scene
 		if(pointId == undefined){
 			if( (event.button || event.which) === 1){
-				//console.log("mouse down button: ", (event.button || event.which) );
 				addPoint(intersects, top_id);
 			}
 		}
@@ -228,7 +233,7 @@ function onDocumentMouseDown( event ) {
 				org_selectedPoint.copy(selectedPoint.position);
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
-				selectRow("that",pointId);
+				selectRow("that", pointId);
 			}
 			if(event.button === 2){
 				// pass in a dummy first parameter
@@ -239,7 +244,11 @@ function onDocumentMouseDown( event ) {
 }
 
 // event listener to handle keyboard (down) events
-function onDocumentKeyDown(event){	
+function onDocumentKeyDown(event){
+	if(holdKey && event.keyCode == 17){
+		return;
+	}
+	holdKey = true;
 	if(event.keyCode == 46 || event.keyCode == 8)
 		deleteSelectedPoint();
 	if(event.keyCode == 17){
@@ -248,7 +257,8 @@ function onDocumentKeyDown(event){
 }
 
 // event listener to handle keyboard (up) events
-function onDocumentKeyUp(event){		
+function onDocumentKeyUp(event){
+	holdKey = false;	
 	if(event.keyCode == 17){
 		$("#rotationControl").click();
 	}
@@ -256,9 +266,10 @@ function onDocumentKeyUp(event){
 
 // function to delete point from keyboard
 function deleteSelectedPoint(){
-	var lastSelectedPointId = markedPointIds[markedPointIds.length-1];
-	// pass in a dummy first parameter
-	delPoint("that",lastSelectedPointId);
+	$.each(markedPointIds, function(key, val){
+			delPoint("that",val);
+		});
+	
 }
 
 function outCanvas(x, y){
@@ -297,7 +308,6 @@ function updateHoverStatus(intersects, intersect_Id, event){
 
 	//set the context menu
 	if(hoverPoint){
-		console.log(hoverPoint);
 		$("#pointPickerDiv p").html("<span>" + (hoverPoint.pointId+1) + ")"+
 									 "<br>x: " + hoverPoint.position.x + 
 									 "<br>y: " + hoverPoint.position.y +
@@ -470,6 +480,7 @@ function updatePointsOnUI(item, point, pointId, mCurvature){
 
 // function to select particular point
 function selectRow(that,pointId){
+
 	var selectedPointId;
 	//choose from UI
 	if(pointId == undefined){
@@ -483,34 +494,83 @@ function selectRow(that,pointId){
 	while(++unmark_index < markedPointIds.length){
 		if(markedPointIds[unmark_index] == selectedPointId) break;
 	}
-
-	//console.log("Mousedown point id in selectRow: ", selectedPointId);
-	//console.log("markedPointIds length in selectRow: ", markedPointIds.length);
-	//console.log("unmark index in selectRow: ", unmark_index);
 	$.each(scene.getObjectByName("pointsObj").children, function(key,val){
 		if(val.pointId == selectedPointId){
 			//already eixisted
 			if(unmark_index < markedPointIds.length){
-				val.material.color.setStyle("black");
-				markedPointIds.splice(unmark_index, 1);
+				// only deal with the events trigger from UI
+				if(pointId == undefined){
+					val.material.color.setStyle("black");
+					markedPointIds.splice(unmark_index, 1);
+				}
 			}
 			else //add into marked points
-			{								
+			{
 				val.material.color.setStyle("red");
-				markedPointIds.push(selectedPointId);	
+				if(pointId == undefined){
+					markedPointIds.push(selectedPointId);
+				}
 			}
 		}
 	});
 
 	if(pointId == undefined){
 		$(that).toggleClass('selectedPoint');
-	}else{
-		$.each($("#pointsPickedInfo div > div"),function(key,val){
-			if($(val).find("button").data("id") == pointId){
-				$(val).toggleClass('selectedPoint');
+	}
+	else{
+		if(unmark_index >= markedPointIds.length){
+			$.each($("#pointsPickedInfo div > div"),function(key,val){
+				if($(val).find("button").data("id") == pointId){
+					$(val).toggleClass('selectedPoint');
+				}
+			});
+		}
+	}
+}
+
+//deal with the selected points through UI
+function updateSelectedPoints(){
+	if(selectedPoint == undefined){
+		return;
+	}
+
+	selectedPointId = selectedPoint.pointId;
+	//check if selected before
+	var unmark_index = -1;
+	while(++unmark_index < markedPointIds.length){
+		if(markedPointIds[unmark_index] == selectedPointId) break;
+	}
+	//if not selected before, push into marked points
+	// all color behaveiro already handled while hitting push button
+	if(unmark_index >= markedPointIds.length){
+		markedPointIds.push(selectedPointId);
+		return;
+	}
+
+	//if selected before, check moved
+	var eps = 0.0000001;
+	if(Math.abs(selectedPoint.position.x - org_selectedPoint.x) > eps ||
+		Math.abs(selectedPoint.position.y - org_selectedPoint.y) > eps ||
+		Math.abs(selectedPoint.position.z - org_selectedPoint.z) > eps)
+		return;
+
+	//if selected before and no movement, do unselection
+	if(unmark_index < markedPointIds.length){
+		$.each(scene.getObjectByName("pointsObj").children, function(key,val){
+			if(val.pointId == selectedPointId){
+				//already eixisted
+				val.material.color.setStyle("black");
+				markedPointIds.splice(unmark_index, 1);
 			}
 		});
-	}	
+
+		$.each($("#pointsPickedInfo div > div"),function(key,val){
+			if($(val).find("button").data("id") == selectedPointId){
+				$(val).toggleClass('selectedPoint');
+				return false;
+			}
+		});
+	}
 }
 
 function delPoint(that,pointId){
