@@ -22,6 +22,8 @@ var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
 var scaleUnit;
+var pointScale = 6.0;
+var orgPointScale = 12;
 
 
 
@@ -758,6 +760,25 @@ function getScaleUnit(){
 	if(scaleUnit < 0) scaleUnit *= -1;
 }
 
+function updatePointSize(){
+	var pointsObj = scene.getObjectByName("pointsObj");
+	if(pointsObj == undefined) return;
+	
+	var distance = cameraControls.object.position.z - pointsObj.position.z;
+	if(distance > 0){
+		var scale = (distance * scaleUnit)* orgPointScale;
+		pointScale = scale;
+	}
+	//console.log(scale);
+	pointsObj.traverse( function(child) {
+		if(child instanceof THREE.Mesh){
+			child.scale.x = scale;
+			child.scale.y = scale;
+			child.scale.z = scale;
+		}
+	});
+}
+
 try {
 	init();
 	//fillScene();
@@ -790,6 +811,7 @@ $(function(){
 		// camera.target = new THREE.Vector3();
 		//TODO: animation
 		cameraControls.update();
+		updatePointSize();
 
 
 	});
@@ -803,6 +825,7 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.target.set(0,0,0);
 		cameraControls.update();
+		updatePointSize();
 	});
 
 
@@ -814,6 +837,7 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		cameraControls.update();
+		updatePointSize();
 	});
 
 
@@ -825,6 +849,7 @@ $(function(){
 		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		cameraControls.update();
+		updatePointSize();
 	});
 
 
@@ -836,6 +861,7 @@ $(function(){
 		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		cameraControls.update();
+		updatePointSize();
 	});
 
 
@@ -848,6 +874,7 @@ $(function(){
 		cameraControls.rotateUp(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		cameraControls.update();
+		updatePointSize();
 	});
 
 	//show curvature  showcurvaturelbtn
@@ -1006,5 +1033,6 @@ $(function(){
 
 	// 	}
 	// });
+
 
 });

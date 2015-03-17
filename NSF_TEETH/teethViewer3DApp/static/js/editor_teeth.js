@@ -7,8 +7,6 @@ var org_selectedPoint;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
-var pointScale = 6.0;
-var orgPointScale = 12;
 var holdKey = false;
 
 // default rotation control is on, set cursor
@@ -91,22 +89,7 @@ function scaleByCamera(){
 }
 
 function mousewheel(e){
-		
-	var pointsObj = scene.getObjectByName("pointsObj");
-	
-	var distance = cameraControls.object.position.z - pointsObj.position.z;
-	if(distance > 0){
-		var scale = (distance * scaleUnit)* orgPointScale;
-		pointScale = scale;
-	}
-	//console.log(scale);
-	pointsObj.traverse( function(child) {
-			if(child instanceof THREE.Mesh){
-				child.scale.x = scale;
-				child.scale.y = scale;
-				child.scale.z = scale;
-			}
-		});
+	updatePointSize();
 }
 
 // event listener that gets x,y,z on mouse hover
