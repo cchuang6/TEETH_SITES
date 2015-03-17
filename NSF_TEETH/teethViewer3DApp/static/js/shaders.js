@@ -16,13 +16,12 @@ var ambientLight, light;
 var defaultCamPos;
 var phongBalancedMaterial;
 var container;
-var editor;
-var viewport;
 var enableShader;
 var rogress_circle;
 var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
+var scaleUnit;
 
 
 
@@ -684,8 +683,6 @@ function fillScene() {
 	else{
 		console.log('cannot load file extension: ' + extension);
 	}
-
-
 }
 
 
@@ -749,14 +746,27 @@ var BinaryStlWriter = (function() {
   return that;
 }());
 
+function getScaleUnit(){
+	//get point scale
+	var vec0 = new THREE.Vector3(0, 1.0, 0.0);
+	var vec1 = new THREE.Vector3(0, 1.0, 1000.0);
+	var camera = cameraControls.object;
+	vec0.project(camera);
+	vec1.project(camera);
+	
+	scaleUnit =  (vec1.y/vec0.y)/1000.0;
+	if(scaleUnit < 0) scaleUnit *= -1;
+}
 
 try {
-  init();
-  //fillScene();
-  setupGui();
-  addToDOM();
-  onWindowResize();
-  animate();
+	init();
+	//fillScene();
+	setupGui();
+	addToDOM();
+	onWindowResize();
+	animate();
+	getScaleUnit();
+
 } catch(e) {
   var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
   $('#container').append(errorReport+e);

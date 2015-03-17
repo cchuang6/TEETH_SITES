@@ -7,7 +7,8 @@ var org_selectedPoint;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
-var globalScale = 1;
+var pointScale = 6.0;
+var orgPointScale = 12;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -76,52 +77,35 @@ document.body.addEventListener( 'mousewheel', mousewheel, false );
 document.body.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
 
 // for scaling points on teeth on zoom in/out event
+function scaleByCamera(){
+	var cameraOffset = cameraControls.object.position.z - orgCameraPos.z;
+	var scale = 1.0;
+	if (cameraOffset > 0)
+		scale = (cameraOffset) * scaleUnit;
+	else if (cameraOffset < 0)
+		scale = 1.0 / ((-cameraOffset) * scaleUnit);
+	else
+		scale = 1.0;
+	return scale;
+}
+
 function mousewheel(e){
-	// console.log(e);
-	var e = window.event || e; // old IE support
-	var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));	
+		
 	var pointsObj = scene.getObjectByName("pointsObj");
-	// console.log(pointsObj);	
-	console.log(cameraControls);
+	
+	var distance = cameraControls.object.position.z - pointsObj.position.z;
+	if(distance > 0){
+		var scale = (distance * scaleUnit)* orgPointScale;
+		pointScale = scale;
+	}
+	console.log(scale);
 	pointsObj.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
-				if(delta == -1){
-					if(child.scale.x < 6)
-						child.scale.x /= 0.95;
-					if(child.scale.y < 6)
-						child.scale.y /= 0.95;
-					if(child.scale.z < 6)
-						child.scale.z /= 0.95;
-					globalScale = child.scale.x;
-				} else {
-					if(child.scale.x > 1)
-						child.scale.x *= 0.95;
-					if(child.scale.y > 1)
-						child.scale.y *= 0.95;
-					if(child.scale.z > 1)
-						child.scale.z *= 0.95;
-					globalScale = child.scale.x;
-				}			
+				child.scale.x = scale;
+				child.scale.y = scale;
+				child.scale.z = scale;
 			}
-		});	
-
-	// $.each(pointsObj.children,function(index,val){
-	// 	if(delta == -1){ // zoom out, scale up
-	// 		if(val.scale.x < 5)
-	// 			val.scale.x += 0.05;
-	// 		if(val.scale.y < 5)
-	// 			val.scale.y += 0.05;
-	// 		if(val.scale.z < 5)
-	// 			val.scale.z += 0.05;
-	// 	} else { // zoom in, scale down
-	// 		if(val.scale.x >= 1)
-	// 			val.scale.x -= 0.05;
-	// 		if(val.scale.y >= 1)
-	// 			val.scale.y -= 0.05;
-	// 		if(val.scale.z >= 1)
-	// 			val.scale.z -= 0.05;
-	// 	}
-	// });
+		});
 }
 
 // event listener that gets x,y,z on mouse hover
@@ -145,17 +129,9 @@ function onDocumentMouseMove( event ){
 			if(selectedPoint){
 				selectedPoint.position.copy(intersects[intersect_Id].point);
 			}
-			//updateHoverStatus(intersects);
-			$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x + 
-										"<br>y: " + intersects[intersect_Id].point.y +
-										"<br>z: " + intersects[intersect_Id].point.z);
-			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
-		}else{
-			//clearHoverPoint(hoverPoint);
-			$("#pointPickerDiv").hide();
 		}
 		//console.log("Move button: ", event.button || event.which);
-		updateHoverStatus(intersects, event);
+		updateHoverStatus(intersects, intersect_Id, event);
 	}else{
 		$("#pointPickerDiv").hide();
 	}
@@ -292,7 +268,7 @@ function outCanvas(x, y){
 	return (x - leftOffset < 0 ) || (x - leftOffset - canvasWidth > 0) || (y - topOffset < 0);
 }
 
-function updateHoverStatus(intersects, event){
+function updateHoverStatus(intersects, intersect_Id, event){
 	
 	if(intersects.length == 0){
 		clearHoverPoint(hoverPoint);
@@ -317,6 +293,27 @@ function updateHoverStatus(intersects, event){
 	else{
 		if((event.button || event.which) != 1)
 			clearHoverPoint(hoverPoint);
+	}
+
+	//set the context menu
+	if(hoverPoint){
+		console.log(hoverPoint);
+		$("#pointPickerDiv p").html("<span>" + (hoverPoint.pointId+1) + ")"+
+									 "<br>x: " + hoverPoint.position.x + 
+									 "<br>y: " + hoverPoint.position.y +
+									 "<br>z: " + hoverPoint.position.z);
+		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+	}
+	else if(intersect_Id >-1){
+		//updateHoverStatus(intersects);
+		$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x + 
+									"<br>y: " + intersects[intersect_Id].point.y +
+									"<br>z: " + intersects[intersect_Id].point.z);
+		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+	}
+	else{
+		//clearHoverPoint(hoverPoint);
+		$("#pointPickerDiv").hide();
 	}
 }
 
@@ -379,9 +376,10 @@ function addPoint(intersects, index){
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
-	sphere.scale.x = globalScale;
-	sphere.scale.y = globalScale;
-	sphere.scale.z = globalScale;
+	//console.log(scaleByCamera());
+	sphere.scale.x = pointScale;
+	sphere.scale.y = pointScale;
+	sphere.scale.z = pointScale;
 	var pointsObj = scene.getObjectByName("pointsObj");
 	pointsObj.add(sphere);
 	scene.add(pointsObj);
