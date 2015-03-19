@@ -356,9 +356,14 @@ function addPoint(intersects, index){
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
-	sphere.scale.x = pointScale;
-	sphere.scale.y = pointScale;
-	sphere.scale.z = pointScale;
+	var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+	if(distance > 0){
+		var scaleUnit = getScaleUnit();
+		var scale = (distance * scaleUnit)* orgPointScale;
+		sphere.scale.x = scale;
+		sphere.scale.y = scale;
+		sphere.scale.z = scale;
+	}
 	var pointsObj = scene.getObjectByName("pointsObj");
 	pointsObj.add(sphere);
 	scene.add(pointsObj);

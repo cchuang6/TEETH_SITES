@@ -768,6 +768,7 @@ function getScaleUnit(){
 	// get view matrix
 	var offset = new THREE.Vector3();
 	offset.copy(cameraControls.object.position);
+	offset.sub(cameraControls.target);
 	// angle from z-axis around y-axis
 	var theta = Math.atan2( offset.x, offset.z );
 	// 	// angle from y-axis
@@ -777,7 +778,7 @@ function getScaleUnit(){
 	offset.x = radius * Math.sin( phi ) * Math.sin(theta);
 	offset.y = radius * Math.cos( phi );
 	offset.z = radius * Math.sin( phi ) * Math.cos(theta);
-
+	//offset.sub(cameraControls.target);
 	var matrixCamera = new THREE.Matrix4().set(
 	                        1.0, 0.0, 0.0, offset.x,
 	                        0.0, 1.0, 0.0, offset.y,
@@ -788,34 +789,40 @@ function getScaleUnit(){
 	matrix.multiplyMatrices(proj, matrix.getInverse(matrixCamera));
 	// //projection
 	offset.setLength(offset.length()*2.0);
+
 	var vec0 = new THREE.Vector3(0, 1.0, 0.0);
 	var vec1 = new THREE.Vector3(0, 1.0, 0.0).add(offset);
+	//console.log(offset);
 	vec0 = vec0.applyProjection(matrix);
 	vec1 = vec1.applyProjection(matrix);
-
+	
 
 	var scaleUnit =  (vec1.y/vec0.y)/offset.length();
+	//check code here, use inner product to check code
+	//console.log(scaleUnit);
 	if(scaleUnit < 0) scaleUnit *= -1;
+	//console.log(scaleUnit);
 	return scaleUnit;
 }
 
 function updatePointSize(){
-	var eps = 0.0000001;
+	
 	var pointsObj = scene.getObjectByName("pointsObj");
 	if(pointsObj == undefined) return;
-	var scaleUnit = getScaleUnit();
-
+	
 	pointsObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
-			var distance = cameraControls.object.position.distanceTo(child.position);
-
+			
+			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+			//console.log(distance);
+			// cameraToTarget.projectOnVector(cameraToObj).length();
 			if(distance > 0){
+				var scaleUnit = getScaleUnit();
 				var scale = (distance * scaleUnit)* orgPointScale;
-				pointScale = scale;
+				child.scale.x = scale;
+				child.scale.y = scale;
+				child.scale.z = scale;
 			}
-			child.scale.x = scale;
-			child.scale.y = scale;
-			child.scale.z = scale;
 		}
 	});
 }
