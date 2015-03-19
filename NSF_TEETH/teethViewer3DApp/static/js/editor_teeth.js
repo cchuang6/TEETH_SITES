@@ -20,7 +20,7 @@ $('#rotationControl').click(function(){
 		rotationState = "disabled";
 		getPointValMode = "enabled";
 		$('#rotationControl span:first').removeClass("icon-rotate");
-		$('#rotationControl span:first').addClass("icon-pointpick");		
+		$('#rotationControl span:first').addClass("icon-pointpick");
 		$('html,body').css('cursor','default');
 		$('#getPointVal span:first').removeClass("icon-disabled");
 		if(rotationState == "enabled"){
@@ -35,10 +35,10 @@ $('#rotationControl').click(function(){
 		cameraControls.noRotate = false;
 		cameraControls.noPan = false;
 		rotationState = "enabled";
-		$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');		
+		$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
 		$('#rotationControl span:first').removeClass("icon-pointpick");
 		$('#rotationControl span:first').addClass("icon-rotate");
-		getPointValMode = "disabled";		
+		getPointValMode = "disabled";
 		$("#pointsPickedInfo").hide();
 	}
 });
@@ -75,19 +75,6 @@ document.addEventListener( 'keyup', onDocumentKeyUp, false);
 document.body.addEventListener( 'mousewheel', mousewheel, false );
 document.body.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
 
-// for scaling points on teeth on zoom in/out event
-function scaleByCamera(){
-	var cameraOffset = cameraControls.object.position.z - orgCameraPos.z;
-	var scale = 1.0;
-	if (cameraOffset > 0)
-		scale = (cameraOffset) * scaleUnit;
-	else if (cameraOffset < 0)
-		scale = 1.0 / ((-cameraOffset) * scaleUnit);
-	else
-		scale = 1.0;
-	return scale;
-}
-
 function mousewheel(e){
 	updatePointSize();
 }
@@ -99,15 +86,15 @@ function onDocumentMouseMove( event ){
 
 	if(outCanvas(event.clientX, event.clientY)){
 		$("#pointPickerDiv").hide();
-		return;	
-	} 
+		return;
+	}
 
 	if(getPointValMode == "enabled"){
-		//selected point, ray cast 
+		//selected point, ray cast
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		var intersect_Id = getIntersectId(intersects);
 		//console.log(intersect_Id);
-		
+
 		if(intersect_Id > -1){
 			//copy the moved position to the the selected objec
 			if(selectedPoint){
@@ -158,22 +145,22 @@ function onDocumentMouseUp( event ){
 			}
 			if(intersect_Id > -1){
 				var mCurvature = getMeanCurvature(intersects, intersect_Id);
-				$.each($("#pointsPickedInfo div > div"),function(key,val){			
+				$.each($("#pointsPickedInfo div > div"),function(key,val){
 					if($(val).find("button").data("id") == pointId){
 						if(!isNaN(mCurvature)){
 							updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
 						} else {
 							updatePointsOnUI($(val), selectedPoint, pointId);
-						}						
-					}			
+						}
+					}
 				});
-				
+
 			}
 			else{
 				//updateSelectedPoints();
 				selectedPoint.position.copy(org_selectedPoint);
 			}
-			//change selected point color 
+			//change selected point color
 			updateSelectedPoints();
 			selectedPoint = null;
 		}
@@ -188,7 +175,7 @@ function onDocumentMouseDown( event ) {
 
 	if(outCanvas(event.clientX, event.clientY)){
 		$("#pointPickerDiv").hide();
-		return;	
+		return;
 	}
 
 	if(rotationState == "enabled"){
@@ -207,7 +194,7 @@ function onDocumentMouseDown( event ) {
 			}
 		}
 		//move or delete point
-		else{						
+		else{
 			if( (event.button || event.which) === 1){
 				selectedPoint = intersects[top_id].object;
 				if(org_selectedPoint == undefined){
@@ -235,13 +222,13 @@ function onDocumentKeyDown(event){
 	if(event.keyCode == 46 || event.keyCode == 8)
 		deleteSelectedPoint();
 	if(event.keyCode == 17){
-		$("#rotationControl").click();		
+		$("#rotationControl").click();
 	}
 }
 
 // event listener to handle keyboard (up) events
 function onDocumentKeyUp(event){
-	holdKey = false;	
+	holdKey = false;
 	if(event.keyCode == 17){
 		$("#rotationControl").click();
 	}
@@ -252,7 +239,7 @@ function deleteSelectedPoint(){
 	$.each(markedPointIds, function(key, val){
 			delPoint("that",val);
 		});
-	
+
 }
 
 function outCanvas(x, y){
@@ -263,7 +250,7 @@ function outCanvas(x, y){
 }
 
 function updateHoverStatus(intersects, intersect_Id, event){
-	
+
 	if(intersects.length == 0){
 		clearHoverPoint(hoverPoint);
 		return;
@@ -276,7 +263,7 @@ function updateHoverStatus(intersects, intersect_Id, event){
 			// check the intersect point is equal to hover point
 			if(pointId != hoverPoint.pointId && (event.button || event.which) != 1){
 				clearHoverPoint(hoverPoint);
-				setHoverPoint(intersects[0].object);	
+				setHoverPoint(intersects[0].object);
 			}
 		}
 		// first time, set hover point
@@ -292,14 +279,14 @@ function updateHoverStatus(intersects, intersect_Id, event){
 	//set the context menu
 	if(hoverPoint){
 		$("#pointPickerDiv p").html("<span>" + (hoverPoint.pointId+1) + ")"+
-									 "<br>x: " + hoverPoint.position.x + 
+									 "<br>x: " + hoverPoint.position.x +
 									 "<br>y: " + hoverPoint.position.y +
 									 "<br>z: " + hoverPoint.position.z);
 		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
 	}
 	else if(intersect_Id >-1){
 		//updateHoverStatus(intersects);
-		$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x + 
+		$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x +
 									"<br>y: " + intersects[intersect_Id].point.y +
 									"<br>z: " + intersects[intersect_Id].point.z);
 		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
@@ -333,13 +320,13 @@ function getRayCastIntersects(x, y){
 	var camera = cameraControls.object;
 	var leftOffset = container.offset().left;
 	var topOffset = container.offset().top;
-	//var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1, 
+	//var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1,
 	//									1-2*((y -topOffset)/canvasHeight),
 	//									0.5);
 	//var projector = new THREE.Projector();
 	//projector.unprojectVector(mouseVector,camera);
 	//var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
-	var mouseVector = new THREE.Vector2(2*((x - leftOffset)/canvasWidth)-1, 
+	var mouseVector = new THREE.Vector2(2*((x - leftOffset)/canvasWidth)-1,
 										1-2*((y -topOffset)/canvasHeight));
 	var raycaster = new THREE.Raycaster();
 	raycaster.setFromCamera(mouseVector, camera);
@@ -352,7 +339,7 @@ function addPoint(intersects, index){
 	var mCurvature = getMeanCurvature(intersects, index);
 	var point = intersects[index].point;
 
-	pointsPickedCounter++;		
+	pointsPickedCounter++;
 	if(!isNaN(mCurvature)){
 		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
 		displayPointsOnUI(point,pointsPickedCounter,mCurvature);
@@ -369,7 +356,6 @@ function addPoint(intersects, index){
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
-	//console.log(scaleByCamera());
 	sphere.scale.x = pointScale;
 	sphere.scale.y = pointScale;
 	sphere.scale.z = pointScale;
@@ -413,7 +399,7 @@ function rgbToMeanCurvature(red, green, blue){
 	}
 }
 
-function displayPointsOnUI(point,pointId,mCurvature){	
+function displayPointsOnUI(point,pointId,mCurvature){
 	if(mCurvature !== undefined){
 		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
 			"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
@@ -432,7 +418,7 @@ function displayPointsOnUI(point,pointId,mCurvature){
 	}
 }
 
-function updatePointsOnUI(item, point, pointId, mCurvature){	
+function updatePointsOnUI(item, point, pointId, mCurvature){
 	// var material = new THREE.MeshPhongMaterial({
  //        color: 0xdddddd
  //    });
@@ -440,7 +426,7 @@ function updatePointsOnUI(item, point, pointId, mCurvature){
  //        font: 'helvetiker' // Must be lowercase!
  //    });
  //    var textMesh = new THREE.Mesh( textGeom, material );
- //    scene.add( textMesh );	
+ //    scene.add( textMesh );
  //    console.log(scene);
 	if(mCurvature !== undefined){
 		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
@@ -564,7 +550,7 @@ function delPoint(that,pointId){
 				pointsObj.remove(val);
 				return false;
 			}
-		});	
+		});
 		$(that).parent().remove();
 		$.each(pointsPicked, function(i){
 	    	if(pointsPicked[i].pointId === $(that).data('id')) {
@@ -584,12 +570,12 @@ function delPoint(that,pointId){
 				pointsObj.remove(val);
 				return false;
 			}
-		});	
-		$.each($("#pointsPickedInfo div > div"),function(key,val){			
+		});
+		$.each($("#pointsPickedInfo div > div"),function(key,val){
 			if($(val).find("button").data("id") == pointId){
 				$(val).remove();
 				return false;
-			}			
+			}
 		});
 		$.each(pointsPicked, function(i){
 	    	if(pointsPicked[i].pointId === pointId) {
@@ -658,14 +644,14 @@ function deleteAllPoints(){
 
 
 // rendering scales
-function createScale(){	
+function createScale(){
 	// var padding = 30;
-	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);	
+	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);
 	// var yAxis = d3.svg.axis().scale(axisScale).orient("left");
 	// var svgContainer = d3.select("#tpHueHelp").insert("svg:svg");
 	// svgContainer.append("g").attr("class", "axis").attr("transform", "translate(" + padding + ",0)").call(yAxis);
-	var xAxis = d3.svg.axis().scale(axisScale);	
-	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);	
+	var xAxis = d3.svg.axis().scale(axisScale);
+	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);
 	var xAxisGroup = svgContainer.append("g").call(xAxis);
 	$("#tpHueHelp svg").css("margin-top","1px");
 }

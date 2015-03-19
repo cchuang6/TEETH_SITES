@@ -21,9 +21,9 @@ var rogress_circle;
 var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
-var scaleUnit;
 var pointScale = 6.0;
 var orgPointScale = 12;
+var fov;
 
 
 
@@ -39,10 +39,10 @@ function init() {
 	console.log('width: ' + canvasWidth)
 	console.log('height: ' + canvasHeight)
 	var canvasRatio = canvasWidth / canvasHeight;
-	var viewAngle = 30;
+	var viewAngle = 30.0;
 	var near = 0.1;
 	var far = 20000;
-	defaultCamPos = new THREE.Vector3(0, 0, 500)
+	defaultCamPos = new THREE.Vector3(0.0, 0.0, 500.0)
 	var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
 	camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 
@@ -87,7 +87,7 @@ function init() {
 		phongBalancedMaterial.side = THREE.DoubleSide;
 	}
 
-	
+
 
 	//TODO:add windows resize
 	window.addEventListener( 'resize', onWindowResize, false );
@@ -493,7 +493,8 @@ function getCenteralizedMesh(mesh){
 						Math.pow(camera.position.z - depth, 2));
 
 
-	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+	fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+
 	//var target = new THREE.Vector3(0, 0, -c_z/2.0);
 	//cameraControls.target = target
 
@@ -749,29 +750,69 @@ var BinaryStlWriter = (function() {
 }());
 
 function getScaleUnit(){
-	//get point scale
-	var vec0 = new THREE.Vector3(0, 1.0, 0.0);
-	var vec1 = new THREE.Vector3(0, 1.0, 1000.0);
+	//get projection matrix
 	var camera = cameraControls.object;
-	vec0.project(camera);
-	vec1.project(camera);
-	
-	scaleUnit =  (vec1.y/vec0.y)/1000.0;
+	var orgPosition = new THREE.Vector3();
+
+	var near = camera.near;
+	var far = camera.far;
+	var fov = camera.fov;
+	var aspect = camera.aspect;
+	var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
+	var right = aspect * top;
+
+	var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
+	                            0.0, near/top, 0.0, 0.0,
+	                            0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
+	                            0.0, 0.0, -1.0, 0.0);
+	// get view matrix
+	var offset = new THREE.Vector3();
+	offset.copy(cameraControls.object.position);
+	// angle from z-axis around y-axis
+	var theta = Math.atan2( offset.x, offset.z );
+	// 	// angle from y-axis
+	var phi = Math.atan2( Math.sqrt( offset.x * offset.x + offset.z * offset.z ), offset.y );
+	var radius = defaultCamPos.z;
+
+	offset.x = radius * Math.sin( phi ) * Math.sin(theta);
+	offset.y = radius * Math.cos( phi );
+	offset.z = radius * Math.sin( phi ) * Math.cos(theta);
+
+	var matrixCamera = new THREE.Matrix4().set(
+	                        1.0, 0.0, 0.0, offset.x,
+	                        0.0, 1.0, 0.0, offset.y,
+	                        0.0, 0.0, 1.0, offset.z,
+	                        0.0, 0.0, 0.0, 1.0);
+	//multiply projection and transformation
+	var matrix = new THREE.Matrix4();
+	matrix.multiplyMatrices(proj, matrix.getInverse(matrixCamera));
+	// //projection
+	offset.setLength(offset.length()*2.0);
+	var vec0 = new THREE.Vector3(0, 1.0, 0.0);
+	var vec1 = new THREE.Vector3(0, 1.0, 0.0).add(offset);
+	vec0 = vec0.applyProjection(matrix);
+	vec1 = vec1.applyProjection(matrix);
+
+
+	var scaleUnit =  (vec1.y/vec0.y)/offset.length();
 	if(scaleUnit < 0) scaleUnit *= -1;
+	return scaleUnit;
 }
 
 function updatePointSize(){
+	var eps = 0.0000001;
 	var pointsObj = scene.getObjectByName("pointsObj");
 	if(pointsObj == undefined) return;
-	
-	var distance = cameraControls.object.position.z - pointsObj.position.z;
-	if(distance > 0){
-		var scale = (distance * scaleUnit)* orgPointScale;
-		pointScale = scale;
-	}
-	//console.log(scale);
+	var scaleUnit = getScaleUnit();
+
 	pointsObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
+			var distance = cameraControls.object.position.distanceTo(child.position);
+
+			if(distance > 0){
+				var scale = (distance * scaleUnit)* orgPointScale;
+				pointScale = scale;
+			}
 			child.scale.x = scale;
 			child.scale.y = scale;
 			child.scale.z = scale;
@@ -786,7 +827,7 @@ try {
 	addToDOM();
 	onWindowResize();
 	animate();
-	getScaleUnit();
+	//getScaleUnit();
 
 } catch(e) {
   var errorReport = "Your program encountered an unrecoverable error, can not draw on canvas. Error was:<br/><br/>";
@@ -808,7 +849,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.target.set(0,0,0);
-		// camera.target = new THREE.Vector3();
+		camera.target = new THREE.Vector3();
 		//TODO: animation
 		cameraControls.update();
 		updatePointSize();
@@ -886,27 +927,27 @@ $(function(){
 		// 	return;
 		// }
 		//check if curvature can be rendered
-		if (showCurvature == false){						
+		if (showCurvature == false){
 			return;
 		}
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
 		if (curvatureState =='disabled' && wireframeState == 'disabled'){
 			renderVertextColor(object);
-			
+
 		}  //turn off vertex color
 		else if (curvatureState =='enabled' && wireframeState == 'disabled'){
 			renderPhongShader(object);
 			$('#curvaturebtn span:first').removeClass('on');
 			$('#curvaturebtn span:first').removeClass('icon-curvature');
 			$('#curvaturebtn span:first').addClass('icon-wireframe');
-			curvatureState='disabled';	
+			curvatureState='disabled';
 			wireframeState="enabled";
 			var object = scene.getObjectByName( "teethObj" );
 			object.traverse( function(child){
 					if(child instanceof THREE.Mesh){
 						// // child is the mesh
-						child.material = new THREE.MeshBasicMaterial( { 
+						child.material = new THREE.MeshBasicMaterial( {
 							wireframe: true,
         					color: 'blue' } );
 						child.material.side = THREE.DoubleSide;
@@ -919,12 +960,12 @@ $(function(){
 						child.geometry.colorsNeedUpdate = true;
 					}
 				});
-			$("#tpHueHelp").hide();		
-			
+			$("#tpHueHelp").hide();
+
 		}
 		else if(curvatureState == 'disabled' && wireframeState == 'enabled'){
-			renderPhongShader(object);		
-			wireframeState = 'disabled';	
+			renderPhongShader(object);
+			wireframeState = 'disabled';
 			$('#curvaturebtn span:first').removeClass('icon-wireframe');
 			$('#curvaturebtn span:first').addClass('icon-curvature');
 			$('#curvaturebtn span:first').addClass('off');
@@ -933,7 +974,7 @@ $(function(){
 		// 	$('#wireframebtn span:first').addClass("icon-disabled");
 		// }
 	});
-	
+
     function renderVertextColor(object){
     	// show hue helper
     	$("#tpHueHelp").show();
@@ -972,7 +1013,7 @@ $(function(){
 				child.geometry.normalsNeedUpdate = true;
 				child.geometry.colorsNeedUpdate = true;
 			}
-		});		
+		});
 		// $('#curvaturebtn span:first').removeClass('on');
 		// $('#curvaturebtn span:first').addClass('off');
 
@@ -998,7 +1039,7 @@ $(function(){
 	// 		object.traverse( function(child){
 	// 				if(child instanceof THREE.Mesh){
 	// 					// // child is the mesh
-	// 					child.material = new THREE.MeshBasicMaterial( { 
+	// 					child.material = new THREE.MeshBasicMaterial( {
 	// 						wireframe: true,
  //        					color: 'blue' } );
 	// 					child.material.side = THREE.DoubleSide;
@@ -1021,8 +1062,8 @@ $(function(){
 	// 		//show phong shader or material based on previous state
 	// 		if (curvatureState=='disabled'){
 	// 			renderPhongShader(object);
-				
-			
+
+
 	// 		}  //turn off vertex color
 	// 		else if (curvatureState=='enabled'){
 	// 			renderVertextColor(object);
