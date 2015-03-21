@@ -1,7 +1,10 @@
 var rotationState = "enabled";
 var getPointValMode = "disabled";
+var angleBtnMode = "disabled";
 var pointsPicked = [];
 var pointsPickedCounter = -1;
+var linePointsPicked = [];
+var linePointsPickedCounter = -1;
 var selectedPoint;
 var org_selectedPoint;
 var lastSelected;
@@ -14,6 +17,12 @@ $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto'
 
 // function to toggle rotation and point picking
 $('#rotationControl').click(function(){
+	angleBtnMode = "disabled";
+	$("#linePointsPickedInfo").hide();
+	hideObject("angleObj");
+	showObject("pointsObj");	
+	$("#rotationControl span:first").removeClass("icon-disabled");
+	$("#anglebtn span:first").addClass("icon-disabled");
 	if(rotationState == "enabled"){
 		cameraControls.noRotate = true;
 		cameraControls.noPan = true;
@@ -66,6 +75,21 @@ $('#rotationControl').click(function(){
 // 	}
 // });
 
+
+$("#anglebtn").click(function(){
+	$("#rotationControl span:first").addClass("icon-disabled");
+	$("#anglebtn span:first").removeClass("icon-disabled");
+	hideObject("pointsObj");
+	showObject("angleObj");
+	rotationState = "disabled";
+	getPointValMode = "disabled";
+	$("#pointsPickedInfo").hide();
+	$("#linePointsPickedInfo").show();
+	angleBtnMode = "enabled";
+	cameraControls.noRotate = true;
+	cameraControls.noPan = true;
+	$('html,body').css('cursor','default');	
+});
 
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 document.addEventListener( 'mousemove', onDocumentMouseMove, false);
@@ -190,7 +214,7 @@ function onDocumentMouseDown( event ) {
 		//add point onto scene
 		if(pointId == undefined){
 			if( (event.button || event.which) === 1){
-				addPoint(intersects, top_id);
+				addPoint("getPointValMode",intersects, top_id);
 			}
 		}
 		//move or delete point
@@ -211,6 +235,26 @@ function onDocumentMouseDown( event ) {
 			}
 		}
 	}
+	if(angleBtnMode == "enabled"){
+		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+		//return if nothing
+		var top_id = 0;
+		var pointId = intersects[top_id].object.pointId;		
+		//add point onto scene
+		if(pointId == undefined && cameraControls.noRotate){
+			if( (event.button || event.which) === 1){
+				addPoint("angleBtnMode",intersects, top_id);
+			}
+		} else if(pointId == linePointsPicked[0].pointId){			
+			if(linePointsPicked.length > 2){
+				drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
+			}			
+		}
+		// add line
+		if(linePointsPicked.length > 1){
+			drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-2],linePointsPicked[linePointsPicked.length-1]);
+		}		
+	}
 }
 
 // event listener to handle keyboard (down) events
@@ -222,7 +266,12 @@ function onDocumentKeyDown(event){
 	if(event.keyCode == 46 || event.keyCode == 8)
 		deleteSelectedPoint();
 	if(event.keyCode == 17){
-		$("#rotationControl").click();
+		if(rotationState == "enabled" || getPointValMode == "enabled"){
+			$("#rotationControl").click();
+		}
+		else if(angleBtnMode == "enabled"){
+			cameraControls.noRotate = false;
+		}
 	}
 }
 
@@ -230,7 +279,12 @@ function onDocumentKeyDown(event){
 function onDocumentKeyUp(event){
 	holdKey = false;
 	if(event.keyCode == 17){
-		$("#rotationControl").click();
+		if(rotationState == "enabled" || getPointValMode == "enabled"){
+			$("#rotationControl").click();
+		}
+		else if(angleBtnMode == "enabled"){
+			cameraControls.noRotate = true;
+		}
 	}
 }
 
@@ -335,33 +389,68 @@ function getRayCastIntersects(x, y){
 }
 
 //add points into scene
-function addPoint(intersects, index){
-	var mCurvature = getMeanCurvature(intersects, index);
+function addPoint(mode, intersects, index){	
+
 	var point = intersects[index].point;
 
-	pointsPickedCounter++;
-	if(!isNaN(mCurvature)){
-		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
-		displayPointsOnUI(point,pointsPickedCounter,mCurvature);
-	}else{
-		pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point});
-		displayPointsOnUI(point,pointsPickedCounter);
-	}
+	if(mode == "getPointValMode"){
+		var mCurvature = getMeanCurvature(intersects, index);		
 
+		pointsPickedCounter++;
+		if(!isNaN(mCurvature)){
+			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
+			displayPointsOnUI(mode,point,pointsPickedCounter,mCurvature);
+		}else{
+			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point});
+			displayPointsOnUI(mode,point,pointsPickedCounter);
+		}		
+	} else if (mode == "angleBtnMode"){
+		linePointsPickedCounter++;
+		linePointsPicked.push({"pointId":linePointsPickedCounter,"coordinates":point});
+		displayPointsOnUI(mode,point,linePointsPickedCounter);
+	}		
+	
 	//create point
 	var sphereGeometry = new THREE.SphereGeometry( 0.1, 32, 32 );
 	var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', transparent: true, opacity: 1.0 } );
-	var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
-	sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
+	var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);	
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
 	sphere.scale.x = pointScale;
 	sphere.scale.y = pointScale;
 	sphere.scale.z = pointScale;
-	var pointsObj = scene.getObjectByName("pointsObj");
-	pointsObj.add(sphere);
-	scene.add(pointsObj);
+	
+	if(mode == "getPointValMode"){
+		sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
+		var obj = scene.getObjectByName("pointsObj");
+		obj.add(sphere);
+		scene.add(obj);
+	} else if(mode == "angleBtnMode"){
+		sphere.pointId = linePointsPicked[linePointsPicked.length-1].pointId;
+		var obj = scene.getObjectByName("angleObj");
+		obj.add(sphere);
+		scene.add(obj);
+	}
+	
+}
+
+// draw line between two points
+function drawLineBetweenPoints(srcPoint, destPoint){
+	// console.log(srcPoint);
+	// console.log(destPoint);	
+	var angleObj = scene.getObjectByName("angleObj");
+	var material = new THREE.LineBasicMaterial({
+		color: 0x000000
+	});
+	material.depthTest = false;
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push(
+		srcPoint.coordinates,
+		destPoint.coordinates
+	);
+	var line = new THREE.Line( geometry, material );
+	angleObj.add( line );
 }
 
 function getMeanCurvature(intersects, index){
@@ -399,35 +488,36 @@ function rgbToMeanCurvature(red, green, blue){
 	}
 }
 
-function displayPointsOnUI(point,pointId,mCurvature){
-	if(mCurvature !== undefined){
-		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
-			"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
-			" y : "+parseFloat(point.y).toFixed(3)+
-			" z :"+parseFloat(point.z).toFixed(3)+
-			"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
-			"</span><button style='float:right' data-id='"+pointId+
-			"' onclick='delPoint(this);'>Del</button></div>");
-	}else{
-		$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
-			"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
-			" y : "+parseFloat(point.y).toFixed(3)+
-			" z :"+parseFloat(point.z).toFixed(3)+
-			"</span><button style='float:right' data-id='"+pointId+
-			"' onclick='delPoint(this);'>Del</button></div>");
-	}
+function displayPointsOnUI(mode,point,pointId,mCurvature){
+	if(mode == "getPointValMode"){
+		if(mCurvature !== undefined){
+			$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z :"+parseFloat(point.z).toFixed(3)+
+				"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
+				"</span><button style='float:right' data-id='"+pointId+
+				"' onclick='delPoint(this);'>Del</button></div>");
+		}else{
+			$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z :"+parseFloat(point.z).toFixed(3)+
+				"</span><button style='float:right' data-id='"+pointId+
+				"' onclick='delPoint(this);'>Del</button></div>");
+		}
+	} else if(mode == "angleBtnMode"){
+		$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z :"+parseFloat(point.z).toFixed(3)+
+				"</span></div>");
+				// <button style='float:right' data-id='"+pointId+
+				// "' onclick='delPoint(this);'>Del</button></div>");
+	}	
 }
 
-function updatePointsOnUI(item, point, pointId, mCurvature){
-	// var material = new THREE.MeshPhongMaterial({
- //        color: 0xdddddd
- //    });
- //    var textGeom = new THREE.TextGeometry( 'Hello World!', {
- //        font: 'helvetiker' // Must be lowercase!
- //    });
- //    var textMesh = new THREE.Mesh( textGeom, material );
- //    scene.add( textMesh );
- //    console.log(scene);
+function updatePointsOnUI(item, point, pointId, mCurvature){	
 	if(mCurvature !== undefined){
 		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 				   " y : "+parseFloat(point.position.y).toFixed(3)+
@@ -640,6 +730,16 @@ function deleteAllPoints(){
 	pointsPickedCounter = -1;
 	pointsPicked = [];
 	markedPointIds = [];
+}
+
+function hideObject(objName){
+	var obj = scene.getObjectByName(objName);	
+	obj.visible = false;	
+}
+
+function showObject(objName){
+	var obj = scene.getObjectByName(objName);	
+	obj.visible = true;	
 }
 
 

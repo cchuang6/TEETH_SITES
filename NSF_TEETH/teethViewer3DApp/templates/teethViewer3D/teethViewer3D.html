@@ -108,7 +108,7 @@
                     <span class="ui-button-text">Normal Distance</span>
                 </button>
                 <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="anglebtn" role="button" aria-disabled="false" title="Angle">
-                    <span class="ui-button-icon-primary ui-icon icon-angle"></span>
+                    <span class="ui-button-icon-primary ui-icon icon-angle icon-disabled"></span>
                     <span class="ui-button-text">Angle</span>
                 </button>
                 <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen">
@@ -303,6 +303,13 @@
             </div>
             <button onclick="deleteAllPoints();" style="margin-top:1%;">Delete All</button>
             <button onclick="exportPointsToCSV();" style="margin-top:1%;">Export to CSV</button>
+        </div>
+        <div id="linePointsPickedInfo" class="textdisable" style="display: none;">
+            <h3>
+                Points Picked
+            </h3>
+            <div style="text-align:left; height:225px; overflow-y: scroll;">
+            </div>            
         </div>
         <div id="pointPickerDiv" class="textdisable" style="display:none;">
             <p>--</p>
