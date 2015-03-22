@@ -248,6 +248,7 @@ function onDocumentMouseDown( event ) {
 		} else if(pointId == linePointsPicked[0].pointId){			
 			if(linePointsPicked.length > 2){
 				drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
+				calculateArea();
 			}			
 		}
 		// add line
@@ -507,7 +508,8 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"' onclick='delPoint(this);'>Del</button></div>");
 		}
 	} else if(mode == "angleBtnMode"){
-		$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+		// $("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
+			$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
 				" z :"+parseFloat(point.z).toFixed(3)+
@@ -740,6 +742,25 @@ function hideObject(objName){
 function showObject(objName){
 	var obj = scene.getObjectByName(objName);	
 	obj.visible = true;	
+}
+
+function calculateArea(){		
+	var xProd = 0; 
+	var yProd = 0;
+	$.each(linePointsPicked,function(index,val){
+		if(index == linePointsPicked.length-1){
+			xProd = xProd + (linePointsPicked[index].coordinates.x * linePointsPicked[0].coordinates.y);
+			yProd = yProd + (linePointsPicked[index].coordinates.y * linePointsPicked[0].coordinates.x);
+		} else{
+			xProd = xProd + (linePointsPicked[index].coordinates.x * linePointsPicked[index+1].coordinates.y);
+			yProd = yProd + (linePointsPicked[index].coordinates.y * linePointsPicked[index+1].coordinates.x);
+		}		
+	});
+	var area = Math.abs((xProd-yProd)/2);
+	console.log(area);
+	$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span> Area : " + parseFloat(area).toFixed(3) +
+				"</span></div>");
 }
 
 
