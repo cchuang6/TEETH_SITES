@@ -21,9 +21,7 @@ var rogress_circle;
 var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
-var pointScale = 6.0;
 var orgPointScale = 12;
-var fov;
 
 
 
@@ -493,7 +491,7 @@ function getCenteralizedMesh(mesh){
 						Math.pow(camera.position.z - depth, 2));
 
 
-	fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
+	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
 
 	//var target = new THREE.Vector3(0, 0, -c_z/2.0);
 	//cameraControls.target = target
