@@ -20,7 +20,7 @@ $('#rotationControl').click(function(){
 	angleBtnMode = "disabled";
 	$("#linePointsPickedInfo").hide();
 	hideObject("angleObj");
-	showObject("pointsObj");	
+	showObject("pointsObj");
 	$("#rotationControl span:first").removeClass("icon-disabled");
 	$("#anglebtn span:first").addClass("icon-disabled");
 	if(rotationState == "enabled"){
@@ -88,16 +88,17 @@ $("#anglebtn").click(function(){
 	angleBtnMode = "enabled";
 	cameraControls.noRotate = true;
 	cameraControls.noPan = true;
-	$('html,body').css('cursor','default');	
+	$('html,body').css('cursor','default');
 });
 
-document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-document.addEventListener( 'mousemove', onDocumentMouseMove, false);
-document.addEventListener( 'mouseup', onDocumentMouseUp, false);
-document.addEventListener( 'keydown', onDocumentKeyDown, false);
-document.addEventListener( 'keyup', onDocumentKeyUp, false);
-document.body.addEventListener( 'mousewheel', mousewheel, false );
-document.body.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
+document.addEventListener('mousedown', onDocumentMouseDown, false );
+document.addEventListener('dblclick', onDocumentDBLClick, false);
+document.addEventListener('mousemove', onDocumentMouseMove, false);
+document.addEventListener('mouseup', onDocumentMouseUp, false);
+document.addEventListener('keydown', onDocumentKeyDown, false);
+document.addEventListener('keyup', onDocumentKeyUp, false);
+document.body.addEventListener('mousewheel', mousewheel, false );
+document.body.addEventListener('DOMMouseScroll', mousewheel, false ); // firefox
 
 function mousewheel(e){
 	updatePointSize();
@@ -240,22 +241,33 @@ function onDocumentMouseDown( event ) {
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		//return if nothing
 		var top_id = 0;
-		var pointId = intersects[top_id].object.pointId;		
+		var pointId = intersects[top_id].object.pointId;
 		//add point onto scene
 		if(pointId == undefined && cameraControls.noRotate){
 			if( (event.button || event.which) === 1){
 				addPoint("angleBtnMode",intersects, top_id);
 			}
-		} else if(pointId == linePointsPicked[0].pointId){			
+		} else if(pointId == linePointsPicked[0].pointId){
 			if(linePointsPicked.length > 2){
 				drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
 				calculateArea();
-			}			
+			}
 		}
 		// add line
 		if(linePointsPicked.length > 1){
 			drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-2],linePointsPicked[linePointsPicked.length-1]);
-		}		
+		}
+	}
+}
+
+function onDocumentDBLClick(event){
+	if(angleBtnMode == "enabled"){
+		console.log("close area");
+		if(linePointsPicked.length > 2){
+			drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
+				calculateArea();
+		}
+
 	}
 }
 
@@ -391,12 +403,12 @@ function getRayCastIntersects(x, y){
 }
 
 //add points into scene
-function addPoint(mode, intersects, index){	
+function addPoint(mode, intersects, index){
 
 	var point = intersects[index].point;
 
 	if(mode == "getPointValMode"){
-		var mCurvature = getMeanCurvature(intersects, index);		
+		var mCurvature = getMeanCurvature(intersects, index);
 
 		pointsPickedCounter++;
 		if(!isNaN(mCurvature)){
@@ -405,21 +417,21 @@ function addPoint(mode, intersects, index){
 		}else{
 			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point});
 			displayPointsOnUI(mode,point,pointsPickedCounter);
-		}		
+		}
 	} else if (mode == "angleBtnMode"){
 		linePointsPickedCounter++;
 		linePointsPicked.push({"pointId":linePointsPickedCounter,"coordinates":point});
 		displayPointsOnUI(mode,point,linePointsPickedCounter);
-	}		
-	
+	}
+
 	//create point
 	var sphereGeometry = new THREE.SphereGeometry( 0.1, 32, 32 );
 	var sphereMaterial = new THREE.MeshBasicMaterial( { color: '#000', transparent: true, opacity: 1.0 } );
-	var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);	
+	var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
 	sphere.position.x = point.x;
 	sphere.position.y = point.y;
 	sphere.position.z = point.z;
-    
+
     var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 	if(distance > 0){
 		var scaleUnit = getScaleUnit();
@@ -429,7 +441,7 @@ function addPoint(mode, intersects, index){
 		sphere.scale.z = scale;
 	}
 
-	
+
 	if(mode == "getPointValMode"){
 		sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
 		var obj = scene.getObjectByName("pointsObj");
@@ -441,13 +453,13 @@ function addPoint(mode, intersects, index){
 		obj.add(sphere);
 		scene.add(obj);
 	}
-	
+
 }
 
 // draw line between two points
 function drawLineBetweenPoints(srcPoint, destPoint){
 	// console.log(srcPoint);
-	// console.log(destPoint);	
+	// console.log(destPoint);
 	var angleObj = scene.getObjectByName("angleObj");
 	var material = new THREE.LineBasicMaterial({
 		color: 0x000000
@@ -524,10 +536,10 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"</span></div>");
 				// <button style='float:right' data-id='"+pointId+
 				// "' onclick='delPoint(this);'>Del</button></div>");
-	}	
+	}
 }
 
-function updatePointsOnUI(item, point, pointId, mCurvature){	
+function updatePointsOnUI(item, point, pointId, mCurvature){
 	if(mCurvature !== undefined){
 		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 				   " y : "+parseFloat(point.position.y).toFixed(3)+
@@ -743,17 +755,17 @@ function deleteAllPoints(){
 }
 
 function hideObject(objName){
-	var obj = scene.getObjectByName(objName);	
-	obj.visible = false;	
+	var obj = scene.getObjectByName(objName);
+	obj.visible = false;
 }
 
 function showObject(objName){
-	var obj = scene.getObjectByName(objName);	
-	obj.visible = true;	
+	var obj = scene.getObjectByName(objName);
+	obj.visible = true;
 }
 
-function calculateArea(){		
-	var xProd = 0; 
+function calculateArea(){
+	var xProd = 0;
 	var yProd = 0;
 	$.each(linePointsPicked,function(index,val){
 		if(index == linePointsPicked.length-1){
@@ -762,7 +774,7 @@ function calculateArea(){
 		} else{
 			xProd = xProd + (linePointsPicked[index].coordinates.x * linePointsPicked[index+1].coordinates.y);
 			yProd = yProd + (linePointsPicked[index].coordinates.y * linePointsPicked[index+1].coordinates.x);
-		}		
+		}
 	});
 	var area = Math.abs((xProd-yProd)/2);
 	console.log(area);
