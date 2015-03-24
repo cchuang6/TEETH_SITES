@@ -3,8 +3,9 @@ var getPointValMode = "disabled";
 var angleBtnMode = "disabled";
 var pointsPicked = [];
 var pointsPickedCounter = -1;
-var linePointsPicked = [];
-var linePointsPickedCounter = -1;
+var polyCounter = -1;
+var polyPointsPicked = [];
+var polyPointsPickedCounter = -1;
 var selectedPoint;
 var org_selectedPoint;
 var lastSelected;
@@ -18,7 +19,7 @@ $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto'
 // function to toggle rotation and point picking
 $('#rotationControl').click(function(){
 	angleBtnMode = "disabled";
-	$("#linePointsPickedInfo").hide();
+	$("#polyPointsPickedInfo").hide();
 	hideObject("angleObj");
 	showObject("pointsObj");
 	$("#rotationControl span:first").removeClass("icon-disabled");
@@ -84,7 +85,7 @@ $("#anglebtn").click(function(){
 	rotationState = "disabled";
 	getPointValMode = "disabled";
 	$("#pointsPickedInfo").hide();
-	$("#linePointsPickedInfo").show();
+	$("#polyPointsPickedInfo").show();
 	angleBtnMode = "enabled";
 	cameraControls.noRotate = true;
 	cameraControls.noPan = true;
@@ -207,7 +208,6 @@ function onDocumentMouseDown( event ) {
 		$('html,body').css('cursor','url("/static/css/images/webgl/handpress.png"), auto');
 	}
 	if(getPointValMode == "enabled"){
-		console.log("Mouse X: ", event.clientX,  " Y: ", event.clientY);
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		//return if nothing
 		if (intersects.length < 1) return;
@@ -239,33 +239,71 @@ function onDocumentMouseDown( event ) {
 	}
 	if(angleBtnMode == "enabled"){
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-		//return if nothing
+		if (intersects.length < 1) return;
 		var top_id = 0;
 		var pointId = intersects[top_id].object.pointId;
+		pointId = pointId == undefined ? -1 : pointId;
 		//add point onto scene
-		if(pointId == undefined && cameraControls.noRotate){
+
+		if(pointId == -1 && cameraControls.noRotate){
 			if( (event.button || event.which) === 1){
 				addPoint("angleBtnMode",intersects, top_id);
 			}
-		} else if(pointId == linePointsPicked[0].pointId){
-			if(linePointsPicked.length > 2){
-				drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
-				calculateArea();
+		}
+		else if(pointId == polyPointsPicked[polyCounter][1].pointId){
+			if(polyPointsPickedCounter > 1){
+				var poly = polyPointsPicked[polyCounter];
+				// calculateAngle(
+				// 	poly[polyPointsPickedCounter-1].coordinates,
+				// 	poly[polyPointsPickedCounter].coordinates,
+				// 	poly[polyPointsPickedCounter+1].coordinates);
+				closePolygon();
+				return;
 			}
 		}
-		// add line
-		if(linePointsPicked.length > 1){
-			drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-2],linePointsPicked[linePointsPicked.length-1]);
+		else{
+			return;
 		}
+
+		// add line
+		var poly = polyPointsPicked[polyCounter];
+		if(polyPointsPickedCounter > 0){
+			drawLineBetweenPoints(
+				poly[polyPointsPickedCounter],
+				poly[polyPointsPickedCounter+1]);
+		}
+
+		// if(polyPointsPickedCounter > 1){
+		// 	calculateAngle(
+		// 		poly[polyPointsPickedCounter-1].coordinates,
+		// 		poly[polyPointsPickedCounter].coordinates,
+		// 		poly[polyPointsPickedCounter+1].coordinates);
+
+		// }
 	}
 }
 
+function closePolygon(){
+	drawLineBetweenPoints(
+		polyPointsPicked[polyCounter][polyPointsPickedCounter+1],
+		polyPointsPicked[polyCounter][1]);
+	calculateAreaAngle();
+	// });
+	polyPointsPickedCounter = -1;
+}
 function onDocumentDBLClick(event){
 	if(angleBtnMode == "enabled"){
-		console.log("close area");
-		if(linePointsPicked.length > 2){
-			drawLineBetweenPoints(linePointsPicked[linePointsPicked.length-1],linePointsPicked[0]);
-				calculateArea();
+		//console.log("close area");
+		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+		if (intersects.length < 1) return;
+		var top_id = 0;
+		var pointId = intersects[top_id].object.pointId;
+
+		if(pointId == undefined) return;
+		else if(pointId == polyPointsPickedCounter &&
+		        polyPointsPickedCounter > 1)
+		{
+			closePolygon();
 		}
 
 	}
@@ -407,9 +445,9 @@ function addPoint(mode, intersects, index){
 
 	var point = intersects[index].point;
 
+	//push points on UI
 	if(mode == "getPointValMode"){
 		var mCurvature = getMeanCurvature(intersects, index);
-
 		pointsPickedCounter++;
 		if(!isNaN(mCurvature)){
 			pointsPicked.push({"pointId":pointsPickedCounter,"coordinates":point,"mCurvature":mCurvature});
@@ -419,9 +457,16 @@ function addPoint(mode, intersects, index){
 			displayPointsOnUI(mode,point,pointsPickedCounter);
 		}
 	} else if (mode == "angleBtnMode"){
-		linePointsPickedCounter++;
-		linePointsPicked.push({"pointId":linePointsPickedCounter,"coordinates":point});
-		displayPointsOnUI(mode,point,linePointsPickedCounter);
+		if(polyPointsPickedCounter == -1){
+			createPoly();
+			polyPointsPicked.push([]);
+			polyPointsPicked[polyCounter].push({"polyId": polyCounter});
+			displayPolyOnUI();
+		}
+		polyPointsPickedCounter++;
+		polyPointsPicked[polyCounter].push(
+		    {"pointId":polyPointsPickedCounter,"coordinates":point});
+		displayPointsOnUI(mode,point,polyPointsPickedCounter);
 	}
 
 	//create point
@@ -446,21 +491,33 @@ function addPoint(mode, intersects, index){
 		sphere.pointId = pointsPicked[pointsPicked.length-1].pointId;
 		var obj = scene.getObjectByName("pointsObj");
 		obj.add(sphere);
-		scene.add(obj);
+
 	} else if(mode == "angleBtnMode"){
-		sphere.pointId = linePointsPicked[linePointsPicked.length-1].pointId;
-		var obj = scene.getObjectByName("angleObj");
-		obj.add(sphere);
-		scene.add(obj);
+		//create new poly
+		sphere.pointId =
+			polyPointsPicked[polyCounter][polyPointsPickedCounter+1].pointId;
+
+		var polyObj = scene.getObjectByName("polyObj" + polyCounter);
+		//console.log(sphere.position);
+		polyObj.add(sphere);
 	}
 
+}
+
+function createPoly(){
+	//add angle obj
+	polyCounter++;
+	var polyObj = new THREE.Object3D();
+	polyObj.name = "polyObj" + polyCounter;
+	var angleObj = scene.getObjectByName("angleObj");
+	angleObj.add(polyObj);
 }
 
 // draw line between two points
 function drawLineBetweenPoints(srcPoint, destPoint){
 	// console.log(srcPoint);
 	// console.log(destPoint);
-	var angleObj = scene.getObjectByName("angleObj");
+	var polyObj = scene.getObjectByName("polyObj"+polyCounter);
 	var material = new THREE.LineBasicMaterial({
 		color: 0x000000
 	});
@@ -471,7 +528,7 @@ function drawLineBetweenPoints(srcPoint, destPoint){
 		destPoint.coordinates
 	);
 	var line = new THREE.Line( geometry, material );
-	angleObj.add( line );
+	polyObj.add( line );
 }
 
 function getMeanCurvature(intersects, index){
@@ -509,6 +566,13 @@ function rgbToMeanCurvature(red, green, blue){
 	}
 }
 
+function displayPolyOnUI(){
+	$("#polyPointsPickedInfo div:first").append(
+	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	  "<span> Poly ID : " + polyCounter +
+	  "</span></div>");
+}
+
 function displayPointsOnUI(mode,point,pointId,mCurvature){
 	if(mode == "getPointValMode"){
 		if(mCurvature !== undefined){
@@ -528,14 +592,11 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"' onclick='delPoint(this);'>Del</button></div>");
 		}
 	} else if(mode == "angleBtnMode"){
-		// $("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
-			$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
 				" z :"+parseFloat(point.z).toFixed(3)+
 				"</span></div>");
-				// <button style='float:right' data-id='"+pointId+
-				// "' onclick='delPoint(this);'>Del</button></div>");
 	}
 }
 
@@ -764,23 +825,78 @@ function showObject(objName){
 	obj.visible = true;
 }
 
-function calculateArea(){
+function calculateAreaAngle(){
 	var xProd = 0;
 	var yProd = 0;
-	$.each(linePointsPicked,function(index,val){
-		if(index == linePointsPicked.length-1){
-			xProd = xProd + (linePointsPicked[index].coordinates.x * linePointsPicked[0].coordinates.y);
-			yProd = yProd + (linePointsPicked[index].coordinates.y * linePointsPicked[0].coordinates.x);
+	var poly = polyPointsPicked[polyCounter]
+	var angles = [];
+	$.each(poly,function(index,val){
+		// the first index is poly ID
+		if(index == 0) return;
+		if(index == 1){
+			var theta =
+			calculateAngle(poly[polyPointsPickedCounter + 1].coordinates,
+			               poly[index].coordinates,
+			               poly[index+1].coordinates);
+			angles.push(theta);
+			//console.log("Angle: " + theta);
+
+		}
+		else if(index == poly.length-1){
+			xProd = xProd +
+					(poly[index].coordinates.x * poly[1].coordinates.y);
+			yProd = yProd +
+					(poly[index].coordinates.y * poly[1].coordinates.x);
+			var theta =
+			calculateAngle(poly[polyPointsPickedCounter].coordinates,
+			               poly[index].coordinates,
+			               poly[1].coordinates);
+			angles.push(theta);
+			//console.log("Angle: " + theta);
+
 		} else{
-			xProd = xProd + (linePointsPicked[index].coordinates.x * linePointsPicked[index+1].coordinates.y);
-			yProd = yProd + (linePointsPicked[index].coordinates.y * linePointsPicked[index+1].coordinates.x);
+			xProd = xProd +
+					(poly[index].coordinates.x * poly[index+1].coordinates.y);
+			yProd = yProd +
+				(poly[index].coordinates.y * poly[index+1].coordinates.x);
+
+			var theta =
+			calculateAngle(poly[index -1].coordinates,
+			               poly[index].coordinates,
+			               poly[index+1].coordinates);
+			angles.push(theta);
+			//console.log("Angle: " + theta);
 		}
 	});
 	var area = Math.abs((xProd-yProd)/2);
-	console.log(area);
-	$("#linePointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	//console.log(area);
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span> Area : " + parseFloat(area).toFixed(3) +
 				"</span></div>");
+	anglesStr = " ";
+	var count = 1;
+	$.each(angles, function(index, val){
+		anglesStr += parseInt(count) + "): " +
+					 parseFloat(val).toFixed(3) + ", ";
+		count++;
+	});
+
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span> Angles : " + anglesStr +
+				"</span></div>");
+}
+
+function calculateAngle(p1,p2,p3){
+	// console.log(v1 + " " + v2 + " " + v3);
+
+	var v1 = new THREE.Vector3();
+	v1.copy(p1).sub(p2);
+	var v2 = new THREE.Vector3();
+	v2.copy(p3).sub(p2);
+
+	var theta = v1.angleTo(v2) * 180.0 / Math.PI;
+	return theta;
+	//console.log(theta);
 }
 
 

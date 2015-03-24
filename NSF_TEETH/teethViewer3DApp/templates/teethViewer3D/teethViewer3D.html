@@ -99,11 +99,11 @@
                 <div id="tpTitle">{{filename}}
                     <span class="versioninfo">(v1)</span>
                 </div>
-                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance">
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="freedistbtn" role="button" aria-disabled="false" title="3D Distance" style="display: none">
                     <span class="ui-button-icon-primary ui-icon icon-fdist"></span>
                     <span class="ui-button-text">3D Distance</span>
                 </button>
-                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="ndistbtn" role="button" aria-disabled="false" title="Normal Distance">
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="ndistbtn" role="button" aria-disabled="false" title="Normal Distance"  style="display: none">
                     <span class="ui-button-icon-primary ui-icon icon-ndist"></span>
                     <span class="ui-button-text">Normal Distance</span>
                 </button>
@@ -111,7 +111,7 @@
                     <span class="ui-button-icon-primary ui-icon icon-angle icon-disabled"></span>
                     <span class="ui-button-text">Angle</span>
                 </button>
-                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen">
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="savescreenbtn" role="button" aria-disabled="false" title="Save Screen"  style="display: none">
                     <span class="ui-button-icon-primary ui-icon icon-camera"></span>
                     <span class="ui-button-text">Save Screen</span>
                 </button>
@@ -209,7 +209,7 @@
             <!-- TODO: activate different view from javascript -->
         <div class="textdisable" id="tpViewPoints" style="display: block;">
             <div class="tp3DStandardView textdisable" id="tp3DStandardView0" style="top: 10px; right: 20px;">
-                <button class="tp3DStandardViewName" id="tp3DStandardViewName0"></button>
+                <button class="tp3DStandardViewName" id="tp3DStandardViewName0"  style="display: none"></button>
             </div>
             <div class="tp3DStandardView textdisable" id="tp3DStandardView1" style="top: 50px; right: 60px;">
                 <button class="tp3DStandardViewName" id="tp3DStandardViewName1"></button>
@@ -229,8 +229,8 @@
             <div class="tp3DStandardView textdisable" id="tp3DStandardView6" style="top: 130px; right: 20px;">
                 <button class="tp3DStandardViewName" id="tp3DStandardViewName6"></button>
             </div>
-            <input class="bluebutton" type="button" value="Save View" id="saveviewbtn">
-            <input class="bluebutton" type="button" value="Set File Icon" id="setthmb">
+            <input class="bluebutton" type="button" value="Save View" id="saveviewbtn"  style="display: none">
+            <input class="bluebutton" type="button" value="Set File Icon" id="setthmb" style="display: none">
         </div>
         <div  class="dg ac" id="lightControl"> </div>
         <div class="textdisable" id="partInfoOnMouse"></div>
@@ -304,12 +304,12 @@
             <button onclick="deleteAllPoints();" style="margin-top:1%;">Delete All</button>
             <button onclick="exportPointsToCSV();" style="margin-top:1%;">Export to CSV</button>
         </div>
-        <div id="linePointsPickedInfo" class="textdisable" style="display: none;">
+        <div id="polyPointsPickedInfo" class="textdisable" style="display: none;">
             <h3>
-                Points Picked
+                Poly Points Picked
             </h3>
             <div style="text-align:left; height:225px; overflow-y: scroll;">
-            </div>            
+            </div>
         </div>
         <div id="pointPickerDiv" class="textdisable" style="display:none;">
             <p>--</p>

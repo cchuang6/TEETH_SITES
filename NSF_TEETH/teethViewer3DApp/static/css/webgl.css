@@ -2189,7 +2189,7 @@ body {
     -webkit-box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
     box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
 }
-#linePointsPickedInfo{
+#polyPointsPickedInfo{
     position: absolute;
     bottom: 15px;
     padding: 10px;
@@ -2289,7 +2289,7 @@ body {
     width:48px;
     height:48px;
     background-size:60% Auto;
-    margin-top: -5px !important;   
+    margin-top: -5px !important;
     left:8px!important
 }
 .on{
@@ -2321,7 +2321,7 @@ body {
     height:70px;
     background-image:url(images/webgl/pointPick.png)!important;
     background-size:40% Auto;
-    margin-top: -5px !important;    
+    margin-top: -5px !important;
     margin-left: -5px !important;
     opacity: 1.0;
 }
