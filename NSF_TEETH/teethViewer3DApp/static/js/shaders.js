@@ -651,6 +651,10 @@ function fillScene() {
 	pointsObj.name = "pointsObj";
 	scene.add(pointsObj);
 
+	//add angle obj
+	var angleObj = new THREE.Object3D();
+	angleObj.name = "angleObj";
+	scene.add(angleObj);
 
 	//Floor
 	// var helper = new THREE.GridHelper( 300, 10 );
@@ -806,16 +810,28 @@ function getScaleUnit(){
 function updatePointSize(){
 	
 	var pointsObj = scene.getObjectByName("pointsObj");
+	var angleObj = scene.getObjectByName("angleObj");
 	if(pointsObj == undefined) return;
-	
+	if(angleObj == undefined) return;
+	var scaleUnit = getScaleUnit();
+
 	pointsObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
 			
 			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
-			//console.log(distance);
-			// cameraToTarget.projectOnVector(cameraToObj).length();
 			if(distance > 0){
-				var scaleUnit = getScaleUnit();
+				var scale = (distance * scaleUnit)* orgPointScale;
+				child.scale.x = scale;
+				child.scale.y = scale;
+				child.scale.z = scale;
+			}
+		}
+	});
+
+	angleObj.traverse( function(child) {
+		if(child instanceof THREE.Mesh){
+			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+			if(distance > 0){
 				var scale = (distance * scaleUnit)* orgPointScale;
 				child.scale.x = scale;
 				child.scale.y = scale;
