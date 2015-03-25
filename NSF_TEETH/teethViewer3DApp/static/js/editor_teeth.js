@@ -5,6 +5,7 @@ var pointsPicked = [];
 var pointsPickedCounter = -1;
 var polyCounter = -1;
 var polyPointsPicked = [];
+var polyInfo = []
 var polyPointsPickedCounter = -1;
 var selectedPoint;
 var org_selectedPoint;
@@ -103,6 +104,85 @@ document.body.addEventListener('DOMMouseScroll', mousewheel, false ); // firefox
 
 function mousewheel(e){
 	updatePointSize();
+	var obj = scene.getObjectByName("angleObj");
+	if(obj.visible)
+		updatePolyInfo('block');
+}
+
+function getViewProjectionMatrix(){
+
+	var camera = cameraControls.object;
+	camera.updateMatrixWorld();
+    var near = camera.near;
+	var far = camera.far;
+	var fov = camera.fov;
+	var aspect = camera.aspect;
+	var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
+	var right = aspect * top;
+	
+	var camera = cameraControls.object;
+	var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
+	                   0.0, near/top, 0.0, 0.0,
+	                   0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
+	                   0.0, 0.0, -1.0, 0.0);
+	// // get view matrix
+	// var offset = new THREE.Vector3();
+	// offset.copy(cameraControls.object.position);
+	// //offset.sub(cameraControls.target);
+	
+	// var matrixCamera = new THREE.Matrix4().set(
+	//                         1.0, 0.0, 0.0, offset.x,
+	//                         0.0, 1.0, 0.0, offset.y,
+	//                         0.0, 0.0, 1.0, offset.z,
+	//                         0.0, 0.0, 0.0, 1.0);
+	// //multiply projection and transformation
+	var matrix = new THREE.Matrix4();
+	// return matrix.multiplyMatrices(proj, matrix.getInverse(matrixCamera));
+	return matrix.multiplyMatrices(proj, camera.matrixWorldInverse);
+}
+
+function updatePolyInfo(display){
+	
+
+	var leftOffset = container.offset().left;
+    var topOffset = container.offset().top;
+    var width = container.width();
+    var height = container.height();
+    var fontsize = parseInt($("body").css('font-size'), 10);
+    var matrix = getViewProjectionMatrix();
+    
+
+	$.each(polyInfo, function(i, val){
+		var polyId = val.polyId;
+		var center = val.center;
+		var angleInfo_pos = val.angleInfo_pos;		
+		var poly = document.getElementsByClassName("poly"+polyId);
+
+		$.each(poly, function(j, val){
+			if(display == 'none'){
+				poly[j].style.display = 'none';
+				return;
+			}
+			else if(display == 'block' && poly[j].style.display == 'none'){
+				poly[j].style.display = 'block';
+			}
+			var pos;
+			var msg = poly[j].innerHTML;
+			var num_char = msg.length;
+			if(j == 0){
+				pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+			}
+			else if (j > 0){
+				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
+				num_char -= 4;
+			}
+			pos.x -= fontsize / 4 * num_char;
+			pos.y -= fontsize / 2;
+			poly[j].style.left = pos.x + 'px' ;
+			poly[j].style.top = pos.y + 'px';	
+			
+		});
+	});
 }
 
 // event listener that gets x,y,z on mouse hover
@@ -272,14 +352,6 @@ function onDocumentMouseDown( event ) {
 				poly[polyPointsPickedCounter],
 				poly[polyPointsPickedCounter+1]);
 		}
-
-		// if(polyPointsPickedCounter > 1){
-		// 	calculateAngle(
-		// 		poly[polyPointsPickedCounter-1].coordinates,
-		// 		poly[polyPointsPickedCounter].coordinates,
-		// 		poly[polyPointsPickedCounter+1].coordinates);
-
-		// }
 	}
 }
 
@@ -287,10 +359,85 @@ function closePolygon(){
 	drawLineBetweenPoints(
 		polyPointsPicked[polyCounter][polyPointsPickedCounter+1],
 		polyPointsPicked[polyCounter][1]);
-	calculateAreaAngle();
-	// });
+	var result = calculatePolyInfo(polyCounter);
+	var area = result.area;
+	var center = result.center;
+	var angles = result.angles;
+	var angleInfo_pos = result.angleInfo_pos;
+	polyInfo.push({polyId: polyCounter, center: center, angleInfo_pos: angleInfo_pos});
+	
+	render2DText(polyCounter, "area", center, parseFloat(area).toFixed(2).toString());
+	$.each(angleInfo_pos, function(index, val){
+		render2DText(polyCounter, "v"+ index, val, parseFloat(angles[index]).toFixed(2).toString() + "&deg;");
+	});
+	
+
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span> Area : " + parseFloat(area).toFixed(3) +
+				"</span></div>");
+	anglesStr = " ";
+	var count = 1;
+	$.each(angles, function(index, val){
+		anglesStr += parseInt(count) + "): " +
+					 parseFloat(val).toFixed(3) + ", ";
+		count++;
+	});
+
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span> Angles : " + anglesStr +
+				"</span></div>");
+
+
+
 	polyPointsPickedCounter = -1;
 }
+
+
+//with specific div 
+function render2DText(polyId, name, center, msg){
+	var text = document.createElement('div');
+	text.className = "poly" + polyId;
+	text.id = name;
+	text.style.position = 'absolute';
+	text.style.dispaly = 'block';
+
+	var fontsize = parseInt($("body").css('font-size'), 10);
+	text.innerHTML = msg;
+	var leftOffset = container.offset().left;
+    var topOffset = container.offset().top;
+    var width = container.width();
+    var height = container.height();
+
+
+    var leftOffset = container.offset().left;
+    var topOffset = container.offset().top;
+    var width = container.width();
+    var height = container.height();
+    var fontsize = parseInt($("body").css('font-size'), 10);
+
+	var matrix = getViewProjectionMatrix();
+	pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+
+	var num_char = msg.length;
+
+	if(msg.indexOf("&deg;") > -1) num_char -= 4;
+	pos.x -= fontsize / 4 * num_char;
+	pos.y -= fontsize / 2;
+	//console.log(pos);
+	text.style.left = pos.x + 'px' ;
+	text.style.top = pos.y + 'px';
+	document.body.appendChild(text);
+}
+
+function toXYCoords (pos, matrix, width, height, leftOffset, topOffset) {
+		var vector = new THREE.Vector3().copy(pos);
+        vector = vector.applyProjection(matrix);        
+        
+        vector.x = (vector.x + 1)/2.0 * container.width() + leftOffset;
+        vector.y = -(vector.y - 1)/2.0 * container.height() + topOffset;
+        return vector;
+}
+
 function onDocumentDBLClick(event){
 	if(angleBtnMode == "enabled"){
 		//console.log("close area");
@@ -444,7 +591,7 @@ function getRayCastIntersects(x, y){
 function addPoint(mode, intersects, index){
 
 	var point = intersects[index].point;
-
+	//console.log(intersects);
 	//push points on UI
 	if(mode == "getPointValMode"){
 		var mCurvature = getMeanCurvature(intersects, index);
@@ -818,28 +965,40 @@ function deleteAllPoints(){
 function hideObject(objName){
 	var obj = scene.getObjectByName(objName);
 	obj.visible = false;
+	if(objName == 'angleObj')
+		updatePolyInfo('none');
 }
 
 function showObject(objName){
 	var obj = scene.getObjectByName(objName);
 	obj.visible = true;
+	if(objName == 'angleObj')
+		updatePolyInfo('block');
 }
 
-function calculateAreaAngle(){
+function calculatePolyInfo(polyId){
+	
 	var xProd = 0;
 	var yProd = 0;
-	var poly = polyPointsPicked[polyCounter]
+	var poly = polyPointsPicked[polyId]
 	var angles = [];
+	var angleInfo_pos = [];
+	var center = new THREE.Vector3();
+	var poly = polyPointsPicked[polyId];
+	
 	$.each(poly,function(index,val){
 		// the first index is poly ID
 		if(index == 0) return;
+		center.x += val.coordinates.x;
+		center.y += val.coordinates.y;
+		center.z += val.coordinates.z;
 		if(index == 1){
-			var theta =
+			var result =
 			calculateAngle(poly[polyPointsPickedCounter + 1].coordinates,
 			               poly[index].coordinates,
 			               poly[index+1].coordinates);
-			angles.push(theta);
-			//console.log("Angle: " + theta);
+			angles.push(result.theta);
+			angleInfo_pos.push(result.lerp);
 
 		}
 		else if(index == poly.length-1){
@@ -847,12 +1006,12 @@ function calculateAreaAngle(){
 					(poly[index].coordinates.x * poly[1].coordinates.y);
 			yProd = yProd +
 					(poly[index].coordinates.y * poly[1].coordinates.x);
-			var theta =
+			var result =
 			calculateAngle(poly[polyPointsPickedCounter].coordinates,
 			               poly[index].coordinates,
 			               poly[1].coordinates);
-			angles.push(theta);
-			//console.log("Angle: " + theta);
+			angles.push(result.theta);
+			angleInfo_pos.push(result.lerp);
 
 		} else{
 			xProd = xProd +
@@ -860,30 +1019,27 @@ function calculateAreaAngle(){
 			yProd = yProd +
 				(poly[index].coordinates.y * poly[index+1].coordinates.x);
 
-			var theta =
+			var result =
 			calculateAngle(poly[index -1].coordinates,
 			               poly[index].coordinates,
 			               poly[index+1].coordinates);
-			angles.push(theta);
-			//console.log("Angle: " + theta);
+			angles.push(result.theta);
+			angleInfo_pos.push(result.lerp);
 		}
 	});
-	var area = Math.abs((xProd-yProd)/2);
-	//console.log(area);
-	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
-				"<span> Area : " + parseFloat(area).toFixed(3) +
-				"</span></div>");
-	anglesStr = " ";
-	var count = 1;
-	$.each(angles, function(index, val){
-		anglesStr += parseInt(count) + "): " +
-					 parseFloat(val).toFixed(3) + ", ";
-		count++;
-	});
 
-	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
-				"<span> Angles : " + anglesStr +
-				"</span></div>");
+	center.x /= (polyPointsPickedCounter + 1);
+	center.y /= (polyPointsPickedCounter + 1);
+	center.z /= (polyPointsPickedCounter + 1);
+	
+	var area = Math.abs((xProd-yProd)/2);
+
+	return { area: area,
+			 center: center,
+			 angles: angles,
+			 angleInfo_pos: angleInfo_pos
+	        };
+	
 }
 
 function calculateAngle(p1,p2,p3){
@@ -893,10 +1049,23 @@ function calculateAngle(p1,p2,p3){
 	v1.copy(p1).sub(p2);
 	var v2 = new THREE.Vector3();
 	v2.copy(p3).sub(p2);
-
 	var theta = v1.angleTo(v2) * 180.0 / Math.PI;
-	return theta;
-	//console.log(theta);
+
+	var lerp = new THREE.Vector3();
+	v1.multiplyScalar(-1.0);
+	v2.multiplyScalar(-1.0);
+	lerp.subVectors(v2, v1).multiplyScalar(0.5).add(v1).normalize();
+	var scaleUnit = getScaleUnit();
+	if(distance < 0 ) return;
+	var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+	var scale = (distance * scaleUnit)* lerp.length() * 3.0;
+	lerp.x *= scale;
+	lerp.y *= scale;
+	lerp.add(p2);
+
+	
+	return {theta: theta,
+			lerp: lerp};
 }
 
 

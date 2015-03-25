@@ -767,10 +767,14 @@ function getScaleUnit(){
 	                            0.0, near/top, 0.0, 0.0,
 	                            0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
 	                            0.0, 0.0, -1.0, 0.0);
+
+	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
+	var quatInverse = quat.clone().inverse();
 	// get view matrix
 	var offset = new THREE.Vector3();
 	offset.copy(cameraControls.object.position);
 	offset.sub(cameraControls.target);
+	//offset.applyQuaternion( quat );
 	// angle from z-axis around y-axis
 	var theta = Math.atan2( offset.x, offset.z );
 	// 	// angle from y-axis
@@ -780,6 +784,7 @@ function getScaleUnit(){
 	offset.x = radius * Math.sin( phi ) * Math.sin(theta);
 	offset.y = radius * Math.cos( phi );
 	offset.z = radius * Math.sin( phi ) * Math.cos(theta);
+	//offset.applyQuaternion( quatInverse );
 	//offset.sub(cameraControls.target);
 	var matrixCamera = new THREE.Matrix4().set(
 	                        1.0, 0.0, 0.0, offset.x,
