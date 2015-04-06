@@ -987,6 +987,8 @@ $(function(){
 					}
 				});
 			$("#tpHueHelp").hide();
+			$("#tpLegend").hide();
+			$("#tpScale").hide();
 
 		}
 		else if(curvatureState == 'disabled' && wireframeState == 'enabled'){
@@ -1004,6 +1006,8 @@ $(function(){
     function renderVertextColor(object){
     	// show hue helper
     	$("#tpHueHelp").show();
+    	$("#tpLegend").show();
+    	$("#tpScale").show();
 		object.traverse( function(child){
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
@@ -1026,6 +1030,8 @@ $(function(){
     function renderPhongShader(object){
     	// hide hue helper
 		$("#tpHueHelp").hide();
+		$("#tpLegend").hide();
+		$("#tpScale").hide();
 		object.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');

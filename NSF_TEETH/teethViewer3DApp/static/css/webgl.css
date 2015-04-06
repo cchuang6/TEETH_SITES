@@ -1810,20 +1810,39 @@ body {
     padding:10px;
     color:black;
     margin-top:5%;
-    right:0%;
+    right:5%;
     -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
     filter:alpha(opacity=75);
     opacity:.75;
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
     border-radius:5px;
-    width:280px;
+    width:60px;
     z-index:999;
     text-align:center;
     top:120px;
     background-color:white;
     color:white;
     padding:5px 10px
+}
+#tpLegend{
+    position:absolute;
+    padding:10px;
+    color:black;
+    margin-top:5%;
+    right:-4.5%;    
+    z-index:999;    
+    top:165px;
+}
+#tpScale{
+    position:absolute;
+    padding:10px;
+    color:black;
+    margin-top:5%;
+    right:-26.5%;    
+    z-index:1999;    
+    top:85px;
+    /*height: 300px;   */
 }
 #tpMousePositionInfo {
     top:150px;
@@ -2720,11 +2739,45 @@ span.custom1 a
 }
 
 #mCurvatureGradient{
-    height: 50px;
-    background: -webkit-linear-gradient(left, hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Safari 5.1 to 6.0 */
-    background: -o-linear-gradient(right,  hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Opera 11.1 to 12.0 */
-    background: -moz-linear-gradient(right, hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Firefox 3.6 to 15 */
-    background: linear-gradient(to right,  hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* Standard syntax (must be last) */
+    width: 20px;
+    float: left;
+    height: 250px;
+    /*background: -webkit-linear-gradient(left, hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Safari 5.1 to 6.0 */
+    /*background: -o-linear-gradient(right,  hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Opera 11.1 to 12.0 */
+    /*background: -moz-linear-gradient(right, hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Firefox 3.6 to 15 */
+    /*background: linear-gradient(to right,  hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* Standard syntax (must be last) */
+    background: -webkit-linear-gradient(hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(hsl(0, 100%, 50%) , hsl(60,100%, 50%), hsl(120,100%, 50%), hsl(180,100%, 50%), hsl(240,100%, 50%)); /* Standard syntax (must be last) */
+}
+
+#gradientScale {
+    background: black;
+    width: 3px;
+    margin-right: 2px;
+    float: left;
+    height: 250px;
+}
+
+.vertical-text {
+    transform: rotate(90deg);
+    transform-origin: left top 0;
+    /*-webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+
+  /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+  /*-webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;*/
+
+  /* Should be unset in IE9+ I think. */
+  /*filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);*/
 }
 
 /*.axis path,

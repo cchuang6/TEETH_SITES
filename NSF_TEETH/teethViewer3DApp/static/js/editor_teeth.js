@@ -1263,15 +1263,47 @@ function calculate2DDistance(p1,p2){
 
 // rendering scales
 function createScale(){
-	// var padding = 30;
-	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);
+
+	var w = 500;
+	var h = 310;
+	var padding = 30;
+
+	//Create SVG element
+	var svg = d3.select("#tpScale")
+				.append("svg")
+				.attr("width", w)
+				.attr("height", h);	
+
+	var yScale = d3.scale.linear()
+								 .domain([1, 0])
+								 .range([h - padding, padding]);				
+
+	//Define Y axis
+	var yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient("left")
+                  .ticks(10);
+
+
+	//Create Y axis
+	svg.append("g")
+	    .attr("class", "axis")
+	    .attr("transform", "translate(" + padding + ",0)")
+	    .call(yAxis);
+
+
+	// var padding = 100;
+	// var axisScale = d3.scale.linear().domain([0,1]).range([0,140]);
 	// var yAxis = d3.svg.axis().scale(axisScale).orient("left");
-	// var svgContainer = d3.select("#tpHueHelp").insert("svg:svg");
+	// var svgContainer = d3.select("#tpScale").insert("svg:svg");
 	// svgContainer.append("g").attr("class", "axis").attr("transform", "translate(" + padding + ",0)").call(yAxis);
-	var xAxis = d3.svg.axis().scale(axisScale);
-	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);
-	var xAxisGroup = svgContainer.append("g").call(xAxis);
-	$("#tpHueHelp svg").css("margin-top","1px");
+	
+	// var xAxis = d3.svg.axis().scale(axisScale);
+	// var svgContainer = d3.select("#tpScale").append("svg:svg").attr("width", 300).attr("height", 20);
+	// var xAxisGroup = svgContainer.append("g").call(xAxis);
+	
+	// $("#tpScale svg").css("padding-top","10px");
+	// $("#tpScale svg").css("height","500px");
 }
 
 createScale();
