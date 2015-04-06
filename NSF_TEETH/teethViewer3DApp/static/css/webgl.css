@@ -1810,7 +1810,7 @@ body {
     padding:10px;
     color:black;
     margin-top:5%;
-    left:2%;
+    right:0%;
     -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
     filter:alpha(opacity=75);
     opacity:.75;
@@ -2191,10 +2191,29 @@ body {
 }
 #polyPointsPickedInfo{
     position: absolute;
+    bottom: 255px;
+    padding: 10px;
+    left: 5px;
+    height: 200px;
+    width: 250px;
+    text-align: center;
+    color: black;
+    background-color: #dfdfdf;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+    filter: alpha(opacity=75);
+    opacity: .75;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
+    box-shadow: rgba(0, 0, 0, 0.15) 2px 2px 2px;
+}
+#polyPointsPickedInfo3D{
+    position: absolute;
     bottom: 15px;
     padding: 10px;
     left: 5px;
-    height: 300px;
+    height: 200px;
     width: 250px;
     text-align: center;
     color: black;

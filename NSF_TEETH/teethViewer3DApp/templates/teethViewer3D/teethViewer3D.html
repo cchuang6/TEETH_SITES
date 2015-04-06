@@ -305,11 +305,18 @@
             <button onclick="exportPointsToCSV();" style="margin-top:1%;">Export to CSV</button>
         </div>
         <div id="polyPointsPickedInfo" class="textdisable" style="display: none;">
-            <h3>
-                Poly Points Picked
-            </h3>
-            <div style="text-align:left; height:225px; overflow-y: scroll;">
+            <input type="checkbox" checked id="polyPoints2DCheck"><span style="font-size:1.17em; font-weight:bold;">Poly Points Picked - 2D Info</span>
+            <div style="text-align:left; height:150px; overflow-y: scroll;">
             </div>
+            <button onclick="deleteAllPoints(this);" style="margin-top:1%;">Delete All</button>
+            <button onclick="exportPointsToCSV(this);" style="margin-top:1%;">Export to CSV</button>
+        </div>
+        <div id="polyPointsPickedInfo3D" class="textdisable" style="display: none;">
+            <input type="checkbox" id="polyPoints3DCheck"><span style="font-size:1.17em; font-weight:bold;">Poly Points Picked - 3D Info</span>            
+            <div style="text-align:left; height:150px; overflow-y: scroll;">
+            </div>
+            <button onclick="deleteAllPoints(this);" style="margin-top:1%;">Delete All</button>
+            <button onclick="exportPointsToCSV(this);" style="margin-top:1%;">Export to CSV</button>
         </div>
         <div id="pointPickerDiv" class="textdisable" style="display:none;">
             <p>--</p>
