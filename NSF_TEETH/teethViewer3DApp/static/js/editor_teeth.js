@@ -111,34 +111,42 @@ function mousewheel(e){
 
 function getViewProjectionMatrix(){
 
-	var camera = cameraControls.object;
-	camera.updateMatrixWorld();
-    var near = camera.near;
-	var far = camera.far;
-	var fov = camera.fov;
-	var aspect = camera.aspect;
-	var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
-	var right = aspect * top;
+	//var camera = cameraControls.object;
+	// camera.updateMatrixWorld();
+ //    var near = camera.near;
+	// var far = camera.far;
+	// var fov = camera.fov;
+	// var aspect = camera.aspect;
+	// var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
+	// var right = aspect * top;
 	
-	var camera = cameraControls.object;
-	var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
-	                   0.0, near/top, 0.0, 0.0,
-	                   0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
-	                   0.0, 0.0, -1.0, 0.0);
+	// var camera = cameraControls.object;
+	// var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
+	//                    0.0, near/top, 0.0, 0.0,
+	//                    0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
+	//                    0.0, 0.0, -1.0, 0.0);
+	//var proj = camera.projection;
 	// // get view matrix
-	// var offset = new THREE.Vector3();
-	// offset.copy(cameraControls.object.position);
+	
+	var offset = new THREE.Vector3();
+	offset.copy(cameraControls.object.position);
 	// //offset.sub(cameraControls.target);
 	
-	// var matrixCamera = new THREE.Matrix4().set(
-	//                         1.0, 0.0, 0.0, offset.x,
-	//                         0.0, 1.0, 0.0, offset.y,
-	//                         0.0, 0.0, 1.0, offset.z,
-	//                         0.0, 0.0, 0.0, 1.0);
+	
+	// var rotationM = new THREE.Matrix4();
+	// rotationM.lookAt( camera.position, cameraControls.target, camera.up);
+	// var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
+	// quat.setFromRotationMatrix(rotationM);
+
+	// var scale = new THREE.Vector3();
+	// scale.copy(cameraControls.object.scale);
+	var matrixCamera = new THREE.Matrix4();
+	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
+	//matrixCamera.quaternion.setFromRotationMatrix(rotationM);
 	// //multiply projection and transformation
 	var matrix = new THREE.Matrix4();
-	// return matrix.multiplyMatrices(proj, matrix.getInverse(matrixCamera));
-	return matrix.multiplyMatrices(proj, camera.matrixWorldInverse);
+	return matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
+	//return matrix.multiplyMatrices(proj, camera.matrixWorldInverse);
 }
 
 function updatePolyInfo(display){
@@ -151,7 +159,7 @@ function updatePolyInfo(display){
     var fontsize = parseInt($("body").css('font-size'), 10);
     var matrix = getViewProjectionMatrix();
     
-
+    //TODO deal with pos < 0
 	$.each(polyInfo, function(i, val){
 		var polyId = val.polyId;
 		var center = val.center;
@@ -175,6 +183,12 @@ function updatePolyInfo(display){
 			else if (j > 0){
 				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
 				num_char -= 4;
+			}
+
+			if (pos.x < leftOffset || pos.y < topOffset || pos.x > width + leftOffset)
+			{
+				poly[j].style.display = 'none';
+				return;
 			}
 			pos.x -= fontsize / 4 * num_char;
 			pos.y -= fontsize / 2;

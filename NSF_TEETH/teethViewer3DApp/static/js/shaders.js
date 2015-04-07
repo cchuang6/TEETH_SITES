@@ -22,7 +22,8 @@ var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
 var orgPointScale = 12;
-
+var cameraQuat;
+var cameraProj;
 
 
 
@@ -99,9 +100,27 @@ function onWindowResize() {
 
 	camera.aspect = canvasWidth / canvasHeight;
 	camera.updateProjectionMatrix();
+	updateCameraProj();
 	renderer.setSize(canvasWidth, canvasHeight);
 }
+function updateCameraProj()
+{
+	var camera = cameraControls.object;
 
+	var near = camera.near;
+	var far = camera.far;
+	var fov = camera.fov;
+	var aspect = camera.aspect;
+	var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
+	var right = aspect * top;
+
+	var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
+	                            0.0, near/top, 0.0, 0.0,
+	                            0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
+	                            0.0, 0.0, -1.0, 0.0);
+	cameraProj = proj;
+
+}
 function loadShader(shadertype) {
   return document.getElementById(shadertype).textContent;
 }
@@ -341,6 +360,7 @@ function loadSTL(url){
 		var camera = cameraControls.object;
 		camera.fov = centMesh.fov;
 		camera.updateProjectionMatrix();
+		updateCameraProj();
 
 		//add mesh to scene
 
@@ -403,6 +423,7 @@ function loadDAE(url){
 				var camera = cameraControls.object;
 				camera.fov = centMesh.fov;
 				camera.updateProjectionMatrix();
+				updateProjectionMatrix();
 				centMesh.mesh.material = phongBalancedMaterial;
 				centMesh.mesh.material.needsUpdate = true;
 				centMesh.mesh.geometry.buffersNeedUpdate = true;
@@ -754,27 +775,14 @@ var BinaryStlWriter = (function() {
 function getScaleUnit(){
 	//get projection matrix
 	var camera = cameraControls.object;
-	var orgPosition = new THREE.Vector3();
-
-	var near = camera.near;
-	var far = camera.far;
-	var fov = camera.fov;
-	var aspect = camera.aspect;
-	var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
-	var right = aspect * top;
-
-	var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
-	                            0.0, near/top, 0.0, 0.0,
-	                            0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
-	                            0.0, 0.0, -1.0, 0.0);
+	// get view matrix
+	var offset = new THREE.Vector3();
+	offset.copy(camera.position);
+	offset.sub(cameraControls.target);
 
 	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
 	var quatInverse = quat.clone().inverse();
-	// get view matrix
-	var offset = new THREE.Vector3();
-	offset.copy(cameraControls.object.position);
-	offset.sub(cameraControls.target);
-	//offset.applyQuaternion( quat );
+	offset.applyQuaternion( quat );
 	// angle from z-axis around y-axis
 	var theta = Math.atan2( offset.x, offset.z );
 	// 	// angle from y-axis
@@ -784,25 +792,47 @@ function getScaleUnit(){
 	offset.x = radius * Math.sin( phi ) * Math.sin(theta);
 	offset.y = radius * Math.cos( phi );
 	offset.z = radius * Math.sin( phi ) * Math.cos(theta);
-	//offset.applyQuaternion( quatInverse );
-	//offset.sub(cameraControls.target);
-	var matrixCamera = new THREE.Matrix4().set(
-	                        1.0, 0.0, 0.0, offset.x,
-	                        0.0, 1.0, 0.0, offset.y,
-	                        0.0, 0.0, 1.0, offset.z,
-	                        0.0, 0.0, 0.0, 1.0);
+	offset.applyQuaternion( quatInverse );
+	offset.add(cameraControls.target);
+
+	// var matrixCamera = new THREE.Matrix4().set(
+	//                         1.0, 0.0, 0.0, offset.x,
+	//                         0.0, 1.0, 0.0, offset.y,
+	//                         0.0, 0.0, 1.0, offset.z,
+	//                         0.0, 0.0, 0.0, 1.0);
 	//multiply projection and transformation
+	// // get view matrix
+	
+	
+	var rotationM = new THREE.Matrix4();
+	rotationM.lookAt( camera.position, cameraControls.target, camera.up);
+	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
+	quat.setFromRotationMatrix(rotationM);
+	cameraQuat = quat;
+
+	var matrixCamera = new THREE.Matrix4();
+	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
+
+
+
 	var matrix = new THREE.Matrix4();
-	matrix.multiplyMatrices(proj, matrix.getInverse(matrixCamera));
+	matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
+
+
+
+
 	// //projection
+	offset.sub(cameraControls.target);
 	offset.setLength(offset.length()*2.0);
 
 	var vec0 = new THREE.Vector3(0, 1.0, 0.0);
 	var vec1 = new THREE.Vector3(0, 1.0, 0.0).add(offset);
+	//var vec1 = new THREE.Vector3(0, 1.0, 1000.0)
 	//console.log(offset);
 	vec0 = vec0.applyProjection(matrix);
 	vec1 = vec1.applyProjection(matrix);
 	
+	//var scaleUnit =  (vec1.y/vec0.y)/1000.0;
 
 	var scaleUnit =  (vec1.y/vec0.y)/offset.length();
 	//check code here, use inner product to check code
