@@ -21,37 +21,42 @@ $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto'
 $('#rotationControl').click(function(){
 	angleBtnMode = "disabled";
 	$("#polyPointsPickedInfo").hide();
+	$("#polyPointsPickedInfo3D").hide();
 	hideObject("angleObj");
-	showObject("pointsObj");
+	// showObject("pointsObj");
 	$("#rotationControl span:first").removeClass("icon-disabled");
 	$("#anglebtn span:first").addClass("icon-disabled");
-	if(rotationState == "enabled"){
-		cameraControls.noRotate = true;
-		cameraControls.noPan = true;
-		rotationState = "disabled";
-		getPointValMode = "enabled";
-		$('#rotationControl span:first').removeClass("icon-rotate");
-		$('#rotationControl span:first').addClass("icon-pointpick");
-		$('html,body').css('cursor','default');
-		$('#getPointVal span:first').removeClass("icon-disabled");
-		if(rotationState == "enabled"){
-			cameraControls.noRotate = true;
-			cameraControls.noPan = true;
-			rotationState = "disabled";
-			$('#rotationControl span:first').addClass("icon-disabled");
-		}
-		$("#pointsPickedInfo").show();
-	}
-	else if(rotationState == "disabled"){
-		cameraControls.noRotate = false;
-		cameraControls.noPan = false;
-		rotationState = "enabled";
-		$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
-		$('#rotationControl span:first').removeClass("icon-pointpick");
-		$('#rotationControl span:first').addClass("icon-rotate");
-		getPointValMode = "disabled";
-		$("#pointsPickedInfo").hide();
-	}
+	cameraControls.noRotate = false;
+	cameraControls.noPan = false;
+	rotationState = "enabled";
+	$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
+	// if(rotationState == "enabled"){
+	// 	cameraControls.noRotate = true;
+	// 	cameraControls.noPan = true;
+	// 	rotationState = "disabled";
+	// 	getPointValMode = "enabled";
+	// 	$('#rotationControl span:first').removeClass("icon-rotate");
+	// 	$('#rotationControl span:first').addClass("icon-pointpick");
+	// 	$('html,body').css('cursor','default');
+	// 	$('#getPointVal span:first').removeClass("icon-disabled");
+	// 	if(rotationState == "enabled"){
+	// 		cameraControls.noRotate = true;
+	// 		cameraControls.noPan = true;
+	// 		rotationState = "disabled";
+	// 		$('#rotationControl span:first').addClass("icon-disabled");
+	// 	}
+	// 	$("#pointsPickedInfo").show();
+	// }
+	// else if(rotationState == "disabled"){
+	// 	cameraControls.noRotate = false;
+	// 	cameraControls.noPan = false;
+	// 	rotationState = "enabled";
+	// 	$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
+	// 	$('#rotationControl span:first').removeClass("icon-pointpick");
+	// 	$('#rotationControl span:first').addClass("icon-rotate");
+	// 	getPointValMode = "disabled";
+	// 	$("#pointsPickedInfo").hide();
+	// }
 });
 
 
@@ -81,17 +86,40 @@ $('#rotationControl').click(function(){
 $("#anglebtn").click(function(){
 	$("#rotationControl span:first").addClass("icon-disabled");
 	$("#anglebtn span:first").removeClass("icon-disabled");
-	hideObject("pointsObj");
+	// hideObject("pointsObj");
 	showObject("angleObj");
 	rotationState = "disabled";
-	getPointValMode = "disabled";
-	$("#pointsPickedInfo").hide();
+	// getPointValMode = "disabled";
+	// $("#pointsPickedInfo").hide();
 	$("#polyPointsPickedInfo").show();
+	$("#polyPointsPickedInfo3D").show();
 	angleBtnMode = "enabled";
 	cameraControls.noRotate = true;
 	cameraControls.noPan = true;
 	$('html,body').css('cursor','default');
 });
+
+$("#polyPoints2DCheck").change(function(){
+	$("#polyPoints3DCheck").prop("checked", !$("#polyPoints3DCheck").prop("checked"));
+	toggleShow2DInfo();	
+});
+
+$("#polyPoints3DCheck").change(function(){
+	$("#polyPoints2DCheck").prop("checked", !$("#polyPoints2DCheck").prop("checked"));	
+	toggleShow2DInfo();	
+});
+
+function toggleShow2DInfo(){
+	// console.log(state);
+	var angleObj = scene.getObjectByName("angleObj");			
+	$.each(angleObj.children, function(index,val){						
+		// toggle 2D info visibility
+		var infoDivClass = "." + val.name;
+		$.each($(infoDivClass),function(i,v){
+			$(v).toggle();
+		});
+	});
+}
 
 document.addEventListener('mousedown', onDocumentMouseDown, false );
 document.addEventListener('dblclick', onDocumentDBLClick, false);
@@ -164,7 +192,7 @@ function updatePolyInfo(display){
 		var polyId = val.polyId;
 		var center = val.center;
 		var angleInfo_pos = val.angleInfo_pos;		
-		var poly = document.getElementsByClassName("poly"+polyId);
+		var poly = document.getElementsByClassName("polyObj"+polyId);
 
 		$.each(poly, function(j, val){
 			if(display == 'none'){
@@ -353,7 +381,7 @@ function onDocumentMouseDown( event ) {
 				// 	poly[polyPointsPickedCounter+1].coordinates);
 				closePolygon();
 				return;
-			}
+			}			
 		}
 		else{
 			return;
@@ -378,6 +406,7 @@ function closePolygon(){
 	var center = result.center;
 	var angles = result.angles;
 	var angleInfo_pos = result.angleInfo_pos;
+	var distance2D = result.distance2D;
 	polyInfo.push({polyId: polyCounter, center: center, angleInfo_pos: angleInfo_pos});
 	
 	render2DText(polyCounter, "area", center, parseFloat(area).toFixed(2).toString());
@@ -385,7 +414,7 @@ function closePolygon(){
 		render2DText(polyCounter, "v"+ index, val, parseFloat(angles[index]).toFixed(2).toString() + "&deg;");
 	});
 	
-
+	// 2D Info Update
 	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span> Area : " + parseFloat(area).toFixed(3) +
 				"</span></div>");
@@ -401,20 +430,41 @@ function closePolygon(){
 				"<span> Angles : " + anglesStr +
 				"</span></div>");
 
+	var distance2DStr = "";
+	count = 1;
+	$.each(distance2D, function(index, val){
+		distance2DStr += parseInt(count) + "): " +
+					 parseFloat(val).toFixed(3) + ", ";
+		count++;
+	});
 
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span> 2D Distances : " + distance2DStr +
+				"</span></div>");
 
 	polyPointsPickedCounter = -1;
+
+	// 3D Info Update
+	// $("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	// 			"<span> Area : " + parseFloat(area).toFixed(3) +
+	// 			"</span></div>");
+
+	// $("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	// 			"<span> Angles : " + anglesStr +
+	// 			"</span></div>");	
 }
 
 
 //with specific div 
 function render2DText(polyId, name, center, msg){
 	var text = document.createElement('div');
-	text.className = "poly" + polyId;
+	text.className = "polyObj" + polyId;
 	text.id = name;
 	text.style.position = 'absolute';
-	text.style.dispaly = 'block';
-
+	if($("#polyPoints2DCheck").prop("checked"))
+		text.style.display = 'block';
+	else
+		text.style.display = 'none';
 	var fontsize = parseInt($("body").css('font-size'), 10);
 	text.innerHTML = msg;
 	var leftOffset = container.offset().left;
@@ -618,6 +668,7 @@ function addPoint(mode, intersects, index){
 			displayPointsOnUI(mode,point,pointsPickedCounter);
 		}
 	} else if (mode == "angleBtnMode"){
+		var mCurvature = getMeanCurvature(intersects, index);		
 		if(polyPointsPickedCounter == -1){
 			createPoly();
 			polyPointsPicked.push([]);
@@ -627,7 +678,11 @@ function addPoint(mode, intersects, index){
 		polyPointsPickedCounter++;
 		polyPointsPicked[polyCounter].push(
 		    {"pointId":polyPointsPickedCounter,"coordinates":point});
-		displayPointsOnUI(mode,point,polyPointsPickedCounter);
+		if(!isNaN(mCurvature)){
+			displayPointsOnUI(mode,point,polyPointsPickedCounter, mCurvature);
+		} else {
+			displayPointsOnUI(mode,point,polyPointsPickedCounter);
+		}		
 	}
 
 	//create point
@@ -728,13 +783,20 @@ function rgbToMeanCurvature(red, green, blue){
 }
 
 function displayPolyOnUI(){
+	// 2D Info Update
 	$("#polyPointsPickedInfo div:first").append(
+	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	  "<span> Poly ID : " + polyCounter +
+	  "</span></div>");
+
+	// 3D Info Update
+	$("#polyPointsPickedInfo3D div:first").append(
 	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
 	  "<span> Poly ID : " + polyCounter +
 	  "</span></div>");
 }
 
-function displayPointsOnUI(mode,point,pointId,mCurvature){
+function displayPointsOnUI(mode,point,pointId,mCurvature){	
 	if(mode == "getPointValMode"){
 		if(mCurvature !== undefined){
 			$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
@@ -752,12 +814,38 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"</span><button style='float:right' data-id='"+pointId+
 				"' onclick='delPoint(this);'>Del</button></div>");
 		}
-	} else if(mode == "angleBtnMode"){
+	} else if(mode == "angleBtnMode"){		
+		if(mCurvature !== undefined){
+			// 2D Info Update
 			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
-				" z :"+parseFloat(point.z).toFixed(3)+
+				" z : "+parseFloat(point.z).toFixed(3)+
+				"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
 				"</span></div>");
+
+			// 3D Info Update
+			$("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z : "+parseFloat(point.z).toFixed(3)+
+				"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
+				"</span></div>");
+		} else {
+			// 2D Info Update
+			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z : "+parseFloat(point.z).toFixed(3)+
+				"</span></div>");
+
+			// 3D Info Update
+			$("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				" y : "+parseFloat(point.y).toFixed(3)+
+				" z : "+parseFloat(point.z).toFixed(3)+
+				"</span></div>");			
+		}
 	}
 }
 
@@ -927,53 +1015,126 @@ function delPoint(that,pointId){
 	//pointsPickedCounter = pointsObj.children.length -1;
 }
 
-function exportPointsToCSV(){
-	// console.log(pointsPicked);
-	var colorExport = false;
+function exportPointsToCSV(that){	
+	var tempArr = $(that).parent().find("div").map(function(){
+					return $(this).text();
+				  }).get(); // ignore the very first value in this array
 	var exportArray = [];
-	$.each(pointsPicked,function(index,val){
-		var pointVal = [];
-		if(val.hasOwnProperty('mCurvature')){
-			curvatureExport = true;
+	var csvContent = "";
+	$.each(tempArr, function(index,val){
+		if(index == 0){
+			return;
+		}	
+		if(val.indexOf("Poly") > -1){
+			csvContent += $.trim(val) + "\n";
+		} else if(val.indexOf("Area") > -1){
+			csvContent += $.trim(val) + "\n";
+		} else if(val.indexOf("Angles") > -1){
+			csvContent += "Angles" + "\n";
+			var values = val.split(":");
+			$.each(values, function(i,v){
+				if(v.indexOf(",") > 1){
+					csvContent += $.trim(v.split(",")[0]) + ",";
+				}				
+			});	
+			csvContent = csvContent.slice(0,-1);		
+			csvContent += "\n";
+		} else if(val.indexOf("2D Distances") > -1){
+			csvContent += "2D Distances" + "\n";
+			var values = val.split(":");
+			$.each(values, function(i,v){
+				if(v.indexOf(",") > 1){
+					csvContent += $.trim(v.split(",")[0]) + ",";
+				}				
+			});	
+			csvContent = csvContent.slice(0,-1);		
+			csvContent += "\n";
+		} else {		
+			// points	
+			var values = val.split(":");				
+			$.each(values, function(i,v){
+				if( i == 0)
+					return;								
+				csvContent += $.trim(v.replace(/[A-Za-z]/g,'')) + ",";
+				if(v.indexOf("curvature") > -1){
+					csvContent += "mean curvature: ";	
+				}
+			});	
+			csvContent = csvContent.slice(0,-1);		
+			csvContent += "\n";
 		}
-		pointVal.push(val.coordinates.x);
-		pointVal.push(val.coordinates.y);
-		pointVal.push(val.coordinates.z);
-		if(curvatureExport){
-			pointVal.push(val.mCurvature);
-		}
-		exportArray.push(pointVal);
 	});
-	var csvContent;
-	if(curvatureExport){
-		csvContent = 'X,Y,Z,mCurvature' + "\n";
-	}else{
-		csvContent = 'X,Y,Z' + "\n";
-	}
+	// console.log(csvContent);
 
-	exportArray.forEach(function(pointElements, index){
-		dataString = pointElements.join(",");
-		csvContent += dataString+ "\n";
-	});
+	// OLD CODE SNIPPET
+	// $.each(pointsPicked,function(index,val){
+	// 	var pointVal = [];
+	// 	if(val.hasOwnProperty('mCurvature')){
+	// 		curvatureExport = true;
+	// 	}
+	// 	pointVal.push(val.coordinates.x);
+	// 	pointVal.push(val.coordinates.y);
+	// 	pointVal.push(val.coordinates.z);
+	// 	if(curvatureExport){
+	// 		pointVal.push(val.mCurvature);
+	// 	}
+	// 	exportArray.push(pointVal);
+	// });
+	// var csvContent;
+	// if(curvatureExport){
+	// 	csvContent = 'X,Y,Z,mCurvature' + "\n";
+	// }else{
+	// 	csvContent = 'X,Y,Z' + "\n";
+	// }
+
+	// exportArray.forEach(function(pointElements, index){
+	// 	dataString = pointElements.join(",");
+	// 	csvContent += dataString+ "\n";
+	// });
+	// OLD CODE SNIPPET ENDS
+	
+
 	var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-	saveAs(blob, "pointsExport.csv");
+	saveAs(blob, "dataExport.csv");
 }
 
-function deleteAllPoints(){
-	$("#pointsPickedInfo div").children().remove();
-	var pointsObj = scene.getObjectByName("pointsObj");
-	$.each(pointsPicked, function(i){
-		$.each(pointsObj.children, function(key, val){
-			if(val.pointId == pointsPicked[i].pointId){
-		    	pointsObj.remove(val);
-		    	return false;
-			}
-		});
-	});
+function deleteAllPoints(that){
+	// following code is for point picker mode
+	// $("#pointsPickedInfo div").children().remove();
+	// var pointsObj = scene.getObjectByName("pointsObj");
+	// $.each(pointsPicked, function(i){
+	// 	$.each(pointsObj.children, function(key, val){
+	// 		if(val.pointId == pointsPicked[i].pointId){
+	// 	    	pointsObj.remove(val);
+	// 	    	return false;
+	// 		}
+	// 	});
+	// });
 
-	pointsPickedCounter = -1;
-	pointsPicked = [];
-	markedPointIds = [];
+	// pointsPickedCounter = -1;
+	// pointsPicked = [];
+	// markedPointIds = [];	
+	if($(that).parent().attr("id") == "polyPointsPickedInfo" || $(that).parent().attr("id") == "polyPointsPickedInfo3D"){
+		$("#polyPointsPickedInfo div").children().remove();	
+		$("#polyPointsPickedInfo3D div").children().remove();
+		var angleObj = scene.getObjectByName("angleObj");		
+		var toremove = [];
+		$.each(angleObj.children, function(index,val){				
+			toremove.push(val.name);			
+			// delete info divs if any
+			var infoDivClass = "." + val.name;
+			$.each($(infoDivClass),function(i,v){
+				$(v).remove();
+			});
+		});		
+		$.each(toremove,function(index,val){			
+			var objToRemove = scene.getObjectByName(val);
+			angleObj.remove(objToRemove);			
+		});
+		polyPointsPicked = [];
+		polyPointsPickedCounter = -1;
+		polyCounter = -1;
+	}
 }
 
 function hideObject(objName){
@@ -999,6 +1160,7 @@ function calculatePolyInfo(polyId){
 	var angleInfo_pos = [];
 	var center = new THREE.Vector3();
 	var poly = polyPointsPicked[polyId];
+	var distance2D = [];
 	
 	$.each(poly,function(index,val){
 		// the first index is poly ID
@@ -1048,10 +1210,33 @@ function calculatePolyInfo(polyId){
 	
 	var area = Math.abs((xProd-yProd)/2);
 
+	$.each(poly,function(index,val){
+		// the first index is poly ID
+		if(index == 0) return;
+		if(index == 1){
+			var result =
+			calculate2DDistance(poly[polyPointsPickedCounter + 1].coordinates,
+			               poly[index].coordinates);
+			distance2D.push(result);
+		}
+		else if(index == poly.length-1){			
+			var result =
+			calculate2DDistance(poly[polyPointsPickedCounter].coordinates,
+			               poly[index].coordinates);
+			distance2D.push(result);
+		} else{
+			var result =
+			calculate2DDistance(poly[index -1].coordinates,
+			               poly[index].coordinates);	
+			distance2D.push(result);		
+		}		
+	});
+
 	return { area: area,
 			 center: center,
 			 angles: angles,
-			 angleInfo_pos: angleInfo_pos
+			 angleInfo_pos: angleInfo_pos,
+			 distance2D: distance2D
 	        };
 	
 }
@@ -1082,18 +1267,57 @@ function calculateAngle(p1,p2,p3){
 			lerp: lerp};
 }
 
+function calculate2DDistance(p1,p2){	
+	var x = p2.x - p1.x;
+	var y = p2.y - p1.y;
+	var distance = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));		
+	return distance
+}
+
 
 // rendering scales
 function createScale(){
-	// var padding = 30;
-	var axisScale = d3.scale.linear().domain([0,1]).range([0,280]);
+
+	var w = 500;
+	var h = 310;
+	var padding = 30;
+
+	//Create SVG element
+	var svg = d3.select("#tpScale")
+				.append("svg")
+				.attr("width", w)
+				.attr("height", h);	
+
+	var yScale = d3.scale.linear()
+								 .domain([1, 0])
+								 .range([h - padding, padding]);				
+
+	//Define Y axis
+	var yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient("left")
+                  .ticks(10);
+
+
+	//Create Y axis
+	svg.append("g")
+	    .attr("class", "axis")
+	    .attr("transform", "translate(" + padding + ",0)")
+	    .call(yAxis);
+
+
+	// var padding = 100;
+	// var axisScale = d3.scale.linear().domain([0,1]).range([0,140]);
 	// var yAxis = d3.svg.axis().scale(axisScale).orient("left");
-	// var svgContainer = d3.select("#tpHueHelp").insert("svg:svg");
+	// var svgContainer = d3.select("#tpScale").insert("svg:svg");
 	// svgContainer.append("g").attr("class", "axis").attr("transform", "translate(" + padding + ",0)").call(yAxis);
-	var xAxis = d3.svg.axis().scale(axisScale);
-	var svgContainer = d3.select("#tpHueHelp").append("svg:svg").attr("width", 300).attr("height", 20);
-	var xAxisGroup = svgContainer.append("g").call(xAxis);
-	$("#tpHueHelp svg").css("margin-top","1px");
+	
+	// var xAxis = d3.svg.axis().scale(axisScale);
+	// var svgContainer = d3.select("#tpScale").append("svg:svg").attr("width", 300).attr("height", 20);
+	// var xAxisGroup = svgContainer.append("g").call(xAxis);
+	
+	// $("#tpScale svg").css("padding-top","10px");
+	// $("#tpScale svg").css("height","500px");
 }
 
 createScale();
