@@ -169,6 +169,12 @@ function getViewProjectionMatrix(){
 	// var scale = new THREE.Vector3();
 	// scale.copy(cameraControls.object.scale);
 	var matrixCamera = new THREE.Matrix4();
+	//console.log('offset', offset);
+	if(cameraQuat == undefined)
+		getScaleUnit();
+	//console.log('cameraQuat', cameraQuat);
+	//console.log('scale', cameraControls.object.scale);
+
 	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
 	//matrixCamera.quaternion.setFromRotationMatrix(rotationM);
 	// //multiply projection and transformation
@@ -1169,6 +1175,10 @@ function calculatePolyInfo(polyId){
 		center.y += val.coordinates.y;
 		center.z += val.coordinates.z;
 		if(index == 1){
+			xProd = xProd +
+					(poly[index].coordinates.x * poly[index+1].coordinates.y);
+			yProd = yProd +
+					(poly[index].coordinates.y * poly[index+1].coordinates.x);
 			var result =
 			calculateAngle(poly[polyPointsPickedCounter + 1].coordinates,
 			               poly[index].coordinates,
