@@ -30,6 +30,9 @@ $('#rotationControl').click(function(){
 	cameraControls.noPan = false;
 	rotationState = "enabled";
 	$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
+	//hide info
+	//hide2DInfo();
+
 	// if(rotationState == "enabled"){
 	// 	cameraControls.noRotate = true;
 	// 	cameraControls.noPan = true;
@@ -115,10 +118,39 @@ function toggleShow2DInfo(){
 	$.each(angleObj.children, function(index,val){						
 		// toggle 2D info visibility
 		var infoDivClass = "." + val.name;
+		console.log(infoDivClass);
 		$.each($(infoDivClass),function(i,v){
 			$(v).toggle();
 		});
 	});
+}
+
+function hide2DInfo(){
+	var angleObj = scene.getObjectByName("angleObj");			
+	$.each(angleObj.children, function(index,val){						
+		// toggle 2D info visibility
+		var infoDivClass = "." + val.name;
+		console.log(infoDivClass);
+		$.each($(infoDivClass),function(i,v){
+			$(v).hide();
+		});
+	});
+
+}
+
+function show2DInfo(){
+	updateCameraQuat();
+	updatePolyInfo('block');
+	var angleObj = scene.getObjectByName("angleObj");			
+	$.each(angleObj.children, function(index,val){						
+		// toggle 2D info visibility
+		var infoDivClass = "." + val.name;
+		console.log(infoDivClass);
+		$.each($(infoDivClass),function(i,v){
+			$(v).show();
+		});
+	});
+
 }
 
 document.addEventListener('mousedown', onDocumentMouseDown, false );
@@ -139,48 +171,17 @@ function mousewheel(e){
 
 function getViewProjectionMatrix(){
 
-	//var camera = cameraControls.object;
-	// camera.updateMatrixWorld();
- //    var near = camera.near;
-	// var far = camera.far;
-	// var fov = camera.fov;
-	// var aspect = camera.aspect;
-	// var top = Math.tan( THREE.Math.degToRad( fov * 0.5 ) ) * near;
-	// var right = aspect * top;
-	
-	// var camera = cameraControls.object;
-	// var proj = new THREE.Matrix4().set(near/right, 0.0, 0.0, 0.0,
-	//                    0.0, near/top, 0.0, 0.0,
-	//                    0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
-	//                    0.0, 0.0, -1.0, 0.0);
-	//var proj = camera.projection;
-	// // get view matrix
 	
 	var offset = new THREE.Vector3();
 	offset.copy(cameraControls.object.position);
-	// //offset.sub(cameraControls.target);
-	
-	
-	// var rotationM = new THREE.Matrix4();
-	// rotationM.lookAt( camera.position, cameraControls.target, camera.up);
-	// var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
-	// quat.setFromRotationMatrix(rotationM);
-
-	// var scale = new THREE.Vector3();
-	// scale.copy(cameraControls.object.scale);
 	var matrixCamera = new THREE.Matrix4();
 	//console.log('offset', offset);
 	if(cameraQuat == undefined)
-		getScaleUnit();
-	//console.log('cameraQuat', cameraQuat);
-	//console.log('scale', cameraControls.object.scale);
+		updateCameraQuat();
 
 	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
-	//matrixCamera.quaternion.setFromRotationMatrix(rotationM);
-	// //multiply projection and transformation
 	var matrix = new THREE.Matrix4();
 	return matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
-	//return matrix.multiplyMatrices(proj, camera.matrixWorldInverse);
 }
 
 function updatePolyInfo(display){
@@ -237,6 +238,7 @@ function updatePolyInfo(display){
 function onDocumentMouseMove( event ){
 	event.preventDefault();
 	event.stopPropagation();
+
 
 	if(outCanvas(event.clientX, event.clientY)){
 		$("#pointPickerDiv").hide();
@@ -321,6 +323,11 @@ function onDocumentMouseUp( event ){
 		$('html,body').css('cursor','auto');
 		return;
 	}
+	if(angleBtnMode == "enabled"){
+		if(!cameraControls.noRotate){
+			show2DInfo();
+		}
+	}
 }
 
 // event listener that handles point picking using raycaster
@@ -366,6 +373,9 @@ function onDocumentMouseDown( event ) {
 		}
 	}
 	if(angleBtnMode == "enabled"){
+		if(!cameraControls.noRotate){
+			hide2DInfo();
+		}
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
 		var top_id = 0;
@@ -540,6 +550,7 @@ function onDocumentKeyDown(event){
 		}
 		else if(angleBtnMode == "enabled"){
 			cameraControls.noRotate = false;
+			cameraControls.noPan = false;
 		}
 	}
 }
@@ -553,6 +564,8 @@ function onDocumentKeyUp(event){
 		}
 		else if(angleBtnMode == "enabled"){
 			cameraControls.noRotate = true;
+			cameraControls.noPan = true;
+			show2DInfo();
 		}
 	}
 }

@@ -119,6 +119,15 @@ function updateCameraProj()
 	                            0.0, 0.0, -1.0*(far+near)/(far-near), -2.0*(far*near)/(far-near),
 	                            0.0, 0.0, -1.0, 0.0);
 	cameraProj = proj;
+}
+
+function updateCameraQuat(){
+	var camera = cameraControls.object;
+	var rotationM = new THREE.Matrix4();
+	rotationM.lookAt( camera.position, cameraControls.target, camera.up);
+	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
+	quat.setFromRotationMatrix(rotationM);
+	cameraQuat = quat;
 
 }
 function loadShader(shadertype) {
@@ -803,12 +812,9 @@ function getScaleUnit(){
 	//multiply projection and transformation
 	// // get view matrix
 	
-	
-	var rotationM = new THREE.Matrix4();
-	rotationM.lookAt( camera.position, cameraControls.target, camera.up);
-	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
-	quat.setFromRotationMatrix(rotationM);
-	cameraQuat = quat;
+	//update cameraQuat 
+	if(cameraQuat == undefined)
+		updateCameraQuat();
 
 	var matrixCamera = new THREE.Matrix4();
 	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
