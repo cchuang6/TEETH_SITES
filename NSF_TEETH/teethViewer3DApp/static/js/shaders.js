@@ -423,7 +423,6 @@ function loadDAE(url){
 				var camera = cameraControls.object;
 				camera.fov = centMesh.fov;
 				camera.updateProjectionMatrix();
-				updateProjectionMatrix();
 				centMesh.mesh.material = phongBalancedMaterial;
 				centMesh.mesh.material.needsUpdate = true;
 				centMesh.mesh.geometry.buffersNeedUpdate = true;
