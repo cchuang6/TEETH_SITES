@@ -99,7 +99,7 @@ function onWindowResize() {
 	var canvasWidth = container.width();
 	var canvasHeight = container.height();
 	camera.aspect = canvasWidth / canvasHeight;
-	
+
 	//updateCameraProj();
 	if($("#polyPoints2DCheck").is(':checked')){
 		show2DInfo(true, false);
@@ -831,7 +831,7 @@ function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 	//console.log(offset);
 	vec0 = vec0.applyProjection(matrix);
 	vec1 = vec1.applyProjection(matrix);
-	
+
 	//var scaleUnit =  (vec1.y/vec0.y)/1000.0;
 
 	var scaleUnit =  (vec1.y/vec0.y)/offset.length();
@@ -843,7 +843,7 @@ function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 }
 
 function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
-	
+
 	var pointsObj = scene.getObjectByName("pointsObj");
 	var angleObj = scene.getObjectByName("angleObj");
 	if(pointsObj == undefined) return;
@@ -852,7 +852,7 @@ function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 
 	pointsObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
-			
+
 			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 			if(distance > 0){
 				var scale = (distance * scaleUnit)* orgPointScale;
@@ -895,7 +895,6 @@ function getViewProjectionMatrix(){
 }
 
 function updatePolyInfo(display){
-	console.log("updatePolyInfo");
 	if(scene == undefined)
     	return;
     var angleObj = scene.getObjectByName("angleObj");
@@ -907,7 +906,7 @@ function updatePolyInfo(display){
     var height = container.height();
     var fontsize = parseInt($("body").css('font-size'), 10);
     var matrix = getViewProjectionMatrix();
-    
+
 
 
 
@@ -916,7 +915,7 @@ function updatePolyInfo(display){
 	$.each(polyInfo, function(i, val){
 		var polyId = val.polyId;
 		var center = val.center;
-		var angleInfo_pos = val.angleInfo_pos;		
+		var angleInfo_pos = val.angleInfo_pos;
 		var poly = document.getElementsByClassName("polyObj"+polyId);
 
 		$.each(poly, function(j, val){
@@ -937,14 +936,14 @@ function updatePolyInfo(display){
 				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
 				num_char -= 4;
 			}
-			
+
 
 			if (pos.x < leftOffset || pos.y < topOffset || pos.x > width + leftOffset)
 			{
 				poly[j].style.display = 'none';
 				return;
 			}
-			
+
 			pos.x -= fontsize / 4 * num_char;
 			pos.y -= fontsize / 2;
 			poly[j].style.left = pos.x + 'px' ;
@@ -984,8 +983,8 @@ $(function(){
 		cameraControls.target.set(0,0,0);
 		camera.target = new THREE.Vector3();
 		updatePointSize(false, true);
-
-
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 
@@ -997,6 +996,8 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.target.set(0,0,0);
 		updatePointSize(false, true);
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 
@@ -1008,6 +1009,8 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		updatePointSize(false, true);
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 
@@ -1019,6 +1022,8 @@ $(function(){
 		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		updatePointSize(false, true);
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 
@@ -1030,6 +1035,8 @@ $(function(){
 		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		updatePointSize(false, true);
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 
@@ -1042,6 +1049,8 @@ $(function(){
 		cameraControls.rotateUp(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
 		updatePointSize(false, true);
+		if($("#polyPoints2DCheck").is(':checked'))
+			updatePolyInfo('block');
 	});
 
 	//show curvature  showcurvaturelbtn

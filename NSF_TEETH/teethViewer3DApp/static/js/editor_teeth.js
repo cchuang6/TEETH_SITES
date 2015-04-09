@@ -70,8 +70,8 @@ function onContainerDBLClick(event){
 		//console.log("close area");
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
-		var top_id = 0;
-		var pointId = intersects[top_id].object.pointId;
+		result = getAddPointIntersect(intersects);
+		var pointId = result.pointId;
 
 		if(pointId == undefined) return;
 		else if(pointId == polyPointsPickedCounter &&
@@ -116,15 +116,15 @@ $("#polyPoints2DCheck").change(function(){
 });
 
 $("#polyPoints3DCheck").change(function(){
-	//$("#polyPoints2DCheck").prop("checked", !$("#polyPoints2DCheck").prop("checked"));	
-	toggle2DInfo();	
+	//$("#polyPoints2DCheck").prop("checked", !$("#polyPoints2DCheck").prop("checked"));
+	toggle2DInfo();
 });
 
 function toggle2DInfo(checked){
 	// console.log(state);
 
-	var angleObj = scene.getObjectByName("angleObj");			
-	$.each(angleObj.children, function(index,val){						
+	var angleObj = scene.getObjectByName("angleObj");
+	$.each(angleObj.children, function(index,val){
 		// toggle 2D info visibility
 		var infoDivClass = "." + val.name;
 		$.each($(infoDivClass),function(i,v){
@@ -134,8 +134,8 @@ function toggle2DInfo(checked){
 }
 
 function hide2DInfo(){
-	var angleObj = scene.getObjectByName("angleObj");			
-	$.each(angleObj.children, function(index,val){						
+	var angleObj = scene.getObjectByName("angleObj");
+	$.each(angleObj.children, function(index,val){
 		// toggle 2D info visibility
 		var infoDivClass = "." + val.name;
 		$.each($(infoDivClass),function(i,v){
@@ -229,6 +229,30 @@ function getIntersectId(intersects){
 	}
 	return intersect_Id;
 }
+
+function getAddPointIntersect(intersects){
+	if(intersects.length == 0) return -1;
+	var intersect_Id = -1;
+	var pointId = -1;
+	$.each(intersects, function(key, val){
+		if(val.object.type == "Mesh"){
+			if(val.object.pointId == undefined){
+				if(intersect_Id == -1)
+					intersect_Id = key;
+			}
+			else if( val.object.pointId != undefined){
+				pointId = val.object.pointId;
+				intersects_Id = key;
+				return false;
+			}
+		}
+
+	});
+	//console.log(intersect_Id);
+	return { pointId: pointId,
+		     intersect_Id:intersect_Id}
+
+}
 // event listener for mouse up event
 function onDocumentMouseUp( event ){
 	if($("#polyPoints2DCheck").is(':checked'))
@@ -274,7 +298,7 @@ function onDocumentMouseUp( event ){
 	// 	$('html,body').css('cursor','auto');
 	// 	return;
 	// }
-	
+
 }
 
 // event listener that handles point picking using raycaster
@@ -294,16 +318,19 @@ function onContainerMouseDown( event ) {
 		// if(!cameraControls.noRotate){
 		// 	hide2DInfo();
 		// }
+
+		//check clientX, clientY inside polygon
+		if(isInPolygons(event.clientX, event.clientY)) return;
+
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
-		var top_id = 0;
-		var pointId = intersects[top_id].object.pointId;
-		pointId = pointId == undefined ? -1 : pointId;
+		result = getAddPointIntersect(intersects);
+		var pointId = result.pointId;
+		var intersect_Id = result.intersect_Id;
 		//add point onto scene
-
 		if(pointId == -1){
 			if( (event.button || event.which) === 1){
-				addPoint("angleBtnMode",intersects, top_id);
+				addPoint("angleBtnMode",intersects, intersect_Id);
 			}
 		}
 		else if(pointId == polyPointsPicked[polyCounter][1].pointId){
@@ -315,7 +342,7 @@ function onContainerMouseDown( event ) {
 				// 	poly[polyPointsPickedCounter+1].coordinates);
 				closePolygon();
 				return;
-			}			
+			}
 		}
 		else{
 			return;
@@ -362,6 +389,14 @@ function onContainerMouseDown( event ) {
 	// }
 }
 
+//TODO : check isInPolygons
+function isInPolygons(x, y){
+	var isInside =false;
+	return isInside;
+
+	//http://alienryderflex.com/polygon/
+}
+
 function closePolygon(){
 	drawLineBetweenPoints(
 		polyPointsPicked[polyCounter][polyPointsPickedCounter+1],
@@ -373,12 +408,12 @@ function closePolygon(){
 	var angleInfo_pos = result.angleInfo_pos;
 	var distance2D = result.distance2D;
 	polyInfo.push({polyId: polyCounter, center: center, angleInfo_pos: angleInfo_pos});
-	
+
 	render2DText(polyCounter, "area", center, parseFloat(area).toFixed(2).toString());
 	$.each(angleInfo_pos, function(index, val){
 		render2DText(polyCounter, "v"+ index, val, parseFloat(angles[index]).toFixed(2).toString() + "&deg;");
 	});
-	
+
 	// 2D Info Update
 	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 				"<span> Area : " + parseFloat(area).toFixed(3) +
@@ -416,11 +451,11 @@ function closePolygon(){
 
 	// $("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
 	// 			"<span> Angles : " + anglesStr +
-	// 			"</span></div>");	
+	// 			"</span></div>");
 }
 
 
-//with specific div 
+//with specific div
 function render2DText(polyId, name, center, msg){
 	//console.log('render2DText');
 	var text = document.createElement('div');
@@ -461,8 +496,8 @@ function render2DText(polyId, name, center, msg){
 
 function toXYCoords (pos, matrix, width, height, leftOffset, topOffset) {
 		var vector = new THREE.Vector3().copy(pos);
-        vector = vector.applyProjection(matrix);        
-        
+        vector = vector.applyProjection(matrix);
+
         vector.x = (vector.x + 1)/2.0 * container.width() + leftOffset;
         vector.y = -(vector.y - 1)/2.0 * container.height() + topOffset;
         return vector;
@@ -493,7 +528,7 @@ function onDocumentKeyDown(event){
 		toggleRotationAngleMode();
 		return;
 	}
-	
+
 	if(event.keyCode == 46 || event.keyCode == 8)
 		deleteSelectedPoint();
 }
@@ -616,7 +651,7 @@ function getRayCastIntersects(x, y){
 
 //add points into scene
 function addPoint(mode, intersects, index){
-
+	if(index == -1) return;
 	var point = intersects[index].point;
 	//console.log(intersects);
 	//push points on UI
@@ -631,7 +666,7 @@ function addPoint(mode, intersects, index){
 			displayPointsOnUI(mode,point,pointsPickedCounter);
 		}
 	} else if (mode == "angleBtnMode"){
-		var mCurvature = getMeanCurvature(intersects, index);		
+		var mCurvature = getMeanCurvature(intersects, index);
 		if(polyPointsPickedCounter == -1){
 			createPoly();
 			polyPointsPicked.push([]);
@@ -645,7 +680,7 @@ function addPoint(mode, intersects, index){
 			displayPointsOnUI(mode,point,polyPointsPickedCounter, mCurvature);
 		} else {
 			displayPointsOnUI(mode,point,polyPointsPickedCounter);
-		}		
+		}
 	}
 
 	//create point
@@ -759,7 +794,7 @@ function displayPolyOnUI(){
 	  "</span></div>");
 }
 
-function displayPointsOnUI(mode,point,pointId,mCurvature){	
+function displayPointsOnUI(mode,point,pointId,mCurvature){
 	if(mode == "getPointValMode"){
 		if(mCurvature !== undefined){
 			$("#pointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' onclick='selectRow(this);'>"+
@@ -777,7 +812,7 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"</span><button style='float:right' data-id='"+pointId+
 				"' onclick='delPoint(this);'>Del</button></div>");
 		}
-	} else if(mode == "angleBtnMode"){		
+	} else if(mode == "angleBtnMode"){
 		if(mCurvature !== undefined){
 			// 2D Info Update
 			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
@@ -807,7 +842,7 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
 				" z : "+parseFloat(point.z).toFixed(3)+
-				"</span></div>");			
+				"</span></div>");
 		}
 	}
 }
@@ -978,7 +1013,7 @@ function delPoint(that,pointId){
 	//pointsPickedCounter = pointsObj.children.length -1;
 }
 
-function exportPointsToCSV(that){	
+function exportPointsToCSV(that){
 	var tempArr = $(that).parent().find("div").map(function(){
 					return $(this).text();
 				  }).get(); // ignore the very first value in this array
@@ -987,7 +1022,7 @@ function exportPointsToCSV(that){
 	$.each(tempArr, function(index,val){
 		if(index == 0){
 			return;
-		}	
+		}
 		if(val.indexOf("Poly") > -1){
 			csvContent += $.trim(val) + "\n";
 		} else if(val.indexOf("Area") > -1){
@@ -998,9 +1033,9 @@ function exportPointsToCSV(that){
 			$.each(values, function(i,v){
 				if(v.indexOf(",") > 1){
 					csvContent += $.trim(v.split(",")[0]) + ",";
-				}				
-			});	
-			csvContent = csvContent.slice(0,-1);		
+				}
+			});
+			csvContent = csvContent.slice(0,-1);
 			csvContent += "\n";
 		} else if(val.indexOf("2D Distances") > -1){
 			csvContent += "2D Distances" + "\n";
@@ -1008,22 +1043,22 @@ function exportPointsToCSV(that){
 			$.each(values, function(i,v){
 				if(v.indexOf(",") > 1){
 					csvContent += $.trim(v.split(",")[0]) + ",";
-				}				
-			});	
-			csvContent = csvContent.slice(0,-1);		
+				}
+			});
+			csvContent = csvContent.slice(0,-1);
 			csvContent += "\n";
-		} else {		
-			// points	
-			var values = val.split(":");				
+		} else {
+			// points
+			var values = val.split(":");
 			$.each(values, function(i,v){
 				if( i == 0)
-					return;								
+					return;
 				csvContent += $.trim(v.replace(/[A-Za-z]/g,'')) + ",";
 				if(v.indexOf("curvature") > -1){
-					csvContent += "mean curvature: ";	
+					csvContent += "mean curvature: ";
 				}
-			});	
-			csvContent = csvContent.slice(0,-1);		
+			});
+			csvContent = csvContent.slice(0,-1);
 			csvContent += "\n";
 		}
 	});
@@ -1055,7 +1090,7 @@ function exportPointsToCSV(that){
 	// 	csvContent += dataString+ "\n";
 	// });
 	// OLD CODE SNIPPET ENDS
-	
+
 
 	var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
 	saveAs(blob, "dataExport.csv");
@@ -1076,25 +1111,26 @@ function deleteAllPoints(that){
 
 	// pointsPickedCounter = -1;
 	// pointsPicked = [];
-	// markedPointIds = [];	
+	// markedPointIds = [];
 	if($(that).parent().attr("id") == "polyPointsPickedInfo" || $(that).parent().attr("id") == "polyPointsPickedInfo3D"){
-		$("#polyPointsPickedInfo div").children().remove();	
+		$("#polyPointsPickedInfo div").children().remove();
 		$("#polyPointsPickedInfo3D div").children().remove();
-		var angleObj = scene.getObjectByName("angleObj");		
+		var angleObj = scene.getObjectByName("angleObj");
 		var toremove = [];
-		$.each(angleObj.children, function(index,val){				
-			toremove.push(val.name);			
+		$.each(angleObj.children, function(index,val){
+			toremove.push(val.name);
 			// delete info divs if any
 			var infoDivClass = "." + val.name;
 			$.each($(infoDivClass),function(i,v){
 				$(v).remove();
 			});
-		});		
-		$.each(toremove,function(index,val){			
+		});
+		$.each(toremove,function(index,val){
 			var objToRemove = scene.getObjectByName(val);
-			angleObj.remove(objToRemove);			
+			angleObj.remove(objToRemove);
 		});
 		polyPointsPicked = [];
+		polyInfo = [];
 		polyPointsPickedCounter = -1;
 		polyCounter = -1;
 	}
@@ -1117,7 +1153,7 @@ function showObject(objName){
 }
 
 function calculatePolyInfo(polyId){
-	
+
 	var xProd = 0;
 	var yProd = 0;
 	var poly = polyPointsPicked[polyId]
@@ -1126,7 +1162,7 @@ function calculatePolyInfo(polyId){
 	var center = new THREE.Vector3();
 	var poly = polyPointsPicked[polyId];
 	var distance2D = [];
-	
+
 	$.each(poly,function(index,val){
 		// the first index is poly ID
 		if(index == 0) return;
@@ -1176,7 +1212,7 @@ function calculatePolyInfo(polyId){
 	center.x /= (polyPointsPickedCounter + 1);
 	center.y /= (polyPointsPickedCounter + 1);
 	center.z /= (polyPointsPickedCounter + 1);
-	
+
 	var area = Math.abs((xProd-yProd)/2);
 
 	$.each(poly,function(index,val){
@@ -1188,7 +1224,7 @@ function calculatePolyInfo(polyId){
 			               poly[index].coordinates);
 			distance2D.push(result);
 		}
-		else if(index == poly.length-1){			
+		else if(index == poly.length-1){
 			var result =
 			calculate2DDistance(poly[polyPointsPickedCounter].coordinates,
 			               poly[index].coordinates);
@@ -1196,9 +1232,9 @@ function calculatePolyInfo(polyId){
 		} else{
 			var result =
 			calculate2DDistance(poly[index -1].coordinates,
-			               poly[index].coordinates);	
-			distance2D.push(result);		
-		}		
+			               poly[index].coordinates);
+			distance2D.push(result);
+		}
 	});
 
 	return { area: area,
@@ -1207,7 +1243,7 @@ function calculatePolyInfo(polyId){
 			 angleInfo_pos: angleInfo_pos,
 			 distance2D: distance2D
 	        };
-	
+
 }
 
 function calculateAngle(p1,p2,p3){
@@ -1231,15 +1267,15 @@ function calculateAngle(p1,p2,p3){
 	lerp.y *= scale;
 	lerp.add(p2);
 
-	
+
 	return {theta: theta,
 			lerp: lerp};
 }
 
-function calculate2DDistance(p1,p2){	
+function calculate2DDistance(p1,p2){
 	var x = p2.x - p1.x;
 	var y = p2.y - p1.y;
-	var distance = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));		
+	var distance = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
 	return distance
 }
 
@@ -1255,11 +1291,11 @@ function createScale(){
 	var svg = d3.select("#tpScale")
 				.append("svg")
 				.attr("width", w)
-				.attr("height", h);	
+				.attr("height", h);
 
 	var yScale = d3.scale.linear()
 								 .domain([1, 0])
-								 .range([h - padding, padding]);				
+								 .range([h - padding, padding]);
 
 	//Define Y axis
 	var yAxis = d3.svg.axis()
@@ -1280,11 +1316,11 @@ function createScale(){
 	// var yAxis = d3.svg.axis().scale(axisScale).orient("left");
 	// var svgContainer = d3.select("#tpScale").insert("svg:svg");
 	// svgContainer.append("g").attr("class", "axis").attr("transform", "translate(" + padding + ",0)").call(yAxis);
-	
+
 	// var xAxis = d3.svg.axis().scale(axisScale);
 	// var svgContainer = d3.select("#tpScale").append("svg:svg").attr("width", 300).attr("height", 20);
 	// var xAxisGroup = svgContainer.append("g").call(xAxis);
-	
+
 	// $("#tpScale svg").css("padding-top","10px");
 	// $("#tpScale svg").css("height","500px");
 }
