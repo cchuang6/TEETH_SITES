@@ -17,11 +17,12 @@ var defaultCamPos;
 var phongBalancedMaterial;
 var container;
 var enableShader;
-var rogress_circle;
+var progress_circle;
 var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
 var orgPointScale = 12;
+var polyInfo = []
 var cameraQuat;
 var cameraProj;
 
@@ -97,16 +98,18 @@ function onWindowResize() {
 	var camera = cameraControls.object;
 	var canvasWidth = container.width();
 	var canvasHeight = container.height();
-
 	camera.aspect = canvasWidth / canvasHeight;
-	camera.updateProjectionMatrix();
-	updateCameraProj();
+	
+	//updateCameraProj();
+	if($("#polyPoints2DCheck").is(':checked')){
+		show2DInfo(true, false);
+	}
 	renderer.setSize(canvasWidth, canvasHeight);
 }
 function updateCameraProj()
 {
 	var camera = cameraControls.object;
-
+	camera.updateProjectionMatrix();
 	var near = camera.near;
 	var far = camera.far;
 	var fov = camera.fov;
@@ -121,14 +124,18 @@ function updateCameraProj()
 	cameraProj = proj;
 }
 
-function updateCameraQuat(){
+function updateCameraQuat(opts){
+	var quat;
 	var camera = cameraControls.object;
+	if(opts != undefined && opts.quat != undefined)
+		quat = opts.quat;
+	else
+		quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
+
 	var rotationM = new THREE.Matrix4();
 	rotationM.lookAt( camera.position, cameraControls.target, camera.up);
-	var quat = new THREE.Quaternion().setFromUnitVectors( camera.up, new THREE.Vector3( 0, 1, 0 ) );
 	quat.setFromRotationMatrix(rotationM);
 	cameraQuat = quat;
-
 }
 function loadShader(shadertype) {
   return document.getElementById(shadertype).textContent;
@@ -368,7 +375,6 @@ function loadSTL(url){
 		//set cmaera fov
 		var camera = cameraControls.object;
 		camera.fov = centMesh.fov;
-		camera.updateProjectionMatrix();
 		updateCameraProj();
 
 		//add mesh to scene
@@ -431,7 +437,6 @@ function loadDAE(url){
 				//set cmaera fov
 				var camera = cameraControls.object;
 				camera.fov = centMesh.fov;
-				camera.updateProjectionMatrix();
 				updateCameraProj();
 				centMesh.mesh.material = phongBalancedMaterial;
 				centMesh.mesh.material.needsUpdate = true;
@@ -781,7 +786,7 @@ var BinaryStlWriter = (function() {
   return that;
 }());
 
-function getScaleUnit(){
+function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 	//get projection matrix
 	var camera = cameraControls.object;
 	// get view matrix
@@ -804,28 +809,17 @@ function getScaleUnit(){
 	offset.applyQuaternion( quatInverse );
 	offset.add(cameraControls.target);
 
-	// var matrixCamera = new THREE.Matrix4().set(
-	//                         1.0, 0.0, 0.0, offset.x,
-	//                         0.0, 1.0, 0.0, offset.y,
-	//                         0.0, 0.0, 1.0, offset.z,
-	//                         0.0, 0.0, 0.0, 1.0);
-	//multiply projection and transformation
-	// // get view matrix
-	
-	//update cameraQuat 
-	if(cameraQuat == undefined)
-		updateCameraQuat();
+		//update cameraQuat
+	if(isCameraQuatUpdated)
+		updateCameraQuat({quat:quat});
+	if(isCameraProjUpdated)
+		updateCameraProj();
 
 	var matrixCamera = new THREE.Matrix4();
 	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
 
-
-
 	var matrix = new THREE.Matrix4();
 	matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
-
-
-
 
 	// //projection
 	offset.sub(cameraControls.target);
@@ -848,13 +842,13 @@ function getScaleUnit(){
 	return scaleUnit;
 }
 
-function updatePointSize(){
+function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 	
 	var pointsObj = scene.getObjectByName("pointsObj");
 	var angleObj = scene.getObjectByName("angleObj");
 	if(pointsObj == undefined) return;
 	if(angleObj == undefined) return;
-	var scaleUnit = getScaleUnit();
+	var scaleUnit = getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated);
 
 	pointsObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
@@ -879,6 +873,83 @@ function updatePointSize(){
 				child.scale.z = scale;
 			}
 		}
+	});
+}
+
+function show2DInfo(isCameraProjUpdated, isCameraQuatUpdated){
+	if(isCameraProjUpdated)
+		updateCameraProj();
+	if(isCameraQuatUpdated)
+		updateCameraQuat();
+	updatePolyInfo('block');
+}
+
+function getViewProjectionMatrix(){
+	var offset = new THREE.Vector3();
+	offset.copy(cameraControls.object.position);
+	var matrixCamera = new THREE.Matrix4();
+	updateCameraQuat();
+	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
+	var matrix = new THREE.Matrix4();
+	return matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
+}
+
+function updatePolyInfo(display){
+	console.log("updatePolyInfo");
+	if(scene == undefined)
+    	return;
+    var angleObj = scene.getObjectByName("angleObj");
+    if(angleObj == undefined)
+    	return;
+	var leftOffset = container.offset().left;
+    var topOffset = container.offset().top;
+    var width = container.width();
+    var height = container.height();
+    var fontsize = parseInt($("body").css('font-size'), 10);
+    var matrix = getViewProjectionMatrix();
+    
+
+
+
+    //TODO deal with pos < 0
+    // Deal with it today
+	$.each(polyInfo, function(i, val){
+		var polyId = val.polyId;
+		var center = val.center;
+		var angleInfo_pos = val.angleInfo_pos;		
+		var poly = document.getElementsByClassName("polyObj"+polyId);
+
+		$.each(poly, function(j, val){
+			if(display == 'none'){
+				$(val).hide();
+				return;
+			}
+			if(display == 'block'){
+				$(val).show();
+			}
+			var pos;
+			var msg = poly[j].innerHTML;
+			var num_char = msg.length;
+			if(j == 0){
+				pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+			}
+			else if (j > 0){
+				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
+				num_char -= 4;
+			}
+			
+
+			if (pos.x < leftOffset || pos.y < topOffset || pos.x > width + leftOffset)
+			{
+				poly[j].style.display = 'none';
+				return;
+			}
+			
+			pos.x -= fontsize / 4 * num_char;
+			pos.y -= fontsize / 2;
+			poly[j].style.left = pos.x + 'px' ;
+			poly[j].style.top = pos.y + 'px';
+		});
 	});
 }
 
@@ -912,9 +983,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.target.set(0,0,0);
 		camera.target = new THREE.Vector3();
-		//TODO: animation
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 
 
 	});
@@ -927,8 +996,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.target.set(0,0,0);
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 	});
 
 
@@ -939,8 +1007,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 	});
 
 
@@ -951,8 +1018,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 	});
 
 
@@ -963,8 +1029,7 @@ $(function(){
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 	});
 
 
@@ -976,8 +1041,7 @@ $(function(){
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.rotateUp(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
-		cameraControls.update();
-		updatePointSize();
+		updatePointSize(false, true);
 	});
 
 	//show curvature  showcurvaturelbtn

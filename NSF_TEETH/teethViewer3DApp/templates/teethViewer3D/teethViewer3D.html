@@ -107,6 +107,10 @@
                     <span class="ui-button-icon-primary ui-icon icon-ndist"></span>
                     <span class="ui-button-text">Normal Distance</span>
                 </button>
+                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="rotationControl" role="button" aria-disabled="false" title="Rotation Control">
+                    <span class="ui-button-icon-primary ui-icon icon-rotate"></span>
+                    <span class="ui-button-text">Rotation Control</span>
+                </button>
                 <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="anglebtn" role="button" aria-disabled="false" title="Angle">
                     <span class="ui-button-icon-primary ui-icon icon-angle icon-disabled"></span>
                     <span class="ui-button-text">Angle</span>
@@ -127,10 +131,6 @@
                     <span class="ui-button-icon-primary ui-icon icon-wireframe icon-disabled"></span>
                     <span class="ui-button-text">Show Wire Frame</span>
                 </button> -->
-                <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="rotationControl" role="button" aria-disabled="false" title="Rotation Control">
-                    <span class="ui-button-icon-primary ui-icon icon-rotate"></span>
-                    <span class="ui-button-text">Rotation Control</span>
-                </button>
                 <!-- <button class="showtt ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" id="getPointVal" role="button" aria-disabled="false" title="Point Pick">
                     <span class="ui-button-icon-primary ui-icon icon-pointpick icon-disabled"></span>
                     <span class="ui-button-text">Point Pick</span>
@@ -313,19 +313,19 @@
             <button onclick="exportPointsToCSV();" style="margin-top:1%;">Export to CSV</button>
         </div>
         <div id="polyPointsPickedInfo" class="textdisable" style="display: none;">
-            <input type="checkbox" checked id="polyPoints2DCheck"><span style="font-size:1.17em; font-weight:bold;">Poly Points Picked - 2D Info</span>
-            <div style="text-align:left; height:150px; overflow-y: scroll;">
+            <input type="checkbox" checked id="polyPoints2DCheck"><span style="font-size:1.17em; font-weight:bold;">Show Points Info</span>
+            <div style="text-align:left; height:250px; overflow-y: scroll;">
             </div>
             <button onclick="deleteAllPoints(this);" style="margin-top:1%;">Delete All</button>
             <button onclick="exportPointsToCSV(this);" style="margin-top:1%;">Export to CSV</button>
         </div>
-        <div id="polyPointsPickedInfo3D" class="textdisable" style="display: none;">
+        <!-- <div id="polyPointsPickedInfo3D" class="textdisable" style="display: none;">
             <input type="checkbox" id="polyPoints3DCheck"><span style="font-size:1.17em; font-weight:bold;">Poly Points Picked - 3D Info</span>            
             <div style="text-align:left; height:150px; overflow-y: scroll;">
             </div>
             <button onclick="deleteAllPoints(this);" style="margin-top:1%;">Delete All</button>
             <button onclick="exportPointsToCSV(this);" style="margin-top:1%;">Export to CSV</button>
-        </div>
+        </div> -->
         <div id="pointPickerDiv" class="textdisable" style="display:none;">
             <p>--</p>
         </div>
@@ -425,7 +425,7 @@
             console.log("teethViewer3D.html file_url" + file_url);
         </script>
         {% compress js %}
-            <script type="text/javascript" src="{% static "js/shaders.js" %}"></script>
+            <script type="text/javascript" src="{% static "js/viewer.js" %}"></script>
             <script type="text/javascript" src="{% static "js/editor_teeth.js" %}"></script>
         {% endcompress %}
 

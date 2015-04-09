@@ -5,63 +5,82 @@ var pointsPicked = [];
 var pointsPickedCounter = -1;
 var polyCounter = -1;
 var polyPointsPicked = [];
-var polyInfo = []
 var polyPointsPickedCounter = -1;
 var selectedPoint;
 var org_selectedPoint;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
-var holdKey = false;
+var shiftKeyPressed = false;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
 
-// function to toggle rotation and point picking
-$('#rotationControl').click(function(){
+
+$('#rotationControl').click(
+	enableRotationMode
+);
+
+$("#anglebtn").click(
+	enableAngleMode
+);
+
+function enableAngleMode(){
+	rotationState = "disabled";
+	angleBtnMode = "enabled";
+	$("#polyPointsPickedInfo").show();
+	$("#rotationControl span:first").addClass("icon-disabled");
+	$("#anglebtn span:first").removeClass("icon-disabled");
+	cameraControls.noRotate = true;
+	cameraControls.noPan = true;
+	$('html,body').css('cursor','default');
+	// hideObject("pointsObj");
+	//showObject("angleObj");
+	// getPointValMode = "disabled";
+	// $("#pointsPickedInfo").hide();
+	//$("#polyPointsPickedInfo3D").show();
+}
+
+function enableRotationMode(){
+	rotationState = "enabled";
 	angleBtnMode = "disabled";
 	$("#polyPointsPickedInfo").hide();
-	$("#polyPointsPickedInfo3D").hide();
-	hideObject("angleObj");
-	// showObject("pointsObj");
 	$("#rotationControl span:first").removeClass("icon-disabled");
 	$("#anglebtn span:first").addClass("icon-disabled");
 	cameraControls.noRotate = false;
 	cameraControls.noPan = false;
-	rotationState = "enabled";
 	$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
-	//hide info
-	//hide2DInfo();
+	//$("#polyPointsPickedInfo3D").hide();
+	//hideObject("angleObj");
+	// showObject("pointsObj");
+}
 
-	// if(rotationState == "enabled"){
-	// 	cameraControls.noRotate = true;
-	// 	cameraControls.noPan = true;
-	// 	rotationState = "disabled";
-	// 	getPointValMode = "enabled";
-	// 	$('#rotationControl span:first').removeClass("icon-rotate");
-	// 	$('#rotationControl span:first').addClass("icon-pointpick");
-	// 	$('html,body').css('cursor','default');
-	// 	$('#getPointVal span:first').removeClass("icon-disabled");
-	// 	if(rotationState == "enabled"){
-	// 		cameraControls.noRotate = true;
-	// 		cameraControls.noPan = true;
-	// 		rotationState = "disabled";
-	// 		$('#rotationControl span:first').addClass("icon-disabled");
-	// 	}
-	// 	$("#pointsPickedInfo").show();
-	// }
-	// else if(rotationState == "disabled"){
-	// 	cameraControls.noRotate = false;
-	// 	cameraControls.noPan = false;
-	// 	rotationState = "enabled";
-	// 	$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
-	// 	$('#rotationControl span:first').removeClass("icon-pointpick");
-	// 	$('#rotationControl span:first').addClass("icon-rotate");
-	// 	getPointValMode = "disabled";
-	// 	$("#pointsPickedInfo").hide();
-	// }
-});
+function toggleRotationAngleMode(){
+	if(rotationState == "enabled"){
+		enableAngleMode();
+	}
+	else if(rotationState == "disabled"){
+		enableRotationMode();
+	}
+}
 
+
+function onContainerDBLClick(event){
+	if(angleBtnMode == "enabled"){
+		//console.log("close area");
+		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+		if (intersects.length < 1) return;
+		var top_id = 0;
+		var pointId = intersects[top_id].object.pointId;
+
+		if(pointId == undefined) return;
+		else if(pointId == polyPointsPickedCounter &&
+		        polyPointsPickedCounter > 1)
+		{
+			closePolygon();
+		}
+	}
+}
 
 // function to toggle point picking
 // $("#getPointVal").click(function(){
@@ -86,41 +105,30 @@ $('#rotationControl').click(function(){
 // });
 
 
-$("#anglebtn").click(function(){
-	$("#rotationControl span:first").addClass("icon-disabled");
-	$("#anglebtn span:first").removeClass("icon-disabled");
-	// hideObject("pointsObj");
-	showObject("angleObj");
-	rotationState = "disabled";
-	// getPointValMode = "disabled";
-	// $("#pointsPickedInfo").hide();
-	$("#polyPointsPickedInfo").show();
-	$("#polyPointsPickedInfo3D").show();
-	angleBtnMode = "enabled";
-	cameraControls.noRotate = true;
-	cameraControls.noPan = true;
-	$('html,body').css('cursor','default');
-});
 
 $("#polyPoints2DCheck").change(function(){
-	$("#polyPoints3DCheck").prop("checked", !$("#polyPoints3DCheck").prop("checked"));
-	toggleShow2DInfo();	
+	//$("#polyPoints3DCheck").prop("checked", !$("#polyPoints3DCheck").prop("checked"));
+	//toggle2DInfo(this.checked);
+	if(this.checked)
+		show2DInfo(false, false);
+	else
+		hide2DInfo();
 });
 
 $("#polyPoints3DCheck").change(function(){
-	$("#polyPoints2DCheck").prop("checked", !$("#polyPoints2DCheck").prop("checked"));	
-	toggleShow2DInfo();	
+	//$("#polyPoints2DCheck").prop("checked", !$("#polyPoints2DCheck").prop("checked"));	
+	toggle2DInfo();	
 });
 
-function toggleShow2DInfo(){
+function toggle2DInfo(checked){
 	// console.log(state);
+
 	var angleObj = scene.getObjectByName("angleObj");			
 	$.each(angleObj.children, function(index,val){						
 		// toggle 2D info visibility
 		var infoDivClass = "." + val.name;
-		console.log(infoDivClass);
 		$.each($(infoDivClass),function(i,v){
-			$(v).toggle();
+			$(v).toggle(checked);
 		});
 	});
 }
@@ -130,7 +138,6 @@ function hide2DInfo(){
 	$.each(angleObj.children, function(index,val){						
 		// toggle 2D info visibility
 		var infoDivClass = "." + val.name;
-		console.log(infoDivClass);
 		$.each($(infoDivClass),function(i,v){
 			$(v).hide();
 		});
@@ -138,101 +145,39 @@ function hide2DInfo(){
 
 }
 
-function show2DInfo(){
-	updateCameraQuat();
-	updatePolyInfo('block');
-	var angleObj = scene.getObjectByName("angleObj");			
-	$.each(angleObj.children, function(index,val){						
-		// toggle 2D info visibility
-		var infoDivClass = "." + val.name;
-		console.log(infoDivClass);
-		$.each($(infoDivClass),function(i,v){
-			$(v).show();
-		});
-	});
 
-}
 
-document.addEventListener('mousedown', onDocumentMouseDown, false );
-document.addEventListener('dblclick', onDocumentDBLClick, false);
+document.addEventListener('mousedown', onContainerMouseDown, false );
+// document.addEventListener('dblclick', onContainerDBLClick, false);
+//$("#teethContainer").mousedown(onContainerMouseDown);
+$("#teethContainer").dblclick(onContainerDBLClick);
 document.addEventListener('mousemove', onDocumentMouseMove, false);
 document.addEventListener('mouseup', onDocumentMouseUp, false);
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
+//#("teethContainer").mousewheel
 document.body.addEventListener('mousewheel', mousewheel, false );
 document.body.addEventListener('DOMMouseScroll', mousewheel, false ); // firefox
 
 function mousewheel(e){
-	updatePointSize();
-	var obj = scene.getObjectByName("angleObj");
-	if(obj.visible)
-		updatePolyInfo('block');
+	//check camera quat update here
+	updatePointSize(false, true);
+	hide2DInfo();
+	clearTimeout($.data(this, 'timer'));
+	//show info
+	if(!$("#polyPoints2DCheck").is(':checked')){
+		return;
+	}
+  	$.data(this, 'timer', setTimeout(function() {
+  		var obj = scene.getObjectByName("angleObj");
+  		if(obj.visible)
+			show2DInfo(false, false);
+  	}, 250));
 }
 
-function getViewProjectionMatrix(){
 
-	
-	var offset = new THREE.Vector3();
-	offset.copy(cameraControls.object.position);
-	var matrixCamera = new THREE.Matrix4();
-	//console.log('offset', offset);
-	if(cameraQuat == undefined)
-		updateCameraQuat();
 
-	matrixCamera.compose(offset, cameraQuat, cameraControls.object.scale);
-	var matrix = new THREE.Matrix4();
-	return matrix.multiplyMatrices(cameraProj, matrix.getInverse(matrixCamera));
-}
 
-function updatePolyInfo(display){
-	
-
-	var leftOffset = container.offset().left;
-    var topOffset = container.offset().top;
-    var width = container.width();
-    var height = container.height();
-    var fontsize = parseInt($("body").css('font-size'), 10);
-    var matrix = getViewProjectionMatrix();
-    
-    //TODO deal with pos < 0
-	$.each(polyInfo, function(i, val){
-		var polyId = val.polyId;
-		var center = val.center;
-		var angleInfo_pos = val.angleInfo_pos;		
-		var poly = document.getElementsByClassName("polyObj"+polyId);
-
-		$.each(poly, function(j, val){
-			if(display == 'none'){
-				poly[j].style.display = 'none';
-				return;
-			}
-			else if(display == 'block' && poly[j].style.display == 'none'){
-				poly[j].style.display = 'block';
-			}
-			var pos;
-			var msg = poly[j].innerHTML;
-			var num_char = msg.length;
-			if(j == 0){
-				pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
-			}
-			else if (j > 0){
-				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
-				num_char -= 4;
-			}
-
-			if (pos.x < leftOffset || pos.y < topOffset || pos.x > width + leftOffset)
-			{
-				poly[j].style.display = 'none';
-				return;
-			}
-			pos.x -= fontsize / 4 * num_char;
-			pos.y -= fontsize / 2;
-			poly[j].style.left = pos.x + 'px' ;
-			poly[j].style.top = pos.y + 'px';	
-			
-		});
-	});
-}
 
 // event listener that gets x,y,z on mouse hover
 function onDocumentMouseMove( event ){
@@ -241,7 +186,7 @@ function onDocumentMouseMove( event ){
 
 
 	if(outCanvas(event.clientX, event.clientY)){
-		$("#pointPickerDiv").hide();
+		//$("#pointPickerDiv").hide();
 		return;
 	}
 
@@ -286,96 +231,69 @@ function getIntersectId(intersects){
 }
 // event listener for mouse up event
 function onDocumentMouseUp( event ){
+	if($("#polyPoints2DCheck").is(':checked'))
+		show2DInfo(false, true);
 	if(rotationState == "enabled"){
 		$('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
 		return;
 	}
-	if(getPointValMode == "enabled"){
-		if(selectedPoint){
-			intersects_Id = -1;
-			//check if inside canvas
-			if(!outCanvas(event.clientX, event.clientY)){
-				var pointId = selectedPoint.pointId;
-				var intersects = getRayCastIntersects(event.clientX, event.clientY);
-				intersect_Id = getIntersectId(intersects);
-			}
-			if(intersect_Id > -1){
-				var mCurvature = getMeanCurvature(intersects, intersect_Id);
-				$.each($("#pointsPickedInfo div > div"),function(key,val){
-					if($(val).find("button").data("id") == pointId){
-						if(!isNaN(mCurvature)){
-							updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
-						} else {
-							updatePointsOnUI($(val), selectedPoint, pointId);
-						}
-					}
-				});
 
-			}
-			else{
-				//updateSelectedPoints();
-				selectedPoint.position.copy(org_selectedPoint);
-			}
-			//change selected point color
-			updateSelectedPoints();
-			selectedPoint = null;
-		}
-		$('html,body').css('cursor','auto');
-		return;
-	}
 	if(angleBtnMode == "enabled"){
-		if(!cameraControls.noRotate){
-			show2DInfo();
-		}
+		//TODO
 	}
+	// if(getPointValMode == "enabled"){
+	// 	if(selectedPoint){
+	// 		intersects_Id = -1;
+	// 		//check if inside canvas
+	// 		if(!outCanvas(event.clientX, event.clientY)){
+	// 			var pointId = selectedPoint.pointId;
+	// 			var intersects = getRayCastIntersects(event.clientX, event.clientY);
+	// 			intersect_Id = getIntersectId(intersects);
+	// 		}
+	// 		if(intersect_Id > -1){
+	// 			var mCurvature = getMeanCurvature(intersects, intersect_Id);
+	// 			$.each($("#pointsPickedInfo div > div"),function(key,val){
+	// 				if($(val).find("button").data("id") == pointId){
+	// 					if(!isNaN(mCurvature)){
+	// 						updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+	// 					} else {
+	// 						updatePointsOnUI($(val), selectedPoint, pointId);
+	// 					}
+	// 				}
+	// 			});
+
+	// 		}
+	// 		else{
+	// 			//updateSelectedPoints();
+	// 			selectedPoint.position.copy(org_selectedPoint);
+	// 		}
+	// 		//change selected point color
+	// 		updateSelectedPoints();
+	// 		selectedPoint = null;
+	// 	}
+	// 	$('html,body').css('cursor','auto');
+	// 	return;
+	// }
+	
 }
 
 // event listener that handles point picking using raycaster
-function onDocumentMouseDown( event ) {
+function onContainerMouseDown( event ) {
 	event.preventDefault();
-
+	event.stopPropagation();
 	if(outCanvas(event.clientX, event.clientY)){
-		$("#pointPickerDiv").hide();
+		//$("#pointPickerDiv").hide();
 		return;
 	}
-
+	hide2DInfo();
 	if(rotationState == "enabled"){
 		$('html,body').css('cursor','url("/static/css/images/webgl/handpress.png"), auto');
 	}
-	if(getPointValMode == "enabled"){
-		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-		//return if nothing
-		if (intersects.length < 1) return;
-		var top_id = 0;
-		var pointId = intersects[top_id].object.pointId;
-		//add point onto scene
-		if(pointId == undefined){
-			if( (event.button || event.which) === 1){
-				addPoint("getPointValMode",intersects, top_id);
-			}
-		}
-		//move or delete point
-		else{
-			if( (event.button || event.which) === 1){
-				selectedPoint = intersects[top_id].object;
-				if(org_selectedPoint == undefined){
-					org_selectedPoint = new THREE.Vector3();
-				}
-				org_selectedPoint.copy(selectedPoint.position);
-				$('html,body').css('cursor','move');
-				// pass in a dummy first parameter
-				selectRow("that", pointId);
-			}
-			if(event.button === 2){
-				// pass in a dummy first parameter
-				delPoint("that",pointId);
-			}
-		}
-	}
+
 	if(angleBtnMode == "enabled"){
-		if(!cameraControls.noRotate){
-			hide2DInfo();
-		}
+		// if(!cameraControls.noRotate){
+		// 	hide2DInfo();
+		// }
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
 		var top_id = 0;
@@ -383,7 +301,7 @@ function onDocumentMouseDown( event ) {
 		pointId = pointId == undefined ? -1 : pointId;
 		//add point onto scene
 
-		if(pointId == -1 && cameraControls.noRotate){
+		if(pointId == -1){
 			if( (event.button || event.which) === 1){
 				addPoint("angleBtnMode",intersects, top_id);
 			}
@@ -411,6 +329,37 @@ function onDocumentMouseDown( event ) {
 				poly[polyPointsPickedCounter+1]);
 		}
 	}
+
+	// if(getPointValMode == "enabled"){
+	// 	var intersects = getRayCastIntersects(event.clientX, event.clientY);
+	// 	//return if nothing
+	// 	if (intersects.length < 1) return;
+	// 	var top_id = 0;
+	// 	var pointId = intersects[top_id].object.pointId;
+	// 	//add point onto scene
+	// 	if(pointId == undefined){
+	// 		if( (event.button || event.which) === 1){
+	// 			addPoint("getPointValMode",intersects, top_id);
+	// 		}
+	// 	}
+	// 	//move or delete point
+	// 	else{
+	// 		if( (event.button || event.which) === 1){
+	// 			selectedPoint = intersects[top_id].object;
+	// 			if(org_selectedPoint == undefined){
+	// 				org_selectedPoint = new THREE.Vector3();
+	// 			}
+	// 			org_selectedPoint.copy(selectedPoint.position);
+	// 			$('html,body').css('cursor','move');
+	// 			// pass in a dummy first parameter
+	// 			selectRow("that", pointId);
+	// 		}
+	// 		if(event.button === 2){
+	// 			// pass in a dummy first parameter
+	// 			delPoint("that",pointId);
+	// 		}
+	// 	}
+	// }
 }
 
 function closePolygon(){
@@ -473,6 +422,7 @@ function closePolygon(){
 
 //with specific div 
 function render2DText(polyId, name, center, msg){
+	//console.log('render2DText');
 	var text = document.createElement('div');
 	text.className = "polyObj" + polyId;
 	text.id = name;
@@ -518,55 +468,49 @@ function toXYCoords (pos, matrix, width, height, leftOffset, topOffset) {
         return vector;
 }
 
-function onDocumentDBLClick(event){
-	if(angleBtnMode == "enabled"){
-		//console.log("close area");
-		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-		if (intersects.length < 1) return;
-		var top_id = 0;
-		var pointId = intersects[top_id].object.pointId;
+// function onDocumentDBLClick(event){
+// 	if(angleBtnMode == "enabled"){
+// 		//console.log("close area");
+// 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
+// 		if (intersects.length < 1) return;
+// 		var top_id = 0;
+// 		var pointId = intersects[top_id].object.pointId;
 
-		if(pointId == undefined) return;
-		else if(pointId == polyPointsPickedCounter &&
-		        polyPointsPickedCounter > 1)
-		{
-			closePolygon();
-		}
+// 		if(pointId == undefined) return;
+// 		else if(pointId == polyPointsPickedCounter &&
+// 		        polyPointsPickedCounter > 1)
+// 		{
+// 			closePolygon();
+// 		}
 
-	}
-}
+// 	}
+// }
 
 // event listener to handle keyboard (down) events
 function onDocumentKeyDown(event){
-	if(holdKey && event.keyCode == 17){
+	if(!shiftKeyPressed && event.shiftKey){
+		shiftKeyPressed = true;
+		toggleRotationAngleMode();
 		return;
 	}
-	holdKey = true;
+	
 	if(event.keyCode == 46 || event.keyCode == 8)
 		deleteSelectedPoint();
-	if(event.keyCode == 17){
-		if(rotationState == "enabled" || getPointValMode == "enabled"){
-			$("#rotationControl").click();
-		}
-		else if(angleBtnMode == "enabled"){
-			cameraControls.noRotate = false;
-			cameraControls.noPan = false;
-		}
-	}
 }
 
 // event listener to handle keyboard (up) events
 function onDocumentKeyUp(event){
-	holdKey = false;
-	if(event.keyCode == 17){
-		if(rotationState == "enabled" || getPointValMode == "enabled"){
-			$("#rotationControl").click();
-		}
-		else if(angleBtnMode == "enabled"){
-			cameraControls.noRotate = true;
-			cameraControls.noPan = true;
-			show2DInfo();
-		}
+	if(shiftKeyPressed){
+		shiftKeyPressed = false;
+		toggleRotationAngleMode();
+		// if(rotationState == "enabled" || getPointValMode == "enabled"){
+		// 	$("#rotationControl").click();
+		// }
+		// else if(angleBtnMode == "enabled"){
+		// 	cameraControls.noRotate = true;
+		// 	cameraControls.noPan = true;
+		// 	show2DInfo();
+		// }
 	}
 }
 
@@ -714,7 +658,7 @@ function addPoint(mode, intersects, index){
 
     var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 	if(distance > 0){
-		var scaleUnit = getScaleUnit();
+		var scaleUnit = getScaleUnit(false, true);
 		var scale = (distance * scaleUnit)* orgPointScale;
 		sphere.scale.x = scale;
 		sphere.scale.y = scale;
@@ -1159,6 +1103,7 @@ function deleteAllPoints(that){
 function hideObject(objName){
 	var obj = scene.getObjectByName(objName);
 	obj.visible = false;
+	//hide poly info
 	if(objName == 'angleObj')
 		updatePolyInfo('none');
 }
@@ -1166,6 +1111,7 @@ function hideObject(objName){
 function showObject(objName){
 	var obj = scene.getObjectByName(objName);
 	obj.visible = true;
+	//show polyinfo
 	if(objName == 'angleObj')
 		updatePolyInfo('block');
 }
@@ -1277,7 +1223,7 @@ function calculateAngle(p1,p2,p3){
 	v1.multiplyScalar(-1.0);
 	v2.multiplyScalar(-1.0);
 	lerp.subVectors(v2, v1).multiplyScalar(0.5).add(v1).normalize();
-	var scaleUnit = getScaleUnit();
+	var scaleUnit = getScaleUnit(false, false);
 	if(distance < 0 ) return;
 	var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 	var scale = (distance * scaleUnit)* lerp.length() * 3.0;

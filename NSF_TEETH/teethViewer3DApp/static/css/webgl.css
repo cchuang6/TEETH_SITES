@@ -2210,10 +2210,10 @@ body {
 }
 #polyPointsPickedInfo{
     position: absolute;
-    bottom: 255px;
+    bottom: 15px;
     padding: 10px;
     left: 5px;
-    height: 200px;
+    height: 300px;
     width: 250px;
     text-align: center;
     color: black;
