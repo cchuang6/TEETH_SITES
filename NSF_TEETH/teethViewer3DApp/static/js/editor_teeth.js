@@ -1169,44 +1169,28 @@ function calculatePolyInfo(polyId){
 		center.x += val.coordinates.x;
 		center.y += val.coordinates.y;
 		center.z += val.coordinates.z;
-		if(index == 1){
-			xProd = xProd +
-					(poly[index].coordinates.x * poly[index+1].coordinates.y);
-			yProd = yProd +
-					(poly[index].coordinates.y * poly[index+1].coordinates.x);
-			var result =
-			calculateAngle(poly[polyPointsPickedCounter + 1].coordinates,
-			               poly[index].coordinates,
-			               poly[index+1].coordinates);
-			angles.push(result.theta);
-			angleInfo_pos.push(result.lerp);
 
-		}
-		else if(index == poly.length-1){
-			xProd = xProd +
-					(poly[index].coordinates.x * poly[1].coordinates.y);
-			yProd = yProd +
-					(poly[index].coordinates.y * poly[1].coordinates.x);
-			var result =
-			calculateAngle(poly[polyPointsPickedCounter].coordinates,
-			               poly[index].coordinates,
-			               poly[1].coordinates);
-			angles.push(result.theta);
-			angleInfo_pos.push(result.lerp);
+		//polyPointsPickedCounter + 1 is the last index
+		var prevIndex = index == 1 ? polyPointsPickedCounter + 1 : index -1;
+		var nextIndex = index == polyPointsPickedCounter + 1 ? 1 : index + 1;
 
-		} else{
-			xProd = xProd +
-					(poly[index].coordinates.x * poly[index+1].coordinates.y);
-			yProd = yProd +
-				(poly[index].coordinates.y * poly[index+1].coordinates.x);
-
-			var result =
-			calculateAngle(poly[index -1].coordinates,
+		//area
+		xProd = xProd +
+					(poly[index].coordinates.x * poly[nextIndex].coordinates.y);
+		yProd = yProd +
+					(poly[index].coordinates.y * poly[nextIndex].coordinates.x);
+		//angle
+		var result =
+			calculateAngle(poly[prevIndex].coordinates,
 			               poly[index].coordinates,
-			               poly[index+1].coordinates);
-			angles.push(result.theta);
-			angleInfo_pos.push(result.lerp);
-		}
+			               poly[nextIndex].coordinates);
+		angles.push(result.theta);
+		angleInfo_pos.push(result.lerp);
+
+		//2D distance
+		var result = calculate2DDistance(poly[prevIndex].coordinates,
+										 poly[index].coordinates);
+		distance2D.push(result);
 	});
 
 	center.x /= (polyPointsPickedCounter + 1);
@@ -1214,28 +1198,6 @@ function calculatePolyInfo(polyId){
 	center.z /= (polyPointsPickedCounter + 1);
 
 	var area = Math.abs((xProd-yProd)/2);
-
-	$.each(poly,function(index,val){
-		// the first index is poly ID
-		if(index == 0) return;
-		if(index == 1){
-			var result =
-			calculate2DDistance(poly[polyPointsPickedCounter + 1].coordinates,
-			               poly[index].coordinates);
-			distance2D.push(result);
-		}
-		else if(index == poly.length-1){
-			var result =
-			calculate2DDistance(poly[polyPointsPickedCounter].coordinates,
-			               poly[index].coordinates);
-			distance2D.push(result);
-		} else{
-			var result =
-			calculate2DDistance(poly[index -1].coordinates,
-			               poly[index].coordinates);
-			distance2D.push(result);
-		}
-	});
 
 	return { area: area,
 			 center: center,
