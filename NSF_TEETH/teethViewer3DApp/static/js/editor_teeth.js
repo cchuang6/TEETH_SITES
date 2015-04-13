@@ -7,6 +7,8 @@ var polyCounter = -1;
 var polyPointsPicked = [];
 var polyPointsPickedCounter = -1;
 var selectedPoint;
+var selectedLine = [];
+var selectedLineVertexIndex = [];
 var org_selectedPoint;
 var lastSelected;
 var markedPointIds = [];
@@ -190,7 +192,26 @@ function onDocumentMouseMove( event ){
 		return;
 	}
 
-	if(getPointValMode == "enabled"){
+	// if(getPointValMode == "enabled"){
+	// 	//selected point, ray cast
+	// 	var intersects = getRayCastIntersects(event.clientX, event.clientY);
+	// 	var intersect_Id = getIntersectId(intersects);
+	// 	//console.log(intersect_Id);
+
+	// 	if(intersect_Id > -1){
+	// 		//copy the moved position to the the selected objec
+	// 		if(selectedPoint){
+	// 			selectedPoint.position.copy(intersects[intersect_Id].point);
+	// 			//make the point selected
+	// 		}
+	// 	}
+	// 	//console.log("Move button: ", event.button || event.which);
+	// 	updateHoverStatus(intersects, intersect_Id, event);
+	// }else{
+	// 	$("#pointPickerDiv").hide();
+	// }
+
+	if(angleBtnMode == "enabled"){
 		//selected point, ray cast
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		var intersect_Id = getIntersectId(intersects);
@@ -200,13 +221,15 @@ function onDocumentMouseMove( event ){
 			//copy the moved position to the the selected objec
 			if(selectedPoint){
 				selectedPoint.position.copy(intersects[intersect_Id].point);
-				//make the point selected
+				$.each(selectedLine,function(index,val){										
+					var selectedIndex = selectedLineVertexIndex[index];										
+					val.geometry.verticesNeedUpdate = true;
+					val.geometry.vertices[selectedIndex].copy(intersects[intersect_Id].point);															
+				});				
 			}
 		}
 		//console.log("Move button: ", event.button || event.which);
 		updateHoverStatus(intersects, intersect_Id, event);
-	}else{
-		$("#pointPickerDiv").hide();
 	}
 }
 
@@ -264,6 +287,37 @@ function onDocumentMouseUp( event ){
 
 	if(angleBtnMode == "enabled"){
 		//TODO
+		if(selectedPoint){
+			intersects_Id = -1;
+			//check if inside canvas
+			if(!outCanvas(event.clientX, event.clientY)){
+				var pointId = selectedPoint.pointId;
+				var intersects = getRayCastIntersects(event.clientX, event.clientY);
+				intersect_Id = getIntersectId(intersects);
+			}
+			if(intersect_Id > -1){
+				// var mCurvature = getMeanCurvature(intersects, intersect_Id);
+				// $.each($("#pointsPickedInfo div > div"),function(key,val){
+				// 	if($(val).find("button").data("id") == pointId){
+				// 		if(!isNaN(mCurvature)){
+				// 			updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
+				// 		} else {
+				// 			updatePointsOnUI($(val), selectedPoint, pointId);
+				// 		}
+				// 	}
+				// });
+
+			}
+			else{
+				//updateSelectedPoints();
+				selectedPoint.position.copy(org_selectedPoint);
+			}
+			//change selected point color
+			updateSelectedPoints();
+			selectedPoint = null;
+		}
+		$('html,body').css('cursor','auto');
+		return;
 	}
 	// if(getPointValMode == "enabled"){
 	// 	if(selectedPoint){
@@ -303,6 +357,11 @@ function onDocumentMouseUp( event ){
 
 // event listener that handles point picking using raycaster
 function onContainerMouseDown( event ) {
+	// cannot focus on input types because this event prohibits it, override the event
+	if(event.toElement.type == "text")
+		return true;
+	// remove focus from all input types
+	$("input[type=text]").blur();
 	event.preventDefault();
 	event.stopPropagation();
 	if(outCanvas(event.clientX, event.clientY)){
@@ -333,18 +392,43 @@ function onContainerMouseDown( event ) {
 				addPoint("angleBtnMode",intersects, intersect_Id);
 			}
 		}
-		else if(pointId == polyPointsPicked[polyCounter][1].pointId){
-			if(polyPointsPickedCounter > 1){
-				var poly = polyPointsPicked[polyCounter];
-				// calculateAngle(
-				// 	poly[polyPointsPickedCounter-1].coordinates,
-				// 	poly[polyPointsPickedCounter].coordinates,
-				// 	poly[polyPointsPickedCounter+1].coordinates);
-				closePolygon();
-				return;
+		// else if(pointId == polyPointsPicked[polyCounter][1].pointId){
+		// 	if(polyPointsPickedCounter > 1){
+		// 		var poly = polyPointsPicked[polyCounter];
+		// 		// calculateAngle(
+		// 		// 	poly[polyPointsPickedCounter-1].coordinates,
+		// 		// 	poly[polyPointsPickedCounter].coordinates,
+		// 		// 	poly[polyPointsPickedCounter+1].coordinates);
+		// 		closePolygon();
+		// 		return;
+		// 	}
+		// }
+		else{			
+			var top_id = 0;			
+			if( (event.button || event.which) === 1){						
+				selectedPoint = intersects[top_id].object;				
+				if(org_selectedPoint == undefined){
+					org_selectedPoint = new THREE.Vector3();
+				}
+				org_selectedPoint.copy(selectedPoint.position);								
+				var pointParent = selectedPoint.parent;
+				selectedLine = [];
+				selectedLineVertexIndex = [];
+				pointParent.traverse( function(child) {
+					if(child instanceof THREE.Line){						
+						// child is a line																		
+						$.each(child.geometry.vertices,function(index,val){
+							if(selectedPoint.position.equals(val)){
+								selectedLine.push(child);
+								selectedLineVertexIndex.push(index);
+							}
+						});
+					}
+				});				
+				$('html,body').css('cursor','move');
+				// pass in a dummy first parameter
+				// selectRow("that", pointId);
 			}
-		}
-		else{
 			return;
 		}
 
@@ -593,7 +677,9 @@ function updateHoverStatus(intersects, intersect_Id, event){
 
 	//set the context menu
 	if(hoverPoint){
-		$("#pointPickerDiv p").html("<span>" + (hoverPoint.pointId+1) + ")"+
+		var polyNumber = hoverPoint.parent.name.replace("polyObj","");
+		var uiPolyName = $("#polyTextField"+polyNumber).val();
+		$("#pointPickerDiv p").html("<span> Poly : "+ uiPolyName + " Point : " + (hoverPoint.pointId+1) + ""+
 									 "<br>x: " + hoverPoint.position.x +
 									 "<br>y: " + hoverPoint.position.y +
 									 "<br>z: " + hoverPoint.position.z);
@@ -742,6 +828,7 @@ function drawLineBetweenPoints(srcPoint, destPoint){
 		destPoint.coordinates
 	);
 	var line = new THREE.Line( geometry, material );
+	line.dynamic = true;
 	polyObj.add( line );
 }
 
@@ -784,8 +871,7 @@ function displayPolyOnUI(){
 	// 2D Info Update
 	$("#polyPointsPickedInfo div:first").append(
 	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
-	  "<span> Poly ID : " + polyCounter +
-	  "</span></div>");
+	  "<span> Poly ID :</span><input type='text' value='" + polyCounter + "' id='polyTextField" + polyCounter + "'> </div>");	
 
 	// 3D Info Update
 	$("#polyPointsPickedInfo3D div:first").append(
@@ -868,8 +954,7 @@ function updatePointsOnUI(item, point, pointId, mCurvature){
 }
 
 // function to select particular point
-function selectRow(that,pointId){
-
+function selectRow(that,pointId){	
 	var selectedPointId;
 	//choose from UI
 	if(pointId == undefined){
@@ -1015,15 +1100,18 @@ function delPoint(that,pointId){
 
 function exportPointsToCSV(that){
 	var tempArr = $(that).parent().find("div").map(function(){
-					return $(this).text();
-				  }).get(); // ignore the very first value in this array
+					if($(this).children("input").attr("type") == "text")
+						return "Poly ID : " + $(this).children("input").val();
+					else
+						return $(this).text();
+				  }).get(); // ignore the very first value in this array	
 	var exportArray = [];
 	var csvContent = "";
 	$.each(tempArr, function(index,val){
 		if(index == 0){
 			return;
 		}
-		if(val.indexOf("Poly") > -1){
+		if(val.indexOf("Poly") > -1){			
 			csvContent += $.trim(val) + "\n";
 		} else if(val.indexOf("Area") > -1){
 			csvContent += $.trim(val) + "\n";
