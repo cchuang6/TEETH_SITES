@@ -31,6 +31,7 @@ function enableAngleMode(){
 	rotationState = "disabled";
 	angleBtnMode = "enabled";
 	$("#polyPointsPickedInfo").show();
+	$("#pointPickerDiv").show();
 	$("#rotationControl span:first").addClass("icon-disabled");
 	$("#anglebtn span:first").removeClass("icon-disabled");
 	cameraControls.noRotate = true;
@@ -47,6 +48,7 @@ function enableRotationMode(){
 	rotationState = "enabled";
 	angleBtnMode = "disabled";
 	$("#polyPointsPickedInfo").hide();
+	$("#pointPickerDiv").hide();
 	$("#rotationControl span:first").removeClass("icon-disabled");
 	$("#anglebtn span:first").addClass("icon-disabled");
 	cameraControls.noRotate = false;
@@ -72,7 +74,7 @@ function onContainerDBLClick(event){
 		//console.log("close area");
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
-		result = getAddPointIntersect(intersects);
+		result = getIntersectInfo(intersects);
 		var pointId = result.pointId;
 
 		if(pointId == undefined) return;
@@ -165,12 +167,17 @@ function mousewheel(e){
 	//check camera quat update here
 	updatePointSize(false, true);
 	hide2DInfo();
+	$("#pointPickerDiv").hide();
 	clearTimeout($.data(this, 'timer'));
 	//show info
 	if(!$("#polyPoints2DCheck").is(':checked')){
 		return;
 	}
   	$.data(this, 'timer', setTimeout(function() {
+  		if(angleBtnMode == "enabled"){
+  			$("#pointPickerDiv").show();
+  			onDocumentMouseMove(e);
+  		}
   		var obj = scene.getObjectByName("angleObj");
   		if(obj.visible)
 			show2DInfo(false, false);
@@ -188,7 +195,9 @@ function onDocumentMouseMove( event ){
 
 
 	if(outCanvas(event.clientX, event.clientY)){
-		//$("#pointPickerDiv").hide();
+		//$("#polyPointsPickedInfo").hide();
+		// console.log("hide point picker");
+		// $("#pointPickerDiv").hide();
 		return;
 	}
 
@@ -214,27 +223,35 @@ function onDocumentMouseMove( event ){
 	if(angleBtnMode == "enabled"){
 		//selected point, ray cast
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-		var intersect_Id = getIntersectId(intersects);
-		//console.log(intersect_Id);
+		var result = getIntersectInfo(intersects);
 
-		if(intersect_Id > -1){
-			//copy the moved position to the the selected objec
-			if(selectedPoint){
+		if (selectedPoint)
+		{
+			
+			var intersect_Id = result.intersect_Id;
+
+
+			//console.log(intersect_Id);
+			if(intersect_Id > -1){
+				//console.log(intersects[intersect_Id].point);
+				//copy the moved position to the the selected objec
 				selectedPoint.position.copy(intersects[intersect_Id].point);
-				$.each(selectedLine,function(index,val){										
-					var selectedIndex = selectedLineVertexIndex[index];										
+				$.each(selectedLine,function(index,val){
+					var selectedIndex = selectedLineVertexIndex[index];
 					val.geometry.verticesNeedUpdate = true;
-					val.geometry.vertices[selectedIndex].copy(intersects[intersect_Id].point);															
-				});				
+					val.geometry.vertices[selectedIndex].copy(intersects[intersect_Id].point);
+				});
 			}
+			//console.log("Move button: ", event.button || event.which);
 		}
-		//console.log("Move button: ", event.button || event.which);
-		updateHoverStatus(intersects, intersect_Id, event);
+		//TODO: combine it
+		updateHoverStatus(intersects, result, event);
 	}
 }
 
 // get the intersect id
 // if no intersection, return -1, others return the point hit on the teeth surface
+// TODO: fix this for mouse moving
 function getIntersectId(intersects){
 	if (intersects.length == 0) return -1;
 	var intersect_Id = 0;
@@ -253,26 +270,27 @@ function getIntersectId(intersects){
 	return intersect_Id;
 }
 
-function getAddPointIntersect(intersects){
+function getIntersectInfo(intersects){
 	if(intersects.length == 0) return -1;
 	var intersect_Id = -1;
 	var pointId = -1;
+	var p_intersect_Id = -1;
 	$.each(intersects, function(key, val){
 		if(val.object.type == "Mesh"){
 			if(val.object.pointId == undefined){
-				if(intersect_Id == -1)
 					intersect_Id = key;
+					return false;
 			}
 			else if( val.object.pointId != undefined){
 				pointId = val.object.pointId;
-				intersects_Id = key;
-				return false;
+				p_intersect_Id = key;
 			}
 		}
 
 	});
 	//console.log(intersect_Id);
 	return { pointId: pointId,
+			 p_intersect_Id: p_intersect_Id,
 		     intersect_Id:intersect_Id}
 
 }
@@ -293,24 +311,24 @@ function onDocumentMouseUp( event ){
 			if(!outCanvas(event.clientX, event.clientY)){
 				var pointId = selectedPoint.pointId;
 				var intersects = getRayCastIntersects(event.clientX, event.clientY);
-				intersect_Id = getIntersectId(intersects);
+				//intersect_Id = getIntersectId(intersects);
+				var result = getIntersectInfo(intersects);
+				var intersect_Id = result.intersect_Id;
+				var pointId = result.pointId;
 			}
-			if(intersect_Id > -1){
-				// var mCurvature = getMeanCurvature(intersects, intersect_Id);
-				// $.each($("#pointsPickedInfo div > div"),function(key,val){
-				// 	if($(val).find("button").data("id") == pointId){
-				// 		if(!isNaN(mCurvature)){
-				// 			updatePointsOnUI($(val), selectedPoint, pointId, mCurvature);
-				// 		} else {
-				// 			updatePointsOnUI($(val), selectedPoint, pointId);
-				// 		}
-				// 	}
-				// });
-
+			if(intersect_Id > -1 && polyPointsPickedCounter == -1){
+				//console.log('polyPointsPickedCounter', polyPointsPickedCounter);
+				var polyId = selectedPoint.parent.name.replace("polyObj","");
+				updatePolyOnUI(selectedPoint, intersects, result, polyId);
 			}
 			else{
 				//updateSelectedPoints();
 				selectedPoint.position.copy(org_selectedPoint);
+				$.each(selectedLine,function(index,val){
+					var selectedIndex = selectedLineVertexIndex[index];
+					val.geometry.verticesNeedUpdate = true;
+					val.geometry.vertices[selectedIndex].copy(org_selectedPoint);
+				});
 			}
 			//change selected point color
 			updateSelectedPoints();
@@ -383,9 +401,11 @@ function onContainerMouseDown( event ) {
 
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
 		if (intersects.length < 1) return;
-		result = getAddPointIntersect(intersects);
+		result = getIntersectInfo(intersects);
 		var pointId = result.pointId;
 		var intersect_Id = result.intersect_Id;
+
+
 		//add point onto scene
 		if(pointId == -1){
 			if( (event.button || event.which) === 1){
@@ -404,9 +424,8 @@ function onContainerMouseDown( event ) {
 		// 	}
 		// }
 		else{			
-			var top_id = 0;			
 			if( (event.button || event.which) === 1){						
-				selectedPoint = intersects[top_id].object;				
+				selectedPoint = intersects[result.p_intersect_Id].object;				
 				if(org_selectedPoint == undefined){
 					org_selectedPoint = new THREE.Vector3();
 				}
@@ -648,35 +667,32 @@ function outCanvas(x, y){
 	return (x - leftOffset < 0 ) || (x - leftOffset - canvasWidth > 0) || (y - topOffset < 0);
 }
 
-function updateHoverStatus(intersects, intersect_Id, event){
+function updateHoverStatus(intersects, result, event){
 
 	if(intersects.length == 0){
+		$("#pointPickerDiv").hide();
 		clearHoverPoint(hoverPoint);
 		return;
 	}
 	//point should be the first intersect
-	var pointId = intersects[0].object.pointId;
+	var pointId = result.pointId;
+	var p_intersect_Id = result.p_intersect_Id;
+	var intersect_Id = result.intersect_Id;
 	//check if move on a point
-	if(pointId != undefined){
+	if(pointId != -1){
 		if(hoverPoint){
 			// check the intersect point is equal to hover point
 			if(pointId != hoverPoint.pointId && (event.button || event.which) != 1){
 				clearHoverPoint(hoverPoint);
-				setHoverPoint(intersects[0].object);
+				setHoverPoint(intersects[p_intersect_Id].object);
 			}
 		}
 		// first time, set hover point
 		else{
-			setHoverPoint(intersects[0].object);
+			setHoverPoint(intersects[p_intersect_Id].object);
 		}
-	}
-	else{
-		if((event.button || event.which) != 1)
-			clearHoverPoint(hoverPoint);
-	}
 
-	//set the context menu
-	if(hoverPoint){
+		//update context
 		var polyNumber = hoverPoint.parent.name.replace("polyObj","");
 		var uiPolyName = $("#polyTextField"+polyNumber).val();
 		$("#pointPickerDiv p").html("<span> Poly : "+ uiPolyName + " Point : " + (hoverPoint.pointId+1) + ""+
@@ -685,16 +701,21 @@ function updateHoverStatus(intersects, intersect_Id, event){
 									 "<br>z: " + hoverPoint.position.z);
 		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
 	}
-	else if(intersect_Id >-1){
-		//updateHoverStatus(intersects);
-		$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x +
-									"<br>y: " + intersects[intersect_Id].point.y +
-									"<br>z: " + intersects[intersect_Id].point.z);
-		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
-	}
 	else{
-		//clearHoverPoint(hoverPoint);
-		$("#pointPickerDiv").hide();
+		if((event.button || event.which) != 1)
+			clearHoverPoint(hoverPoint);
+		if(intersect_Id >-1){
+			//updateHoverStatus(intersects);
+			$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x +
+										"<br>y: " + intersects[intersect_Id].point.y +
+										"<br>z: " + intersects[intersect_Id].point.z);
+			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+		}
+		else{
+			//clearHoverPoint(hoverPoint);
+			$("#pointPickerDiv").hide();
+		}
+
 	}
 }
 
@@ -834,6 +855,7 @@ function drawLineBetweenPoints(srcPoint, destPoint){
 
 function getMeanCurvature(intersects, index){
 	var mCurvature = "";
+	//console.log(intersects);
 	if(intersects.length == 0) return mCurvature;
 	var face = intersects[index].face;
 	//get curvature color
@@ -933,21 +955,95 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 	}
 }
 
+function updatePolyOnUI(changedPoint, intersects, result, polyId){
+	var intersect_Id = result.intersect_Id
+	var pointId = result.pointId
+	var mCurvature = getMeanCurvature(intersects, intersect_Id);
+	var uiPolyName = $("#polyTextField"+polyId).val();
+	// var result = calculatePolyInfo(polyCounter);
+
+	// var area = result.area;
+	// var center = result.center;
+	// var angles = result.angles;
+	// var angleInfo_pos = result.angleInfo_pos;
+	// var distance2D = result.distance2D;
+
+	// $.each(polyInfo, function(i, val){
+	// 	if (val.polyId == polyId){
+	// 		console.log(val);
+	// 		val.center = center;
+	// 		val.angleInfo_pos = angleInfo_pos;
+	// 		return false;
+	// 	}
+	// });
+	// polyInfo.push({polyId: polyCounter, center: center, angleInfo_pos: angleInfo_pos});
+
+	// render2DText(polyCounter, "area", center, parseFloat(area).toFixed(2).toString());
+	// $.each(angleInfo_pos, function(index, val){
+	// 	render2DText(polyCounter, "v"+ index, val, parseFloat(angles[index]).toFixed(2).toString() + "&deg;");
+	// });
+
+	// // 2D Info Update
+	// $("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	// 			"<span> Area : " + parseFloat(area).toFixed(3) +
+	// 			"</span></div>");
+	// anglesStr = " ";
+	// var count = 1;
+	// $.each(angles, function(index, val){
+	// 	anglesStr += parseInt(count) + "): " +
+	// 				 parseFloat(val).toFixed(3) + ", ";
+	// 	count++;
+	// });
+
+	// $("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	// 			"<span> Angles : " + anglesStr +
+	// 			"</span></div>");
+
+	// var distance2DStr = "";
+	// count = 1;
+	// $.each(distance2D, function(index, val){
+	// 	distance2DStr += parseInt(count) + "): " +
+	// 				 parseFloat(val).toFixed(3) + ", ";
+	// 	count++;
+	// });
+
+	// $("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	// 			"<span> 2D Distances : " + distance2DStr +
+	// 			"</span></div>");
+
+	// polyPointsPickedCounter = -1;
+
+
+	$.each($("#polyPointsPickedInfo div > div"),function(key,val){
+		if($(val).find("input").val() == uiPolyName){
+			// console.log("len", $(".polyObj"+polyNumber).length);
+			// var num_vertices = $(".polyObj"+polyNumber).length - 1;
+			var item = $("#polyPointsPickedInfo div > div").get(key + 1 + pointId);
+			console.log(item.innerHTML);
+			updatePointsOnUI(item, changedPoint.position, pointId, mCurvature);
+			return false;
+		}
+	});
+}
+
 function updatePointsOnUI(item, point, pointId, mCurvature){
+	//TODO add delete poly
 	if(mCurvature !== undefined){
-		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
-				   " y : "+parseFloat(point.position.y).toFixed(3)+
-				   " z :"+parseFloat(point.position.z).toFixed(3)+
+		item.innerHTML = "<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+				   " y : "+parseFloat(point.y).toFixed(3)+
+				   " z :"+parseFloat(point.z).toFixed(3)+
 				   "<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
-				   "</span><button style='float:right' data-id="+pointId+
-				   " onclick='delPoint(this);'>Del</button>");
+				   "</span>";
+				   // <button style='float:right' data-id="+pointId+
+				   // " onclick='delPoint(this);'>Del</button>";
 	}
 	else{
-		item.html("<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
+		item.innerHTML = "<span>" + (pointId+1) + ") x : "+parseFloat(point.position.x).toFixed(3)+
 			" y : "+parseFloat(point.position.y).toFixed(3)+
 			" z :"+parseFloat(point.position.z).toFixed(3)+
-			"</span><button style='float:right' data-id="+pointId+
-			" onclick='delPoint(this);'>Del</button>");
+			"</span>";
+			// <button style='float:right' data-id="+pointId+
+			// " onclick='delPoint(this);'>Del</button>";
 
 	}
 
