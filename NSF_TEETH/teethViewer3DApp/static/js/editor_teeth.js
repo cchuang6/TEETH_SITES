@@ -6,9 +6,7 @@ var pointsPickedCounter = -1;
 var polyCounter = -1;
 var polyPointsPickedCounter = -1;
 var selectedPoint;
-var selectedLine = [];
-var selectedLineVertexIndex = [];
-var org_selectedPoint;
+var org_position;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
@@ -16,7 +14,6 @@ var shiftKeyPressed = false;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
-
 
 $('#rotationControl').click(
 	enableRotationMode
@@ -85,6 +82,7 @@ function onContainerDBLClick(event){
 	}
 }
 
+/* points picked function */
 // function to toggle point picking
 // $("#getPointVal").click(function(){
 // 	if(getPointValMode == "disabled"){
@@ -149,7 +147,7 @@ function hide2DInfo(){
 }
 
 
-
+// TODO : Binding event handler with specific div 
 document.addEventListener('mousedown', onContainerMouseDown, false );
 // document.addEventListener('dblclick', onContainerDBLClick, false);
 //$("#teethContainer").mousedown(onContainerMouseDown);
@@ -168,10 +166,12 @@ function onMousewheel(e){
 	hide2DInfo();
 	$("#pointPickerDiv").hide();
 	clearTimeout($.data(this, 'timer'));
-	//show info
+	
 	if(!$("#polyPoints2DCheck").is(':checked')){
 		return;
 	}
+
+	//show updated info
   	$.data(this, 'timer', setTimeout(function() {
   		if(angleBtnMode == "enabled"){
   			$("#pointPickerDiv").show();
@@ -184,9 +184,6 @@ function onMousewheel(e){
 }
 
 
-
-
-
 // event listener that gets x,y,z on mouse hover
 function onDocumentMouseMove( event ){
 	event.preventDefault();
@@ -194,9 +191,6 @@ function onDocumentMouseMove( event ){
 
 
 	if(outCanvas(event.clientX, event.clientY)){
-		//$("#polyPointsPickedInfo").hide();
-		// console.log("hide point picker");
-		// $("#pointPickerDiv").hide();
 		return;
 	}
 
@@ -226,47 +220,14 @@ function onDocumentMouseMove( event ){
 
 		if (selectedPoint)
 		{
-			
 			var intersect_Id = result.intersect_Id;
-
-
-			//console.log(intersect_Id);
 			if(intersect_Id > -1){
-				//console.log(intersects[intersect_Id].point);
 				//copy the moved position to the the selected objec
-				selectedPoint.position.copy(intersects[intersect_Id].point);
-				$.each(selectedLine,function(index,val){
-					var selectedIndex = selectedLineVertexIndex[index];
-					val.geometry.verticesNeedUpdate = true;
-					val.geometry.vertices[selectedIndex].copy(intersects[intersect_Id].point);
-				});
+				onMovePointOnPoly(selectedPoint, intersects[intersect_Id].point);
 			}
-			//console.log("Move button: ", event.button || event.which);
 		}
-		//TODO: combine it
 		updateHoverStatus(intersects, result, event);
 	}
-}
-
-// get the intersect id
-// if no intersection, return -1, others return the point hit on the teeth surface
-// TODO: fix this for mouse moving
-function getIntersectId(intersects){
-	if (intersects.length == 0) return -1;
-	var intersect_Id = 0;
-	//check if it is point
-	if(intersects[intersect_Id].object.pointId != undefined){
-		//check if hit on the same point
-		if(selectedPoint)
-			if(intersects[intersect_Id].object.pointId != selectedPoint.pointId)
-				return -1;
-		//check if it has at least two elements
-		(intersects.length > 1) ? intersect_Id = 1 : intersect_Id = -1;
-		//check the second is point
-		if(intersect_Id == 1)
-			(intersects[intersect_Id].object.pointId != undefined) ? intersect_Id = -1 : intersect_Id = 1;
-	}
-	return intersect_Id;
 }
 
 function getIntersectInfo(intersects){
@@ -323,13 +284,7 @@ function onDocumentMouseUp( event ){
 				updatePolyOnUI(selectedPoint, intersects, result, polyId);
 			}
 			else{
-				//updateSelectedPoints();
-				selectedPoint.position.copy(org_selectedPoint);
-				$.each(selectedLine,function(index,val){
-					var selectedIndex = selectedLineVertexIndex[index];
-					val.geometry.verticesNeedUpdate = true;
-					val.geometry.vertices[selectedIndex].copy(org_selectedPoint);
-				});
+				onMovePointOnPoly(selectedPoint, org_position)
 			}
 			//change selected point color
 			updateSelectedPoints();
@@ -364,7 +319,7 @@ function onDocumentMouseUp( event ){
 	// 		}
 	// 		else{
 	// 			//updateSelectedPoints();
-	// 			selectedPoint.position.copy(org_selectedPoint);
+	// 			selectedPoint.position.copy(org_position);
 	// 		}
 	// 		//change selected point color
 	// 		updateSelectedPoints();
@@ -376,11 +331,47 @@ function onDocumentMouseUp( event ){
 
 }
 
+// move source point to destination position
+function onMovePointOnPoly(src_pt, dest_pos){
+	src_pt.position.copy(dest_pos);
+
+	//update line
+	var poly = src_pt.parent;
+	if (poly == undefined) return;
+	
+	var vertices = poly.children.length;
+	if (vertices == 0) return;
+	//move lines
+	for(i = 0; i < 2; i++){
+		var j = i == 0 ? -1 : 1;
+		var k = i == 0 ? 1 : 0;
+		var index = (vertices + src_pt.pointId * 2 + j) % vertices;
+		var line = poly.children[index]
+		if (line instanceof THREE.Line){
+			line.geometry.verticesNeedUpdate = true;
+			line.geometry.vertices[k].copy(dest_pos);
+		}
+	}
+}
+function getPolyPointId(poly, point){
+	poly.traverse( function(child) {
+		if(child instanceof THREE.Mesh){						
+			// child is a meshc
+			if(child == point)
+			if(child.pointId == pointId){
+				point = child;
+				return false;
+			}
+		}
+	});
+	return point;
+}
+
 function getPolyPointById(poly, pointId){
 	var point;
 	poly.traverse( function(child) {
 		if(child instanceof THREE.Mesh){						
-			// child is a meshc
+			// child is a mesh
 			if(child.pointId == pointId){
 				point = child;
 				return false;
@@ -441,26 +432,13 @@ function onContainerMouseDown( event ) {
 		// 	}
 		// }
 		else{			
-			if( (event.button || event.which) === 1){						
-				selectedPoint = intersects[result.p_intersect_Id].object;				
-				if(org_selectedPoint == undefined){
-					org_selectedPoint = new THREE.Vector3();
+			if( (event.button || event.which) === 1){
+				selectedPoint = intersects[result.p_intersect_Id].object;
+				if(org_position == undefined){
+					org_position = new THREE.Vector3();
 				}
-				org_selectedPoint.copy(selectedPoint.position);								
-				var pointParent = selectedPoint.parent;
-				selectedLine = [];
-				selectedLineVertexIndex = [];
-				pointParent.traverse( function(child) {
-					if(child instanceof THREE.Line){						
-						// child is a line																		
-						$.each(child.geometry.vertices,function(index,val){
-							if(selectedPoint.position.equals(val)){
-								selectedLine.push(child);
-								selectedLineVertexIndex.push(index);
-							}
-						});
-					}
-				});				
+				org_position.copy(selectedPoint.position);
+							
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
 				// selectRow("that", pointId);
@@ -487,10 +465,10 @@ function onContainerMouseDown( event ) {
 	// 	else{
 	// 		if( (event.button || event.which) === 1){
 	// 			selectedPoint = intersects[top_id].object;
-	// 			if(org_selectedPoint == undefined){
-	// 				org_selectedPoint = new THREE.Vector3();
+	// 			if(org_position == undefined){
+	// 				org_position = new THREE.Vector3();
 	// 			}
-	// 			org_selectedPoint.copy(selectedPoint.position);
+	// 			org_position.copy(selectedPoint.position);
 	// 			$('html,body').css('cursor','move');
 	// 			// pass in a dummy first parameter
 	// 			selectRow("that", pointId);
@@ -1132,9 +1110,9 @@ function updateSelectedPoints(){
 
 	//if selected before, check moved
 	var eps = 0.0000001;
-	if(Math.abs(selectedPoint.position.x - org_selectedPoint.x) > eps ||
-		Math.abs(selectedPoint.position.y - org_selectedPoint.y) > eps ||
-		Math.abs(selectedPoint.position.z - org_selectedPoint.z) > eps)
+	if(Math.abs(selectedPoint.position.x - org_position.x) > eps ||
+		Math.abs(selectedPoint.position.y - org_position.y) > eps ||
+		Math.abs(selectedPoint.position.z - org_position.z) > eps)
 		return;
 
 	//if selected before and no movement, do unselection
