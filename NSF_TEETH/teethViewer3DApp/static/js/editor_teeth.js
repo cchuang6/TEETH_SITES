@@ -1,3 +1,10 @@
+/*
+*   Editor for 3D Viewer
+*   Author: Chia-Yuan Chuang
+*
+*/
+
+
 var rotationState = "enabled";
 var getPointValMode = "disabled";
 var angleBtnMode = "disabled";
@@ -10,7 +17,7 @@ var org_position;
 var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
-var shiftKeyPressed = false;
+var altKeyPressed = false;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -277,8 +284,6 @@ function onDocumentMouseUp( event ){
 				var intersect_Id = result.intersect_Id;
 				var pointId = result.pointId;
 			}
-			console.log('intersect_Id', intersect_Id);
-			console.log('polyPointsPickedCounter', polyPointsPickedCounter);
 			if(intersect_Id > -1 && polyPointsPickedCounter == -1){
 				var polyId = selectedPoint.parent.name.replace("polyObj","");
 				updatePolyOnUI(selectedPoint, intersects, result, polyId);
@@ -287,7 +292,7 @@ function onDocumentMouseUp( event ){
 				onMovePointOnPoly(selectedPoint, org_position)
 			}
 			//change selected point color
-			updateSelectedPoints();
+			//updateSelectedPoints();
 			selectedPoint = null;
 		}
 		if($("#polyPoints2DCheck").is(':checked'))
@@ -596,8 +601,8 @@ function toXYCoords (pos, matrix, width, height, leftOffset, topOffset) {
 
 // event listener to handle keyboard (down) events
 function onDocumentKeyDown(event){
-	if(!shiftKeyPressed && event.shiftKey){
-		shiftKeyPressed = true;
+	if(!altKeyPressed && event.altKey){
+		altKeyPressed = true;
 		toggleRotationAngleMode();
 		return;
 	}
@@ -608,17 +613,10 @@ function onDocumentKeyDown(event){
 
 // event listener to handle keyboard (up) events
 function onDocumentKeyUp(event){
-	if(shiftKeyPressed){
-		shiftKeyPressed = false;
+	if(altKeyPressed){
+		altKeyPressed = false;
 		toggleRotationAngleMode();
-		// if(rotationState == "enabled" || getPointValMode == "enabled"){
-		// 	$("#rotationControl").click();
-		// }
-		// else if(angleBtnMode == "enabled"){
-		// 	cameraControls.noRotate = true;
-		// 	cameraControls.noPan = true;
-		// 	show2DInfo();
-		// }
+		return;
 	}
 }
 
@@ -928,7 +926,6 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 }
 
 function updatePolyOnUI(changedPoint, intersects, intersect_info, polyId){
-	console.log("updatePolyOnUI");
 	var intersect_Id = intersect_info.intersect_Id
 	var pointId = intersect_info.pointId
 	var mCurvature = getMeanCurvature(intersects, intersect_Id);

@@ -1,9 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-// Sharp specular
-////////////////////////////////////////////////////////////////////////////////
-/*global THREE, requestAnimationFrame, dat, $ */
-
-
+/*
+*  3D Viewer
+*  Author: Chia-Yuan Chuang
+*  Date: 2015
+*
+*/
 
 
 var scene, renderer;
@@ -682,9 +682,9 @@ function fillScene() {
 
 	//add points obj
 	//create a points object 3D
-	var pointsObj = new THREE.Object3D();
-	pointsObj.name = "pointsObj";
-	scene.add(pointsObj);
+	// var pointsObj = new THREE.Object3D();
+	// pointsObj.name = "pointsObj";
+	// scene.add(pointsObj);
 
 	//add angle obj
 	var angleObj = new THREE.Object3D();
@@ -809,9 +809,10 @@ function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 	offset.applyQuaternion( quatInverse );
 	offset.add(cameraControls.target);
 
-		//update cameraQuat
+	//update cameraQuat
 	if(isCameraQuatUpdated)
 		updateCameraQuat({quat:quat});
+	//update projection matrix
 	if(isCameraProjUpdated)
 		updateCameraProj();
 
@@ -844,24 +845,24 @@ function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 
 function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 
-	var pointsObj = scene.getObjectByName("pointsObj");
+	// var pointsObj = scene.getObjectByName("pointsObj");
 	var angleObj = scene.getObjectByName("angleObj");
-	if(pointsObj == undefined) return;
+	// if(pointsObj == undefined) return;
 	if(angleObj == undefined) return;
 	var scaleUnit = getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated);
 
-	pointsObj.traverse( function(child) {
-		if(child instanceof THREE.Mesh){
+	// pointsObj.traverse( function(child) {
+	// 	if(child instanceof THREE.Mesh){
 
-			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
-			if(distance > 0){
-				var scale = (distance * scaleUnit)* orgPointScale;
-				child.scale.x = scale;
-				child.scale.y = scale;
-				child.scale.z = scale;
-			}
-		}
-	});
+	// 		var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+	// 		if(distance > 0){
+	// 			var scale = (distance * scaleUnit)* orgPointScale;
+	// 			child.scale.x = scale;
+	// 			child.scale.y = scale;
+	// 			child.scale.z = scale;
+	// 		}
+	// 	}
+	// });
 
 	angleObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
@@ -906,12 +907,15 @@ function updatePolyInfo(display){
     var height = container.height();
     var fontsize = parseInt($("body").css('font-size'), 10);
     var matrix = getViewProjectionMatrix();
-
+    // console.log("View Projection Matrix");
+    // console.log(matrix);
 
 
 
     //TODO deal with pos < 0
     // Deal with it today
+    // console.log("show polyInfo");
+    // console.log(polyInfo);
 	$.each(polyInfo, function(i, val){
 		var polyId = val.polyId;
 		var center = val.center;
@@ -981,7 +985,7 @@ $(function(){
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
 		cameraControls.target.set(0,0,0);
-		camera.target = new THREE.Vector3();
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
@@ -993,8 +997,9 @@ $(function(){
 		console.log("Rotate to bottom");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-		cameraControls.rotateLeft(Math.PI);
 		cameraControls.target.set(0,0,0);
+		cameraControls.rotateLeft(Math.PI);
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
@@ -1006,8 +1011,9 @@ $(function(){
 		console.log("Rotate to left");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-		cameraControls.rotateLeft(Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
+		cameraControls.rotateLeft(Math.PI/2.0);
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
@@ -1019,8 +1025,9 @@ $(function(){
 		console.log("Rotate to right");
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
+		cameraControls.rotateLeft(-1.0 * Math.PI/2.0);
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
@@ -1032,8 +1039,9 @@ $(function(){
 		console.log("Rotate to back")
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
 		cameraControls.target.set(0,0,0);
+		cameraControls.rotateUp(-1.0 * Math.PI/2.0);
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
@@ -1045,9 +1053,10 @@ $(function(){
 		console.log("Rotate to front")
 		var camera = cameraControls.object;
 		camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
+		cameraControls.target.set(0,0,0);
 		cameraControls.rotateLeft(Math.PI);
 		cameraControls.rotateUp(Math.PI/2.0);
-		cameraControls.target.set(0,0,0);
+		cameraControls.update();
 		updatePointSize(false, true);
 		if($("#polyPoints2DCheck").is(':checked'))
 			updatePolyInfo('block');
