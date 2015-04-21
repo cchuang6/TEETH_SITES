@@ -155,11 +155,12 @@ function hide2DInfo(){
 
 
 // TODO : Binding event handler with specific div 
-document.addEventListener('mousedown', onContainerMouseDown, false );
+ document.addEventListener('mousedown', onContainerMouseDown, false );
 // document.addEventListener('dblclick', onContainerDBLClick, false);
 //$("#teethContainer").mousedown(onContainerMouseDown);
 $("#teethContainer").dblclick(onContainerDBLClick);
-document.addEventListener('mousemove', onDocumentMouseMove, false);
+// document.addEventListener('mousemove', onDocumentMouseMove, false);
+$("#teethContainer").bind('mousemove',onContainerMouseMove);
 document.addEventListener('mouseup', onDocumentMouseUp, false);
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
@@ -182,7 +183,7 @@ function onMousewheel(e){
   	$.data(this, 'timer', setTimeout(function() {
   		if(angleBtnMode == "enabled"){
   			$("#pointPickerDiv").show();
-  			onDocumentMouseMove(e);
+  			onContainerMouseMove(e);
   		}
   		var obj = scene.getObjectByName("angleObj");
   		if(obj.visible)
@@ -192,14 +193,9 @@ function onMousewheel(e){
 
 
 // event listener that gets x,y,z on mouse hover
-function onDocumentMouseMove( event ){
+function onContainerMouseMove( event ){
 	event.preventDefault();
-	event.stopPropagation();
-
-
-	if(outCanvas(event.clientX, event.clientY)){
-		return;
-	}
+	// event.stopPropagation();
 
 	// if(getPointValMode == "enabled"){
 	// 	//selected point, ray cast
@@ -580,24 +576,6 @@ function toXYCoords (pos, matrix, width, height, leftOffset, topOffset) {
         vector.y = -(vector.y - 1)/2.0 * container.height() + topOffset;
         return vector;
 }
-
-// function onDocumentDBLClick(event){
-// 	if(angleBtnMode == "enabled"){
-// 		//console.log("close area");
-// 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
-// 		if (intersects.length < 1) return;
-// 		var top_id = 0;
-// 		var pointId = intersects[top_id].object.pointId;
-
-// 		if(pointId == undefined) return;
-// 		else if(pointId == polyPointsPickedCounter &&
-// 		        polyPointsPickedCounter > 1)
-// 		{
-// 			closePolygon();
-// 		}
-
-// 	}
-// }
 
 // event listener to handle keyboard (down) events
 function onDocumentKeyDown(event){

@@ -15,6 +15,7 @@ var tess = -1;	// force initialization
 var ambientLight, light;
 var defaultCamPos;
 var phongBalancedMaterial;
+var meshBasicMaterial;
 var container;
 var enableShader;
 var progress_circle;
@@ -86,10 +87,12 @@ function init() {
 		phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
 		phongBalancedMaterial.side = THREE.DoubleSide;
 	}
-
-
-
-	//TODO:add windows resize
+	
+	meshBasicMaterial = new THREE.MeshBasicMaterial( {
+							vertexColors: THREE.NoColors,
+							wireframe: true,
+        					color: 'blue' } );
+	meshBasicMaterial.side = THREE.DoubleSide;
 	window.addEventListener( 'resize', onWindowResize, false );
 
 }
@@ -99,8 +102,6 @@ function onWindowResize() {
 	var canvasWidth = container.width();
 	var canvasHeight = container.height();
 	camera.aspect = canvasWidth / canvasHeight;
-
-	//updateCameraProj();
 	if($("#polyPoints2DCheck").is(':checked')){
 		show2DInfo(true, false);
 	}
@@ -198,8 +199,7 @@ function createShaderMaterial(id, light, ambientLight) {
 
 }
 
-function setupGui() {
-
+function guiMeshPhongMaterial(gui, material){
 	effectController = {
 
 		shininess: 1.0,
@@ -229,14 +229,10 @@ function setupGui() {
 
 	var h;
 
-
-	var gui = new dat.GUI({autoPlace: false});
-	$('#lightControl').append(gui.domElement);
-	// material (attributes)
-
 	h = gui.addFolder("Material control");
-
-	h.add(effectController, "shininess", 1.0, 128.0, 32.0).name("shininess");
+	//console.log("phongBalancedMaterial");
+	//console.log(phongBalancedMaterial);
+	h.add(effectController, "shininess", 1.0, 100.0, 5.0);
 	h.add(effectController, "dropoff", 0.0, 2.0, 0.025).name("dropoff");
 	h.add(effectController, "ka", 0.0, 1.0, 0.025).name("Ka");
 	h.add(effectController, "kd", 0.0, 1.0, 0.025).name("Kd");
@@ -270,7 +266,41 @@ function setupGui() {
 	h.add(effectController, "lz", -1.0, 1.0, 0.025).name("z");
 
 
-	//test progress bar
+
+	//set material colors
+	if(enableShader){
+		updateMeshMaterial(material);
+	}
+}
+
+function updateMeshMaterial(material){
+	material.uniforms.shininess.value = effectController.shininess;
+	material.uniforms.uDropoff.value = effectController.dropoff;
+	material.uniforms.uKd.value = effectController.kd;
+	material.uniforms.uKs.value = effectController.ks;
+	var materialColor = new THREE.Color();
+	materialColor.setHSL(effectController.hue, effectController.saturation, effectController.lightness);
+	material.uniforms.uMaterialColor.value.copy(materialColor);
+	if (!effectController.metallic) {
+	materialColor.setRGB(1, 1, 1);
+	}
+	material.uniforms.uSpecularColor.value.copy(materialColor);
+	// Ambient is just material's color times ka, light color is not involved
+	ambientLight.color.setHSL(effectController.hue, effectController.saturation, effectController.lightness * effectController.ka);
+	light.position.set(effectController.lx, effectController.ly, effectController.lz);
+	light.color.setHSL(effectController.lhue, effectController.lsaturation, effectController.llightness);
+}
+
+function setupGui(material) {
+
+	var gui = new dat.GUI({autoPlace: false});
+	$('#lightControl').append(gui.domElement);
+	// material (attributes)
+
+	guiMeshPhongMaterial(gui, material);
+
+
+	//progress bar
 	progress_circle = new ProgressBar.Circle('#progress', {
  		color: '#FCB03C',
  		strokeWidth: 3,
@@ -304,27 +334,8 @@ function render() {
 		fillScene();
 	}
 
-	updateCurvatureSettings();
-
-	if(enableShader){
-		phongBalancedMaterial.uniforms.shininess.value = effectController.shininess;
-		phongBalancedMaterial.uniforms.uDropoff.value = effectController.dropoff;
-		phongBalancedMaterial.uniforms.uKd.value = effectController.kd;
-		phongBalancedMaterial.uniforms.uKs.value = effectController.ks;
-
-		var materialColor = new THREE.Color();
-		materialColor.setHSL(effectController.hue, effectController.saturation, effectController.lightness);
-		phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
-
-		if (!effectController.metallic) {
-			materialColor.setRGB(1, 1, 1);
-		}
-		phongBalancedMaterial.uniforms.uSpecularColor.value.copy(materialColor);
-
-		// Ambient is just material's color times ka, light color is not involved
-		ambientLight.color.setHSL(effectController.hue, effectController.saturation, effectController.lightness * effectController.ka);
-		light.position.set(effectController.lx, effectController.ly, effectController.lz);
-		light.color.setHSL(effectController.lhue, effectController.lsaturation, effectController.llightness);
+	if(enableShader && curvatureState =='disabled' && wireframeState == 'disabled'){
+		updateMeshMaterial(phongBalancedMaterial);
 	}
 	else
 		light.position.set(effectController.lx, effectController.ly, effectController.lz);
@@ -332,24 +343,6 @@ function render() {
 
 
 	renderer.render(scene, cameraControls.object);
-
-}
-
-function updateCurvatureSettings(){
-	if(effectController.curvature){
-
-		// enable shader
-
-		//enable material color
-
-	}
-	else{
-		//disable material color
-
-		//enable shader
-
-
-	}
 
 }
 
@@ -541,99 +534,7 @@ function getCenteralizedMesh(mesh){
 	};
 }
 
-//Load OBJ file
-function loadOBJ(url){
-	//TO DO:
-	console.log('Start loading OBJ file');
 
-	// texture
-	var manager = new THREE.LoadingManager();
-	manager.onProgress = function ( item, loaded, total ) {
-		console.log( item, loaded, total );
-	};
-
-
-
-	var fileAttributes = getFileAttributes(url);
-	var filePath = fileAttributes.filePath;
-	var fileName = fileAttributes.fileName;
-	var pureFileName = fileName.substring(0, fileName.lastIndexOf('.'));
-	var textureFile = filePath + pureFileName + '_color.png';
-
-	var mtl_url = url+'.mtl';
-	console.log('mtl: ' + mtl_url)
-
-
-	//debug
-	console.log('Texture file: ' + textureFile);
-
-	// model
-
-	//var loader = new THREE.OBJMTLLoader( manager );
-	//var loader = new THREE.OBJLoader( manager );
-	var loader = new THREE.OBJMTLLoader( manager );
-
-	//loading
-	loader.load( url, mtl_url, function ( object ) {
-			console.log('Call load function at obj loader');
-			// object.traverse( function ( child )
-			// {
-			// 	if ( child instanceof THREE.Mesh ) {
-			// 		//child.material.map = THREE.ImageUtils.loadTexture(textureFile);
-			// 		//console.log('load texture successful');
-			// 		//child.material.needsUpdate = true;
-
-			// 		//compute boundingbox
-			// 		var geometry = child.geometry;
-			// 		geometry.computeBoundingBox();
-			// 		var boundingBox = geometry.boundingBox.clone();
-			// 		var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
-			// 		var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
-			// 		var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
-			// 		var height = boundingBox.max.y - boundingBox.min.y;
-			// 		var depth = boundingBox.max.z - boundingBox.min.z;
-   //  				console.log('bounding box center: ' +
-   //      					'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-
-			// 		//rotate
-			// 		child.rotation.y =  Math.PI;
-			// 		child.position.x = -c_x;
-			// 		//mesh.position.y = - boundingBox.min.y + (c_y - boundingBox.min.y)/2.0;
-			// 		child.position.y = -c_y - height / 8.0;
-			// 		child.position.z = -c_z;
-
-			// 		console.log('mesh x'+ child.position.y)
-			// 		console.log('mesh y'+ child.position.z)
-			// 		console.log('depth '+ depth);
-
-			// 		child.scale.x = 0.6;
-			// 		child.scale.y = 0.6;
-			// 		child.scale.z = 0.6;
-
-			// 		//effectController.lx = 0.0;
-			// 		//effectController.ly = - boundingBox.min.y + c_y - boundingBox.min.y;
-			// 		//effectController.lz = 1.0;
-			// 		var dist = Math.sqrt(Math.pow(camera.position.x, 2) +
-			// 							Math.pow(camera.position.y , 2)+
-			// 							Math.pow(camera.position.z - depth, 2));
-
-			// 		var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
-			// 		camera.fov = fov;
-			// 		//camera.position.y = - boundingBox.min.y + (c_y - boundingBox.min.y);
-			// 		//camera.position.y = 300;
-			// 		camera.updateProjectionMatrix();
-			// 		scene.add(child);
-			// 		console.log('load file successful');
-			// 	}
-			// } );
-
-			//simple test
-			scene.add(object);
-			console.log('load file successful');
-	});
-
-	console.log('load file successful2');
-}
 
 
 function getFileAttributes(url){
@@ -959,7 +860,7 @@ function updatePolyInfo(display){
 try {
 	init();
 	//fillScene();
-	setupGui();
+	setupGui(phongBalancedMaterial);
 	addToDOM();
 	onWindowResize();
 	animate();
@@ -1065,74 +966,67 @@ $(function(){
 	//show curvature  showcurvaturelbtn
 	$('#curvaturebtn').click(function(){
 		console.log("curvature switch");
-		//check wire frame status
-		// if(wireframeState=='enabled'){
-		// 	$('#wireframebtn').trigger("click");
-		// 	return;
-		// }
 		//check if curvature can be rendered
 		if (showCurvature == false){
 			return;
 		}
+
 		var object = scene.getObjectByName( "teethObj" );
 		//turn on vertex color
 		if (curvatureState =='disabled' && wireframeState == 'disabled'){
-			renderVertextColor(object);
+			renderVertexColor(object);
 
-		}  //turn off vertex color
+		}  //turn off vertex color, render wireframe
 		else if (curvatureState =='enabled' && wireframeState == 'disabled'){
-			renderPhongShader(object);
-			$('#curvaturebtn span:first').removeClass('on');
-			$('#curvaturebtn span:first').removeClass('icon-curvature');
-			$('#curvaturebtn span:first').addClass('icon-wireframe');
-			curvatureState='disabled';
-			wireframeState="enabled";
-			var object = scene.getObjectByName( "teethObj" );
-			object.traverse( function(child){
-					if(child instanceof THREE.Mesh){
-						// // child is the mesh
-						child.material = new THREE.MeshBasicMaterial( {
-							wireframe: true,
-        					color: 'blue' } );
-						child.material.side = THREE.DoubleSide;
-						//child.material.vertexColors = +THREE.VertexColors; //Ensure number
-						child.material.needsUpdate = true;
-						child.geometry.buffersNeedUpdate = true;
-						child.geometry.uvsNeedUpdate = true;
-						child.geometry.verticesNeedUpdate = true;
-						child.geometry.normalsNeedUpdate = true;
-						child.geometry.colorsNeedUpdate = true;
-					}
-				});
-			$("#tpHueHelp").hide();
-			$("#tpLegend").hide();
-			$("#tpScale").hide();
-
+			renderWireFrame(object);
 		}
 		else if(curvatureState == 'disabled' && wireframeState == 'enabled'){
 			renderPhongShader(object);
-			wireframeState = 'disabled';
-			$('#curvaturebtn span:first').removeClass('icon-wireframe');
-			$('#curvaturebtn span:first').addClass('icon-curvature');
-			$('#curvaturebtn span:first').addClass('off');
+			
 		}
-		// if (wireframeState=='enabled'){
-		// 	$('#wireframebtn span:first').addClass("icon-disabled");
-		// }
 	});
 
-    function renderVertextColor(object){
+	function renderWireFrame(object){
+		curvatureState='disabled';
+		wireframeState="enabled";
+		$('#curvaturebtn span:first').removeClass('on');
+		$('#curvaturebtn span:first').removeClass('icon-curvature');
+		$('#curvaturebtn span:first').addClass('icon-wireframe');
+		$("#tpHueHelp").hide();
+		$("#tpLegend").hide();
+		$("#tpScale").hide();
+		object.traverse( function(child){
+				if(child instanceof THREE.Mesh){
+					// // child is the mesh
+					meshBasicMaterial.wireframe = true;
+					meshBasicMaterial.color.setRGB(0.0, 0.0, 1.0);
+					meshBasicMaterial.vertexColors = +THREE.NoColors;
+					child.material = meshBasicMaterial;
+					child.material.needsUpdate = true;
+					child.geometry.buffersNeedUpdate = true;
+					child.geometry.uvsNeedUpdate = true;
+					child.geometry.verticesNeedUpdate = true;
+					child.geometry.normalsNeedUpdate = true;
+					child.geometry.colorsNeedUpdate = true;
+				}
+			});
+	}
+
+    function renderVertexColor(object){
     	// show hue helper
+    	curvatureState='enabled';
+    	wireframeState= 'disabled';
+    	$('#curvaturebtn span:first').removeClass('off');
+		$('#curvaturebtn span:first').addClass('on');
     	$("#tpHueHelp").show();
     	$("#tpLegend").show();
     	$("#tpScale").show();
 		object.traverse( function(child){
 			if(child instanceof THREE.Mesh){
-				console.log('find child as mesh');
-				// // child is the mesh
-				child.material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-				child.material.side = THREE.DoubleSide;
-				//child.material.vertexColors = +THREE.VertexColors; //Ensure number
+				meshBasicMaterial.wireframe = false;
+				meshBasicMaterial.color.setRGB(1.0, 1.0, 1.0);
+				meshBasicMaterial.vertexColors = +THREE.VertexColors;
+				child.material = meshBasicMaterial; 
 				child.material.needsUpdate = true;
 				child.geometry.buffersNeedUpdate = true;
 				child.geometry.uvsNeedUpdate = true;
@@ -1141,12 +1035,16 @@ $(function(){
 				child.geometry.colorsNeedUpdate = true;
 			}
 		});
-		curvatureState='enabled';
-		$('#curvaturebtn span:first').removeClass('off');
-		$('#curvaturebtn span:first').addClass('on');
     }
+
+
     function renderPhongShader(object){
     	// hide hue helper
+    	wireframeState = 'disabled';
+    	curvatureState = 'disabled';
+		$('#curvaturebtn span:first').removeClass('icon-wireframe');
+		$('#curvaturebtn span:first').addClass('icon-curvature');
+		$('#curvaturebtn span:first').addClass('off');
 		$("#tpHueHelp").hide();
 		$("#tpLegend").hide();
 		$("#tpScale").hide();
@@ -1154,8 +1052,6 @@ $(function(){
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
 				child.material = phongBalancedMaterial;
-				//child.material.vertexColors = +THREE.FaceColors;
-				//child.material.vertexColors = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
 				child.material.needsUpdate = true;
 				child.geometry.buffersNeedUpdate = true;
 				child.geometry.uvsNeedUpdate = true;
@@ -1164,10 +1060,9 @@ $(function(){
 				child.geometry.colorsNeedUpdate = true;
 			}
 		});
-		// $('#curvaturebtn span:first').removeClass('on');
-		// $('#curvaturebtn span:first').addClass('off');
-
     }
+
+
 	// download stl click event listener
 	$("#downloadstlbtn").click(function(){
 		console.log("STL Downloader");
@@ -1180,50 +1075,5 @@ $(function(){
 			}
 		});
 	});
-	//render wire frame
-	// $("#wireframebtn").click(function(){
-	// 	console.log("WireFrame");
-	// 	if(wireframeState=="disabled"){
-	// 		wireframeState="enabled";
-	// 		var object = scene.getObjectByName( "teethObj" );
-	// 		object.traverse( function(child){
-	// 				if(child instanceof THREE.Mesh){
-	// 					// // child is the mesh
-	// 					child.material = new THREE.MeshBasicMaterial( {
-	// 						wireframe: true,
- //        					color: 'blue' } );
-	// 					child.material.side = THREE.DoubleSide;
-	// 					//child.material.vertexColors = +THREE.VertexColors; //Ensure number
-	// 					child.material.needsUpdate = true;
-	// 					child.geometry.buffersNeedUpdate = true;
-	// 					child.geometry.uvsNeedUpdate = true;
-	// 					child.geometry.verticesNeedUpdate = true;
-	// 					child.geometry.normalsNeedUpdate = true;
-	// 					child.geometry.colorsNeedUpdate = true;
-	// 				}
-	// 			});
-	// 		$("#tpHueHelp").hide();
-	// 		$('#wireframebtn span:first').removeClass("icon-disabled");
-	// 		$('#curvaturebtn span:first').addClass("icon-disabled");
-	// 	}
-	// 	else if(wireframeState=="enabled"){
-	// 		wireframeState="disabled";
-	// 		var object = scene.getObjectByName( "teethObj" );
-	// 		//show phong shader or material based on previous state
-	// 		if (curvatureState=='disabled'){
-	// 			renderPhongShader(object);
-
-
-	// 		}  //turn off vertex color
-	// 		else if (curvatureState=='enabled'){
-	// 			renderVertextColor(object);
-	// 		}
-	// 		//show material
-	// 		$('#wireframebtn span:first').addClass("icon-disabled");
-	// 		$('#curvaturebtn span:first').removeClass("icon-disabled");
-
-	// 	}
-	// });
-
 
 });
