@@ -293,6 +293,10 @@ function updateMeshMaterial(material){
 	light.color.setHSL(effectController.lhue, effectController.lsaturation, effectController.llightness);
 }
 
+
+//TODO: rewrite setupGUI
+// Use default mesh phong material instead of using your own shaders
+//http://threejs.org/docs/index.html#Reference/Materials/MeshPhongMaterial
 function setupGui(material) {
 
 	var gui = new dat.GUI({autoPlace: false});
@@ -347,6 +351,8 @@ function render() {
 	renderer.render(scene, cameraControls.object);
 
 }
+
+//TODO: Test PLY File and see if color can be parsed
 
 /* For binary STLs geometry might contain colors for vertices. To use it:
  *  // use the same code to load STL as above

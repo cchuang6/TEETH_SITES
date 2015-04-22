@@ -1,5 +1,15 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en">
+
+<!--
+    For Adrew:
+    
+    "load staticfiles" and and load compress are Django template
+    Please see 
+    https://docs.djangoproject.com/en/1.8/howto/static-files/
+    http://django-compressor.readthedocs.org/en/latest/quickstart/
+-->
+
 {% load staticfiles %}
 {% load compress %}
 
@@ -185,20 +195,21 @@
             <p>--</p>
         </div>
     </body>
-
-        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/fileSaver.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/d3.min.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/three.min.71.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/Detector.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/progressbar/progressbar.js" %}"></script>
-
+        {% compress js%}
+        <!-- jqeury, three.js, dat.gui, progressbar, and filesaver library -->
+        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/fileSaver.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/d3.min.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/three.min.71.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/Detector.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/libs/progressbar.js" %}" charset="utf-8"></script>
+        <!-- Orbit and Pan Controllers -->
+        <script type="text/javascript" src="{% static "js/controls/OrbitAndPanControls.js" %}" charset="utf-8"></script>
         <!--STL and DAE file loader -->
-        <script src="{% static "js/loaders/STLLoader.js" %}"></script>
-        <script src="{% static "js/loaders/ColladaLoader.js" %}"></script>
-
+        <script src="{% static "js/loaders/STLLoader.js" %}" charset="utf-8"></script>
+        <script src="{% static "js/loaders/ColladaLoader.js" %}" charset="utf-8"></script>
+        <!-- vertex shader -->
         <script type="text/x-glsl" id="vertex">
             varying vec3 vNormal;
             varying vec3 vViewPosition;
@@ -211,7 +222,7 @@
                 vViewPosition = -mvPosition.xyz;
             }
         </script>
-
+        <!--fragment shader -->
         <!-- TODO: check code here -->
         <script type="text/x-glsl" id="fragment">
             uniform vec3 uMaterialColor;
@@ -264,15 +275,24 @@
                 gl_FragColor.rgb += uDirLightColor * uSpecularColor * uKs * specular;
             }
         </script>
+        
+        <!-- For Andrew Sapiens: You can pass file_url here to load file as you want
+             The syntax "%static %"" is the template tag in Django. Here are some examples
+             https://docs.djangoproject.com/en/1.8/howto/static-files/
+             You can change the "%static %"" to the regular static url
+        -->
+
         <script type = "text/javascript">
             $('#tpDRHeader').hide();
             $('#teethContainer').hide();
             var file_url = "{{file_url}}";
             console.log("teethViewer3D.html file_url" + file_url);
         </script>
-        {% compress js %}
-            <script type="text/javascript" src="{% static "js/viewer.js" %}"></script>
-            <script type="text/javascript" src="{% static "js/editor_teeth.js" %}"></script>
-        {% endcompress %}
+        <!-- viwer and 3D editor -->
+        
+        <script type="text/javascript" src="{% static "js/viewer.js" %}" charset="utf-8"></script>
+        <script type="text/javascript" src="{% static "js/editor_teeth.js" %}" charset="utf-8"></script>
+        {% endcompress js%}
+        
 
 </html>
