@@ -19,7 +19,7 @@ urlpatterns = patterns('',
 
     #url(r'^admin/', include(admin.site.urls)),
     url(r'^$', views.index, name='teethViewer3DHome'),
-    url(r'^stlViewer/', views.stlViewer, name='stlLoader'),
+    # url(r'^stlViewer/', views.stlViewer, name='stlLoader'),
     
     
 

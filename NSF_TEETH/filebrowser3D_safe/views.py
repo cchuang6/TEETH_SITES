@@ -479,7 +479,7 @@ def view3D(request):
     return render_to_response('teethViewer3D/teethViewer3D.html', {
         'query': query,
         'filename': _(u'%s') % filename,
-        'file_extension': file_extension,
+        # 'file_extension': file_extension,
         'title': _(u'Teeth Model "%s"') % filename,
         'settings_var': get_settings_var(),
         'file_url': _(u'%s') % file_url,
