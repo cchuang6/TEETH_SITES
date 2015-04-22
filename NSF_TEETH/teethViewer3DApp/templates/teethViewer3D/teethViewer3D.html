@@ -191,22 +191,13 @@
         <script type="text/javascript" src="{% static "js/d3.min.js" %}"></script>
         <script type="text/javascript" src="{% static "js/three.min.71.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/Detector.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/Viewport.68.js" %}"></script>
-
-        <script type="text/javascript" src="{% static "js/libs/Coordinates.js" %}"></script>
-        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.new.js" %}"></script>
-        <!--<script type="text/javascript" src="{% static "js/libs/OrbitControlsTouch.js" %}"></script>-->
-        <!--<script type="text/javascript" src="{% static "js/libs/TrackballControls.js" %}"></script>-->
-        <script type="text/javascript" src="{% static "js/libs/stats.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/libs/OrbitAndPanControls.js" %}"></script>
         <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}"></script>
         <script type="text/javascript" src="{% static "js/progressbar/progressbar.js" %}"></script>
 
-        <!--STL and OBJ file loader -->
-        <script src="{% static "js/loaders/STLLoader.68.js" %}"></script>
-        <script src="{% static "js/loaders/OBJLoader.68.js" %}"></script>
-        <script src="{% static "js/loaders/OBJMTLLoader.68.js" %}"></script>
-        <script src="{% static "js/loaders/MTLLoader.68.js" %}"></script>
-        <script src="{% static "js/loaders/ColladaLoader.68.js" %}"></script>
+        <!--STL and DAE file loader -->
+        <script src="{% static "js/loaders/STLLoader.js" %}"></script>
+        <script src="{% static "js/loaders/ColladaLoader.js" %}"></script>
 
         <script type="text/x-glsl" id="vertex">
             varying vec3 vNormal;

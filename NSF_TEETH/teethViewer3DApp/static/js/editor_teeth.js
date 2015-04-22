@@ -159,8 +159,8 @@ function hide2DInfo(){
 // document.addEventListener('dblclick', onContainerDBLClick, false);
 //$("#teethContainer").mousedown(onContainerMouseDown);
 $("#teethContainer").dblclick(onContainerDBLClick);
-// document.addEventListener('mousemove', onDocumentMouseMove, false);
-$("#teethContainer").bind('mousemove',onContainerMouseMove);
+document.addEventListener('mousemove', onContainerMouseMove, false);
+// $("#teethContainer").bind('mousemove',onContainerMouseMove);
 document.addEventListener('mouseup', onDocumentMouseUp, false);
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
@@ -194,8 +194,15 @@ function onMousewheel(e){
 
 // event listener that gets x,y,z on mouse hover
 function onContainerMouseMove( event ){
+	
+
+	if(outCanvas(event.clientX, event.clientY)){
+		return;
+	}
+
 	event.preventDefault();
-	// event.stopPropagation();
+	event.stopPropagation();
+
 
 	// if(getPointValMode == "enabled"){
 	// 	//selected point, ray cast

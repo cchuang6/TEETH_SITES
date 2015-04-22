@@ -9,10 +9,6 @@
 
 THREE.OrbitAndPanControls = function ( object, domElement ) {
 
-	THREE.EventDispatcher.call( this );
-
-	this.enabled = true;
-
 	this.object = object;
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
 
@@ -110,7 +106,7 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 		// get X column of matrix
 		panOffset.set( te[0], te[1], te[2] );
 		panOffset.multiplyScalar(-distance);
-
+		
 		pan.add( panOffset );
 
 	};
@@ -123,10 +119,10 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 		// get Y column of matrix
 		panOffset.set( te[4], te[5], te[6] );
 		panOffset.multiplyScalar(distance);
-
+		
 		pan.add( panOffset );
 	};
-
+	
 	// main entry point; pass in Vector2 of change desired in pixel space,
 	// right and down are positive
 	this.pan = function ( delta ) {
@@ -213,7 +209,7 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 
 		// restrict radius to be between desired limits
 		radius = Math.max( this.minDistance, Math.min( this.maxDistance, radius ) );
-
+		
 		// move target to panned location
 		this.target.add( pan );
 
@@ -328,7 +324,7 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 
 			panEnd.set( event.clientX, event.clientY );
 			panDelta.subVectors( panEnd, panStart );
-
+			
 			scope.pan( panDelta );
 
 			panStart.copy( panEnd );
@@ -403,7 +399,7 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 		}
 
 	}
-
+	
 	function touchstart( event ) {
 
 		if ( scope.enabled === false ) { return; }
@@ -497,7 +493,7 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 
 				panEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
 				panDelta.subVectors( panEnd, panStart );
-
+				
 				scope.pan( panDelta );
 
 				panStart.copy( panEnd );
@@ -529,3 +525,5 @@ THREE.OrbitAndPanControls = function ( object, domElement ) {
 	this.domElement.addEventListener( 'touchmove', touchmove, false );
 
 };
+
+THREE.OrbitAndPanControls.prototype = Object.create( THREE.EventDispatcher.prototype );

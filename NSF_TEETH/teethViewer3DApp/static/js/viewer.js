@@ -56,8 +56,10 @@ function init() {
 	// RENDERER
 	if (Detector.webgl)
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
-	else
+	else{
+		Detector.addGetWebGLMessage();
 		renderer = new THREE.CanvasRenderer();
+	}
 	renderer.setSize(canvasWidth, canvasHeight);
 
 	//renderer.setClearColorHex(0xFFFFFF, 0.8);
@@ -346,6 +348,13 @@ function render() {
 
 }
 
+/* For binary STLs geometry might contain colors for vertices. To use it:
+ *  // use the same code to load STL as above
+ *  if (geometry.hasColors) {
+ *    material = new THREE.MeshPhongMaterial({ opacity: geometry.alpha, vertexColors: THREE.VertexColors });
+ *  } else { .... }
+ *  var mesh = new THREE.Mesh( geometry, material );
+ */
 // Load STL file
 function loadSTL(url){
 	console.log('Start loading STL file');
@@ -354,14 +363,16 @@ function loadSTL(url){
 	manager.onProgress = function ( item, loaded, total ) {
 		console.log( item, loaded, total);
 	};
-	var loader = new THREE.STLLoader(manager);
 
-	//Load Event
-	loader.addEventListener( 'load', function ( event ) {
+
+	//onload 
+	var onLoad = function(bufferGeometry){
+		console.log('Call load function at STL loader');
+
 		var sceneObject = new THREE.Object3D();
 		sceneObject.name = "teethObj";
-		var bufferGeometry = event.content;
-		var geometry = new THREE.Geometry().fromBufferGeometry( bufferGeometry )
+		//var bufferGeometry = geometry;
+		var geometry = new THREE.Geometry().fromBufferGeometry(bufferGeometry )
 		var mesh = new THREE.Mesh( geometry, phongBalancedMaterial );
 		var centMesh = getCenteralizedMesh(mesh);
 		sceneObject.add(centMesh.mesh);
@@ -378,32 +389,30 @@ function loadSTL(url){
 		$('#progress').hide();
 		$('#tpDRHeader').show();
 		container.show();
+	};
 
-	}, false );
-	//progress event
-	loader.addEventListener( 'progress', function( event ){
-		if ( $.isNumeric(event.loaded) && $.isNumeric(event.total) )
+	var onProgress = function ( object ) {
+		if ( $.isNumeric(object.loaded) && $.isNumeric(object.total) )
 		{
-			var complete = event.loaded / event.total;
+			var complete = object.loaded / object.total;
 			progress_circle.set(complete);
 			var percentComplete = Math.round(complete * 100, 2);
 			progress_circle.setText(percentComplete + '% downloaded')
 			console.log( percentComplete + '% downloaded' );
 		}
 		else{
-			console.log(event);
+			console.log(object);
 		}
-	}, false);
+	};
 
-	//error event
-	loader.addEventListener('error', function(event){
-		console.log("Load STL Error!!");
-		console.log(event);
-	}, false);
+	var onError = function ( object ) {
+		console.log("Error!");
+		cosole.log(object);
+	};
 
-
-
-	loader.load(url);
+	//loading
+	var loader = new THREE.STLLoader( manager );
+	loader.load( url, onLoad, onProgress, onError);
 
 }
 
@@ -420,9 +429,10 @@ function loadDAE(url){
 
 	var onLoad = function(object){
 		console.log('Call load function at DAE loader');
-		daeSceneObj = object.scene;
-		daeSceneObj.name = "teethObj";
-		daeSceneObj.traverse( function(child) {
+
+		var sceneObj = object.scene;
+		sceneObj.name = "teethObj";
+		sceneObj.traverse( function(child) {
 			if(child instanceof THREE.Mesh){
 				console.log('find child as mesh');
 				// // child is the mesh
@@ -443,7 +453,7 @@ function loadDAE(url){
 		});
 		//simple test
 		//add scene
-		scene.add(daeSceneObj);
+		scene.add(sceneObj);
 
 		console.log('load file successful');
 
