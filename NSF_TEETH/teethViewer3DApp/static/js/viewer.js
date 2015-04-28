@@ -413,7 +413,7 @@ function loadSTL(url){
 
 	var onError = function ( object ) {
 		console.log("Error!");
-		cosole.log(object);
+		console.log(object);
 	};
 
 	//loading
@@ -826,9 +826,6 @@ function updatePolyInfo(display){
     var matrix = getViewProjectionMatrix();
     // console.log("View Projection Matrix");
     // console.log(matrix);
-
-
-
     //TODO deal with pos < 0
     // Deal with it today
     // console.log("show polyInfo");
@@ -837,7 +834,10 @@ function updatePolyInfo(display){
 		var polyId = val.polyId;
 		var center = val.center;
 		var angleInfo_pos = val.angleInfo_pos;
+		var middle_pos = val.middle_pos;
 		var poly = document.getElementsByClassName("polyObj"+polyId);
+		
+		console.log(polyId);
 
 		$.each(poly, function(j, val){
 			if(display == 'none'){
@@ -850,12 +850,20 @@ function updatePolyInfo(display){
 			var pos;
 			var msg = poly[j].innerHTML;
 			var num_char = msg.length;
-			if(j == 0){
-				pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+			
+			if(middle_pos != undefined){
+				console.log("middle_pos", middle_pos);
+				pos = toXYCoords(middle_pos, matrix, width, height, leftOffset, topOffset);
 			}
-			else if (j > 0){
-				pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
-				num_char -= 4;
+			if(center != undefined && angleInfo_pos != undefined){
+				
+				if(j == 0){
+					pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+				}
+				else if (j > 0){
+					pos = toXYCoords(angleInfo_pos[j -1], matrix, width, height, leftOffset, topOffset);
+					num_char -= 4;
+				}
 			}
 
 

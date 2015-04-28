@@ -82,7 +82,7 @@ function onContainerDBLClick(event){
 
 		if(pointId == undefined) return;
 		else if(pointId == polyPointsPickedCounter &&
-		        polyPointsPickedCounter > 1)
+		        polyPointsPickedCounter > 0)
 		{
 			closePolygon();
 		}
@@ -501,30 +501,57 @@ function closePolygon(){
 	var poly = scene.getObjectByName("polyObj" + polyCounter);
 	var p1 = getPolyPointById(poly, polyPointsPickedCounter);
 	var p2 = getPolyPointById(poly, 0);
-	drawLineBetweenPoints(p1, p2);
-	var result = calculatePolyInfo(polyCounter);
-	var area = result.area;
-	var center = result.center;
-	var angles = result.angles;
-	var angleInfo_pos = result.angleInfo_pos;
-	var distance2D = result.distance2D;
-	polyInfo.push({polyId: polyCounter, center: center, angleInfo_pos: angleInfo_pos});
-
-	render2DText(polyCounter, "area", center, parseFloat(area).toFixed(2).toString());
-	$.each(angleInfo_pos, function(index, val){
-		render2DText(polyCounter, "v"+ index, val, parseFloat(angles[index]).toFixed(2).toString() + "&deg;");
-	});
-
-	//Area
-	var msg = parseFloat(area).toFixed(3);
-	appendToPolyPointsPickedInfo("Area", msg);
+	if(polyPointsPickedCounter > 1)
+		drawLineBetweenPoints(p1, p2);
 	
-	//angles
-	msg = convertDictToHTML(angles);
-	appendToPolyPointsPickedInfo("Angles", msg);
+	var _polyInfo = {}
+	_polyInfo['polyId'] = polyCounter;
+	var result = calculatePolyInfo(polyCounter);
 
-	msg = convertDictToHTML(distance2D);
-	appendToPolyPointsPickedInfo("2D Distances", msg);
+	if(polyPointsPickedCounter < 2){
+		//store results in polyInfo
+
+		_polyInfo['middle_pos'] = result.middle_pos;
+		_polyInfo['distance2D'] = result.distance2D;
+		polyInfo.push(_polyInfo);
+		console.log(result.middle_pos);
+		//render results on 3D Viewer
+		render2DText(polyCounter, "distance2D", result.middle_pos,
+					 parseFloat(result.distance2D[0]).toFixed(2).toString());
+
+		// 2D distance
+		msg = convertDictToHTML(result.distance2D);
+		appendToPolyPointsPickedInfo("2D Distances", msg);
+	}
+	else{
+		//store results in polyInfo
+		
+		_polyInfo['area'] = result.area;
+		_polyInfo['center'] = result.center;
+		_polyInfo['angles'] = result.angles;
+		_polyInfo['angleInfo_pos'] = result.angleInfo_pos;
+		_polyInfo['distance2D'] = result.distance2D;
+		polyInfo.push(_polyInfo);
+
+		//render results on 3D Viewer
+		render2DText(polyCounter, "area", result.center,
+					 parseFloat(result.area).toFixed(2).toString());
+		$.each(result.angleInfo_pos, function(index, val){
+			render2DText(polyCounter, "v"+ index, val,
+						 parseFloat(result.angles[index]).toFixed(2).toString() + "&deg;");
+		});
+
+		//Area
+		var msg = parseFloat(area).toFixed(3);
+		appendToPolyPointsPickedInfo("Area", msg);
+		
+		//angles
+		msg = convertDictToHTML(result.angles);
+		appendToPolyPointsPickedInfo("Angles", msg);
+		// 2D distance
+		msg = convertDictToHTML(result.distance2D);
+		appendToPolyPointsPickedInfo("2D Distances", msg);
+	}
 
 	polyPointsPickedCounter = -1;
 }
@@ -561,8 +588,10 @@ function render2DText(polyId, name, center, msg){
     var fontsize = parseInt($("body").css('font-size'), 10);
 
 	var matrix = getViewProjectionMatrix();
-	pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
 
+	// console.log('render2DText', center);
+	pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
+	
 	var num_char = msg.length;
 
 	if(msg.indexOf("&deg;") > -1) num_char -= 4;
@@ -915,63 +944,95 @@ function updatePolyOnUI(changedPoint, intersects, intersect_info, polyId){
 	var pointId = intersect_info.pointId
 	var mCurvature = getMeanCurvature(intersects, intersect_Id);
 	var uiPolyName = $("#polyTextField"+polyId).val();
-	//update point pos
-	var cur_polyInfo = calculatePolyInfo(polyId);
 	
-	var area = cur_polyInfo.area;
-	var center = cur_polyInfo.center;
-	var angles = cur_polyInfo.angles;
-	var angleInfo_pos = cur_polyInfo.angleInfo_pos;
-	var distance2D = cur_polyInfo.distance2D;
-	//console.log('Before', polyInfo);
-	$.each(polyInfo, function(i, val){
-		if (val.polyId == polyId){
-			val.center = center;
-			val.angleInfo_pos = angleInfo_pos;
-			return false;
-		}
-	});
-
-	//change viewer msg
 	var poly = scene.getObjectByName("polyObj" + polyId);
 	var vertices = poly.children.length;
-	$.each($('.polyObj'+polyId), function(j, val){
-		if($(val).attr('id') == 'area')
-			$(val).html(parseFloat(area).toFixed(3));
-		else{
-			var vertex = parseInt($(val).attr('id').substring(1));
-			$(val).html(parseFloat(angles[vertex]).toFixed(3));
-		}
-	});
-
-	//prepare updated info
-	var angles_str = convertDictToHTML(angles);
-	var distance2D_str = convertDictToHTML(distance2D);
-	var area_str = parseFloat(area).toFixed(3);
-
-	updatedPolyInfo = {'mCurvature': mCurvature, 
-						'angles': angles_str,
-						'distance2D': distance2D_str,
-						'area': area_str,
-						'vertices': vertices/2
-						}
-
-	//change polyPointsPickedInfo
-	$.each($("#polyPointsPickedInfo div > div"),function(key,val){
-		if($(val).find("input").val() == uiPolyName){
-			var polyItems = $("#polyPointsPickedInfo div > div")
-			updatePolyPointsPickedInfo(polyItems, key, pointId, 
-									   changedPoint, updatedPolyInfo);
-			return false;
-		}
-	});
-
-
-
-	// polyPointsPickedCounter = -1;
-
-
+	var cur_polyInfo = calculatePolyInfo(polyId);
 	
+	if(vertices == 3){
+		var middle_pos = cur_polyInfo.middle_pos;
+		var distance2D = cur_polyInfo.distance2D;
+		$.each(polyInfo, function(i, val){
+			if (val.polyId == polyId){
+				val.middle_pos = middle_pos;
+				return false;
+			}
+		});
+
+		$.each($('.polyObj'+polyId), function(j, val){
+			if($(val).attr('id') == 'distance2D')
+				$(val).html(parseFloat(distance2D).toFixed(3));
+		});
+
+		//prepare updated info
+		
+		var distance2D_str = convertDictToHTML(distance2D);
+	
+		updatedPolyInfo = {
+							'distance2D': distance2D_str,
+							'vertices': vertices -1
+						   }
+	
+		//change polyPointsPickedInfo
+		$.each($("#polyPointsPickedInfo div > div"),function(key,val){
+			if($(val).find("input").val() == uiPolyName){
+				var polyItems = $("#polyPointsPickedInfo div > div")
+				updatePolyPointsPickedInfo(polyItems, key, pointId, 
+										   changedPoint, updatedPolyInfo);
+				return false;
+			}
+		});
+
+
+	}
+	else{
+		//update point pos
+		var area = cur_polyInfo.area;
+		var center = cur_polyInfo.center;
+		var angles = cur_polyInfo.angles;
+		var angleInfo_pos = cur_polyInfo.angleInfo_pos;
+		var distance2D = cur_polyInfo.distance2D;
+		//console.log('Before', polyInfo);
+		$.each(polyInfo, function(i, val){
+			if (val.polyId == polyId){
+				val.center = center;
+				val.angleInfo_pos = angleInfo_pos;
+				return false;
+			}
+		});
+
+		//change viewer msg
+		$.each($('.polyObj'+polyId), function(j, val){
+			if($(val).attr('id') == 'area')
+				$(val).html(parseFloat(area).toFixed(3));
+			else{
+				var vertex = parseInt($(val).attr('id').substring(1));
+				$(val).html(parseFloat(angles[vertex]).toFixed(3));
+			}
+		});
+	
+		//prepare updated info
+		var angles_str = convertDictToHTML(angles);
+		var distance2D_str = convertDictToHTML(distance2D);
+		var area_str = parseFloat(area).toFixed(3);
+	
+		updatedPolyInfo = {'mCurvature': mCurvature, 
+							'angles': angles_str,
+							'distance2D': distance2D_str,
+							'area': area_str,
+							'vertices': vertices/2
+							}
+	
+		//change polyPointsPickedInfo
+		$.each($("#polyPointsPickedInfo div > div"),function(key,val){
+			if($(val).find("input").val() == uiPolyName){
+				var polyItems = $("#polyPointsPickedInfo div > div")
+				updatePolyPointsPickedInfo(polyItems, key, pointId, 
+										   changedPoint, updatedPolyInfo);
+				return false;
+			}
+		});
+	}
 }
 
 function convertDictToHTML(dict){
@@ -993,19 +1054,23 @@ function updatePolyPointsPickedInfo(polyItems, polyItemIndex, pointIndex, change
 	var item = polyItems.get(polyItemIndex + 1 + pointIndex);
 	updatePointsOnUI(item, changedPoint.position, pointIndex, updatedPolyInfo.mCurvature);
 	
-
-
-	//update area
-	item = polyItems.get(polyItemIndex + vertices + 1);
-	item.innerHTML = "<span> Area : " + updatedPolyInfo.area + "</span>";
+	// update other info
 	
-	//update angle
-	item = polyItems.get(polyItemIndex + vertices + 2);
-	item.innerHTML = "<span> Angles : " + updatedPolyInfo.angles + "</span>";
-
-	//update distance
-	item = polyItems.get(polyItemIndex + vertices + 3);
-	item.innerHTML = "<span> 2D Distances : " + updatedPolyInfo.distance2D + "</span>";
+	if(updatedPolyInfo.area != undefined){
+		//update area
+		item = polyItems.get(polyItemIndex + vertices + 1);
+		item.innerHTML = "<span> Area : " + updatedPolyInfo.area + "</span>";
+		//update angle
+		item = polyItems.get(polyItemIndex + vertices + 2);
+		item.innerHTML = "<span> Angles : " + updatedPolyInfo.angles + "</span>";
+		//update distance
+		item = polyItems.get(polyItemIndex + vertices + 3);
+		item.innerHTML = "<span> 2D Distances : " + updatedPolyInfo.distance2D + "</span>";
+	}
+	else{
+		item = polyItems.get(polyItemIndex + vertices + 1);
+		item.innerHTML = "<span> 2D Distances : " + updatedPolyInfo.distance2D + "</span>";
+	}
 }
 
 function updatePointsOnUI(item, point, pointId, mCurvature){
@@ -1311,59 +1376,96 @@ function showObject(objName){
 
 function calculatePolyInfo(polyId){
 
-	var xProd = 0.0;
-	var yProd = 0.0;
+	
 	var poly = scene.getObjectByName("polyObj" + polyId);
-	// var poly = polyPointsPicked[polyId]
-	var angles = [];
-	var angleInfo_pos = [];
-	var center = new THREE.Vector3();
 	var distance2D = [];
 	var length = poly.children.length;
-	//var vetices = polyInfo.angleInfo_pos.length;
-	//var lastIndex = poly.length - 1
+	var info_results = {};
 
-	poly.traverse( function(child) {
-		if(child instanceof THREE.Mesh){						
-			if(child.pointId != undefined){
-				// child is a point
-				center.x += child.position.x;
-				center.y += child.position.y;
-				center.z += child.position.z;
-				var prevPoint = poly.children[(length + child.pointId * 2 - 2) % length];
-				var nextPoint = poly.children[(child.pointId * 2 + 2) % length];
+	if(length == 3){
+		var p1 = poly.children[0].position;
+		var p2 = poly.children[2].position;
+		var middle_pos = calculateMiddleLine(p1, p2);
+		
+		var distance = calculate2DDistance(p1, p2);
+		distance2D.push(distance);
+		
+		console.log('calculatePolyInfo', middle_pos);
+		info_results['middle_pos'] = middle_pos;
+		info_results['distance2D'] = distance2D;
+	}
+	else{
+		var xProd = 0.0;
+		var yProd = 0.0;
+		var angles = [];
+		var angleInfo_pos = [];
+		var center = new THREE.Vector3();
 
-				//area
-				xProd = xProd + (child.position.x * nextPoint.position.y);
-				yProd = yProd + (child.position.y * nextPoint.position.x);
-				
-				//angle
-				var result = calculateAngle(prevPoint.position,
-											child.position,
-											nextPoint.position);
-				angles.push(result.theta);
-				angleInfo_pos.push(result.lerp);
-
-				//2D distance
-				var result = calculate2DDistance(prevPoint.position,
-												 child.position);
-				distance2D.push(result);
+		poly.traverse( function(child) {
+			if(child instanceof THREE.Mesh){						
+				if(child.pointId != undefined){
+					// child is a point
+					center.x += child.position.x;
+					center.y += child.position.y;
+					center.z += child.position.z;
+					var prevPoint = poly.children[(length + child.pointId * 2 - 2) % length];
+					var nextPoint = poly.children[(child.pointId * 2 + 2) % length];
+	
+					//area
+					xProd = xProd + (child.position.x * nextPoint.position.y);
+					yProd = yProd + (child.position.y * nextPoint.position.x);
+					
+					//angle
+					var result = calculateAngle(prevPoint.position,
+												child.position,
+												nextPoint.position);
+					angles.push(result.theta);
+					angleInfo_pos.push(result.lerp);
+	
+					//2D distance
+					var distance = calculate2DDistance(prevPoint.position,
+													 child.position);
+					distance2D.push(distance);
+				}
 			}
-		}
-	});
+		});
+		
+		center.divideScalar(length/2.0);
+		var area = Math.abs((xProd-yProd)/2);
 
-	center.x /= (length/2);
-	center.y /= (length/2);
-	center.z /= (length/2);
+		info_results['area'] = area;
+		info_results['center'] = center;
+		info_results['angles'] = angles;
+		info_results['angleInfo_pos'] = angleInfo_pos;
+		info_results['distance2D'] = distance2D;
+	}
+	return info_results;
+}
 
-	var area = Math.abs((xProd-yProd)/2);
-	return { area: area,
-			 center: center,
-			 angles: angles,
-			 angleInfo_pos: angleInfo_pos,
-			 distance2D: distance2D
-	        };
+function calculateMiddleLine(p1, p2){
+	var middle_pos = new THREE.Vector3()
+	middle_pos.copy(p1).add(p2).divideScalar(2.0);
+	
 
+	var dx = p2.x - p1.x;
+	var dy = p2.y - p1.y;
+	var z = (p2.z + p1.z) /2.0;
+	
+	var norm_vec = new THREE.Vector3(-dy, dx, z);
+
+
+	norm_vec.normalize();
+	var scaleUnit = getScaleUnit(false, false);
+	var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+	if(distance < 0 ) return;
+	var scale = (distance * scaleUnit) * 3.0;
+	norm_vec.multiplyScalar(scale);
+	//console.log('calculateMiddleLine', norm_vec);
+
+
+	
+	middle_pos.add(norm_vec);
+	return middle_pos;
 }
 
 function calculateAngle(p1,p2,p3){
@@ -1382,8 +1484,8 @@ function calculateAngle(p1,p2,p3){
 	v2.multiplyScalar(-1.0);
 	lerp.subVectors(v2, v1).multiplyScalar(0.5).add(v1).normalize();
 	var scaleUnit = getScaleUnit(false, false);
-	if(distance < 0 ) return;
 	var distance = cameraControls.object.position.distanceTo(cameraControls.target);
+	if(distance < 0 ) return;
 	var scale = (distance * scaleUnit)* lerp.length() * 3.0;
 	lerp.x *= scale;
 	lerp.y *= scale;
