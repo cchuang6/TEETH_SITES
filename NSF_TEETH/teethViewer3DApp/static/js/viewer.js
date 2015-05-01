@@ -22,7 +22,6 @@ var progress_circle;
 var showCurvature;
 var wireframeState="disabled";
 var curvatureState="disabled";
-var orgPointScale = 12;
 var polyInfo = []
 var cameraQuat;
 var cameraProj;
@@ -203,7 +202,7 @@ function createShaderMaterial(id, light, ambientLight) {
 
 function guiMeshPhongMaterial(gui, material){
 	effectController = {
-
+		pointSize: 12.0,
 		shininess: 1.0,
 		dropoff: 0.0,
 		ka: 0.76,
@@ -211,7 +210,7 @@ function guiMeshPhongMaterial(gui, material){
 		ks: 1.0,
 		metallic: false,
 
-		curvature: false,
+		//curvature: false,
 		hue: 0.11,
 		saturation: 0.0,
 		lightness: 0.6,
@@ -230,6 +229,9 @@ function guiMeshPhongMaterial(gui, material){
 	};
 
 	var h;
+	h = gui.addFolder("Point Control");
+	h.add(effectController, "pointSize", 1.0, 15.0, 1.0).name("Point Size").onChange( updatePointSizeByUI );
+	// effectController.pointSize.name("Point Size");
 
 	h = gui.addFolder("Material control");
 	//console.log("phongBalancedMaterial");
@@ -241,12 +243,13 @@ function guiMeshPhongMaterial(gui, material){
 	h.add(effectController, "ks", 0.0, 1.0, 0.025).name("Ks");
 	h.add(effectController, "metallic");
 	h.add(effectController, "newTess", [2,3,4,5,6,8,10,12,16,24,32] ).name("Tessellation Level");
+	
 
 	// material (color)
 
 	h = gui.addFolder("Material color");
 
-	h.add(effectController, "curvature").name("Curvature");
+	//h.add(effectController, "curvature").name("Curvature");
 	h.add(effectController, "hue", 0.0, 1.0, 0.025).name("m_hue");
 	h.add(effectController, "saturation", 0.0, 1.0, 0.025).name("m_saturation");
 	h.add(effectController, "lightness", 0.0, 1.0, 0.025).name("m_lightness");
@@ -759,10 +762,17 @@ function getScaleUnit(isCameraProjUpdated, isCameraQuatUpdated){
 	//console.log(scaleUnit);
 	return scaleUnit;
 }
+function updatePointSizeByUI(size){
+	updatePointSize(true, true)
+}
 
 function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 
 	// var pointsObj = scene.getObjectByName("pointsObj");
+	// console.log("Point Size", effectController.pointSize)
+	// console.log("isCameraProjUpdated", isCameraProjUpdated)
+	// console.log("isCameraQuatUpdated", isCameraQuatUpdated)
+	if(scene == undefined) return;
 	var angleObj = scene.getObjectByName("angleObj");
 	// if(pointsObj == undefined) return;
 	if(angleObj == undefined) return;
@@ -773,19 +783,20 @@ function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 
 	// 		var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 	// 		if(distance > 0){
-	// 			var scale = (distance * scaleUnit)* orgPointScale;
+	// 			var scale = (distance * scaleUnit)* effectController.pointSize;
 	// 			child.scale.x = scale;
 	// 			child.scale.y = scale;
 	// 			child.scale.z = scale;
 	// 		}
 	// 	}
 	// });
+	
 
 	angleObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
 			var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 			if(distance > 0){
-				var scale = (distance * scaleUnit)* orgPointScale;
+				var scale = (distance * scaleUnit)* effectController.pointSize;
 				child.scale.x = scale;
 				child.scale.y = scale;
 				child.scale.z = scale;
@@ -837,7 +848,7 @@ function updatePolyInfo(display){
 		var middle_pos = val.middle_pos;
 		var poly = document.getElementsByClassName("polyObj"+polyId);
 		
-		console.log(polyId);
+		//console.log(polyId);
 
 		$.each(poly, function(j, val){
 			if(display == 'none'){
@@ -852,7 +863,7 @@ function updatePolyInfo(display){
 			var num_char = msg.length;
 			
 			if(middle_pos != undefined){
-				console.log("middle_pos", middle_pos);
+				//console.log("middle_pos", middle_pos);
 				pos = toXYCoords(middle_pos, matrix, width, height, leftOffset, topOffset);
 			}
 			if(center != undefined && angleInfo_pos != undefined){

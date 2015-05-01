@@ -514,7 +514,7 @@ function closePolygon(){
 		_polyInfo['middle_pos'] = result.middle_pos;
 		_polyInfo['distance2D'] = result.distance2D;
 		polyInfo.push(_polyInfo);
-		console.log(result.middle_pos);
+		// console.log(result.middle_pos);
 		//render results on 3D Viewer
 		render2DText(polyCounter, "distance2D", result.middle_pos,
 					 parseFloat(result.distance2D[0]).toFixed(2).toString());
@@ -783,7 +783,7 @@ function addPoint(mode, intersects, index){
     var distance = cameraControls.object.position.distanceTo(cameraControls.target);
 	if(distance > 0){
 		var scaleUnit = getScaleUnit(false, true);
-		var scale = (distance * scaleUnit)* orgPointScale;
+		var scale = (distance * scaleUnit)* effectController.pointSize;	
 		sphere.scale.x = scale;
 		sphere.scale.y = scale;
 		sphere.scale.z = scale;
@@ -1390,7 +1390,7 @@ function calculatePolyInfo(polyId){
 		var distance = calculate2DDistance(p1, p2);
 		distance2D.push(distance);
 		
-		console.log('calculatePolyInfo', middle_pos);
+		// console.log('calculatePolyInfo', middle_pos);
 		info_results['middle_pos'] = middle_pos;
 		info_results['distance2D'] = distance2D;
 	}
