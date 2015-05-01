@@ -390,10 +390,6 @@ function getPolyPointById(poly, pointId){
 }
 // event listener that handles point picking using raycaster
 function onContainerMouseDown( event ) {
-	// cannot focus on input types because this event prohibits it, override the event
-	if(event.toElement.type == "text")
-		return true;
-	// remove focus from all input types
 	$("input[type=text]").blur();
 	event.preventDefault();
 	event.stopPropagation();
