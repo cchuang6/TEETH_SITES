@@ -223,7 +223,7 @@ function guiMeshPhongMaterial(gui, material){
 		// will not show any decimal places.
 
 		lx: 0.0,
-		ly: 0.15,
+		ly: 0.0,
 		lz: 1.0,
 		newTess: 10
 	};
@@ -250,9 +250,9 @@ function guiMeshPhongMaterial(gui, material){
 	h = gui.addFolder("Material color");
 
 	//h.add(effectController, "curvature").name("Curvature");
-	h.add(effectController, "hue", 0.0, 1.0, 0.025).name("m_hue");
-	h.add(effectController, "saturation", 0.0, 1.0, 0.025).name("m_saturation");
-	h.add(effectController, "lightness", 0.0, 1.0, 0.025).name("m_lightness");
+	h.add(effectController, "hue", 0.0, 2.0, 0.025).name("m_hue");
+	h.add(effectController, "saturation", 0.0, 2.0, 0.025).name("m_saturation");
+	h.add(effectController, "lightness", 0.0, 2.0, 0.025).name("m_lightness");
 
 	// light (point)
 

@@ -390,13 +390,17 @@ function getPolyPointById(poly, pointId){
 }
 // event listener that handles point picking using raycaster
 function onContainerMouseDown( event ) {
-	$("input[type=text]").blur();
-	event.preventDefault();
-	event.stopPropagation();
 	if(outCanvas(event.clientX, event.clientY)){
 		//$("#pointPickerDiv").hide();
+		if(event.target.type =="text" && event.target.nodeName == "INPUT"){
+			console.log(event.target);
+			return true;
+		}
+		event.preventDefault();
+		event.stopPropagation();
 		return;
 	}
+
 	hide2DInfo();
 	if(rotationState == "enabled"){
 		$('html,body').css('cursor','url("/static/css/images/webgl/handpress.png"), auto');
@@ -538,7 +542,7 @@ function closePolygon(){
 		});
 
 		//Area
-		var msg = parseFloat(area).toFixed(3);
+		var msg = parseFloat(result.area).toFixed(3);
 		appendToPolyPointsPickedInfo("Area", msg);
 		
 		//angles
@@ -945,6 +949,7 @@ function updatePolyOnUI(changedPoint, intersects, intersect_info, polyId){
 	var vertices = poly.children.length;
 	var cur_polyInfo = calculatePolyInfo(polyId);
 	
+	// 2 points
 	if(vertices == 3){
 		var middle_pos = cur_polyInfo.middle_pos;
 		var distance2D = cur_polyInfo.distance2D;
@@ -968,18 +973,6 @@ function updatePolyOnUI(changedPoint, intersects, intersect_info, polyId){
 							'distance2D': distance2D_str,
 							'vertices': vertices -1
 						   }
-	
-		//change polyPointsPickedInfo
-		$.each($("#polyPointsPickedInfo div > div"),function(key,val){
-			if($(val).find("input").val() == uiPolyName){
-				var polyItems = $("#polyPointsPickedInfo div > div")
-				updatePolyPointsPickedInfo(polyItems, key, pointId, 
-										   changedPoint, updatedPolyInfo);
-				return false;
-			}
-		});
-
-
 	}
 	else{
 		//update point pos
@@ -1018,17 +1011,16 @@ function updatePolyOnUI(changedPoint, intersects, intersect_info, polyId){
 							'area': area_str,
 							'vertices': vertices/2
 							}
-	
-		//change polyPointsPickedInfo
-		$.each($("#polyPointsPickedInfo div > div"),function(key,val){
-			if($(val).find("input").val() == uiPolyName){
-				var polyItems = $("#polyPointsPickedInfo div > div")
-				updatePolyPointsPickedInfo(polyItems, key, pointId, 
-										   changedPoint, updatedPolyInfo);
-				return false;
-			}
-		});
 	}
+
+	$.each($("#polyPointsPickedInfo div > div"),function(key,val){
+		if($(val).find("input").attr('id') == "polyTextField" + polyId){
+			var polyItems = $("#polyPointsPickedInfo div > div");
+			updatePolyPointsPickedInfo(polyItems, key, pointId, 
+									   changedPoint, updatedPolyInfo);
+			return false;
+		}
+	});
 }
 
 function convertDictToHTML(dict){
