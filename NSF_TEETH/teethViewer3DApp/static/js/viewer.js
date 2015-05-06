@@ -501,50 +501,27 @@ function loadDAE(url){
 
 
 function getCenteralizedMesh(mesh){
-	//compute boundingbox
+	
 	var geometry = mesh.geometry;
+	//center geometry, can use geometry.center()
 	geometry.computeBoundingBox();
-	var boundingBox = geometry.boundingBox.clone();
-	var c_x = (boundingBox.min.x + boundingBox.max.x)/2.0;
-	var c_y = (boundingBox.min.y + boundingBox.max.y)/2.0;
-	var c_z = (boundingBox.min.z + boundingBox.max.z)/2.0;
-	var height = boundingBox.max.y - boundingBox.min.y;
-	var depth = boundingBox.max.z - boundingBox.min.z;
-	// console.log('Before setting position');
- //    console.log('bounding box center: ' +
- //       		'(' + c_x + ', ' + c_y + ', ' + c_z + ')');
-
-	//rotate
-	mesh.rotation.y =  Math.PI;
-
-	//set position
-	mesh.position.x = -c_x;
-	mesh.position.y = -c_y - height / 8.0;
-	mesh.position.z = c_z/2.0;
-
-	//scale mesh
+	var offset = geometry.boundingBox.center().negate();
+	geometry.applyMatrix(new THREE.Matrix4().setPosition(offset));
+	
+	var height = geometry.boundingBox.max.y - geometry.boundingBox.min.y;
+	
 	mesh.scale.x = 0.6;
 	mesh.scale.y = 0.6;
 	mesh.scale.z = 0.6;
-	//set camera
+	
+	//set camera fov
 	var camera = cameraControls.object;
-	// defaultCamPos = new THREE.Vector3(mesh.position.x,
-	// 									mesh.position.y, defaultCamPos.z)
-	// camera.position.x = defaultCamPos.x
-	// camera.position.y = defaultCamPos.y
-	// camera.position.z = defaultCamPos.z
 	var dist = Math.sqrt(Math.pow(camera.position.x, 2) +
 						Math.pow(camera.position.y , 2)+
-						Math.pow(camera.position.z - depth, 2));
+						Math.pow(camera.position.z, 2));
 
 
 	var fov = 2 * Math.atan( height / ( 2 * dist ) ) * ( 180 / Math.PI );
-
-	//var target = new THREE.Vector3(0, 0, -c_z/2.0);
-	//cameraControls.target = target
-
-
-
 
 	// add mesh into scene
 	return{
