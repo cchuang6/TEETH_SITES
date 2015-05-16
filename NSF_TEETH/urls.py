@@ -6,6 +6,7 @@ from django.contrib import admin
 import mezzanine_pagedown.urls
 from mezzanine.core.views import direct_to_template
 import teethViewer3DApp
+import waterShaderApp
 
 
 admin.autodiscover()
@@ -49,6 +50,7 @@ urlpatterns += patterns('',
 
     url("^$", "mezzanine.pages.views.page", {"slug": "/"}, name="home"),
     url(r'^map/', include('mapApp.urls')),
+    url(r'^waterShader/', include('waterShaderApp.urls')),
     #url(r'^teethViewer3D/', include('teethViewer3DApp.urls')),
     
 
