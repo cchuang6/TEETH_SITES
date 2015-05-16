@@ -88,7 +88,7 @@ function init() {
 		phongBalancedMaterial.uniforms.uMaterialColor.value.copy(materialColor);
 		phongBalancedMaterial.side = THREE.DoubleSide;
 	}
-	
+
 	meshBasicMaterial = new THREE.MeshBasicMaterial( {
 							vertexColors: THREE.NoColors,
 							wireframe: true,
@@ -243,7 +243,7 @@ function guiMeshPhongMaterial(gui, material){
 	h.add(effectController, "ks", 0.0, 1.0, 0.025).name("Ks");
 	h.add(effectController, "metallic");
 	h.add(effectController, "newTess", [2,3,4,5,6,8,10,12,16,24,32] ).name("Tessellation Level");
-	
+
 
 	// material (color)
 
@@ -374,7 +374,7 @@ function loadSTL(url){
 	};
 
 
-	//onload 
+	//onload
 	var onLoad = function(bufferGeometry){
 		console.log('Call load function at STL loader');
 
@@ -450,6 +450,17 @@ function loadDAE(url){
 				var camera = cameraControls.object;
 				camera.fov = centMesh.fov;
 				updateCameraProj();
+				//compute normals
+				if (centMesh.mesh.geometry.faces[0].normal.x  == 0.0 &&
+				    centMesh.mesh.geometry.faces[0].normal.y  == 0.0 &&
+				    centMesh.mesh.geometry.faces[0].normal.z  == 0.0){
+					centMesh.mesh.geometry.computeFaceNormals();
+					centMesh.mesh.geometry.computeVertexNormals();
+				}
+
+				// if(centMesh.mesh.geometry.)
+				// centMesh.mesh.geometry.computeFaceNormals();
+				// centMesh.mesh.geometry.computeVertexNormals();
 				centMesh.mesh.material = phongBalancedMaterial;
 				centMesh.mesh.material.needsUpdate = true;
 				centMesh.mesh.geometry.buffersNeedUpdate = true;
@@ -501,19 +512,19 @@ function loadDAE(url){
 
 
 function getCenteralizedMesh(mesh){
-	
+
 	var geometry = mesh.geometry;
 	//center geometry, can use geometry.center()
 	geometry.computeBoundingBox();
 	var offset = geometry.boundingBox.center().negate();
 	geometry.applyMatrix(new THREE.Matrix4().setPosition(offset));
-	
+
 	var height = geometry.boundingBox.max.y - geometry.boundingBox.min.y;
-	
+
 	mesh.scale.x = 0.6;
 	mesh.scale.y = 0.6;
 	mesh.scale.z = 0.6;
-	
+
 	//set camera fov
 	var camera = cameraControls.object;
 	var dist = Math.sqrt(Math.pow(camera.position.x, 2) +
@@ -767,7 +778,7 @@ function updatePointSize(isCameraProjUpdated, isCameraQuatUpdated){
 	// 		}
 	// 	}
 	// });
-	
+
 
 	angleObj.traverse( function(child) {
 		if(child instanceof THREE.Mesh){
@@ -824,7 +835,7 @@ function updatePolyInfo(display){
 		var angleInfo_pos = val.angleInfo_pos;
 		var middle_pos = val.middle_pos;
 		var poly = document.getElementsByClassName("polyObj"+polyId);
-		
+
 		//console.log(polyId);
 
 		$.each(poly, function(j, val){
@@ -838,13 +849,13 @@ function updatePolyInfo(display){
 			var pos;
 			var msg = poly[j].innerHTML;
 			var num_char = msg.length;
-			
+
 			if(middle_pos != undefined){
 				//console.log("middle_pos", middle_pos);
 				pos = toXYCoords(middle_pos, matrix, width, height, leftOffset, topOffset);
 			}
 			if(center != undefined && angleInfo_pos != undefined){
-				
+
 				if(j == 0){
 					pos = toXYCoords(center, matrix, width, height, leftOffset, topOffset);
 				}
@@ -994,7 +1005,7 @@ $(function(){
 		}
 		else if(curvatureState == 'disabled' && wireframeState == 'enabled'){
 			renderPhongShader(object);
-			
+
 		}
 	});
 
@@ -1038,7 +1049,7 @@ $(function(){
 				meshBasicMaterial.wireframe = false;
 				meshBasicMaterial.color.setRGB(1.0, 1.0, 1.0);
 				meshBasicMaterial.vertexColors = +THREE.VertexColors;
-				child.material = meshBasicMaterial; 
+				child.material = meshBasicMaterial;
 				child.material.needsUpdate = true;
 				child.geometry.buffersNeedUpdate = true;
 				child.geometry.uvsNeedUpdate = true;
