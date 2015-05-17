@@ -9,7 +9,7 @@
 var scene, renderer;
 var cameraControls;
 var effectController;
-var clock = new THREE.Clock();
+//var clock = new THREE.Clock();
 var teapotSize = 600;
 var tess = -1;	// force initialization
 var ambientLight, light;
@@ -71,6 +71,7 @@ function init() {
 	cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
 	//cameraControls.minPolarAngle = -1.0 * Math.PI;
 	cameraControls.target.set(0, 0, 0);
+	cameraControls.maxPolarAngle = Math.PI;
 
 	// MATERIALS
 	// Note: setting per pixel off does not affect the specular highlight;
@@ -332,7 +333,7 @@ function animate() {
 
 function render() {
 
-	var delta = clock.getDelta();
+	//var delta = clock.getDelta();
 
 	// cameraControls.update(delta);
 	cameraControls.update();

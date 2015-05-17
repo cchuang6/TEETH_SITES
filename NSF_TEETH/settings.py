@@ -151,8 +151,10 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    'compressor.finders.CompressorFinder',
 )
 
+COMPRESS_ENABLED = True
 # The numeric mode to set newly-uploaded files to. The value should be
 # a mode you'd pass directly to os.chmod.
 FILE_UPLOAD_PERMISSIONS = 0o644
@@ -256,6 +258,7 @@ INSTALLED_APPS = (
     "mezzanine.twitter",
     'djgeojson',
     'leaflet',
+    "compressor",
     #'homeApp',
     #"mezzanine.accounts",
     #"mezzanine.mobile",
@@ -314,7 +317,6 @@ PACKAGE_NAME_GRAPPELLI = "grappelli_safe"
 OPTIONAL_APPS = (
     "debug_toolbar",
     "django_extensions",
-    "compressor",
     PACKAGE_NAME_FILEBROWSER,
     PACKAGE_NAME_GRAPPELLI,
 )
