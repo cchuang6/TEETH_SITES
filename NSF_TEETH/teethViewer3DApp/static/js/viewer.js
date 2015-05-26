@@ -238,30 +238,30 @@ function guiMeshPhongMaterial(gui, material){
 	//console.log("phongBalancedMaterial");
 	//console.log(phongBalancedMaterial);
 	h.add(effectController, "shininess", 1.0, 100.0, 5.0);
-	h.add(effectController, "dropoff", 0.0, 2.0, 0.025).name("dropoff");
-	h.add(effectController, "ka", 0.0, 1.0, 0.025).name("Ka");
-	h.add(effectController, "kd", 0.0, 1.0, 0.025).name("Kd");
-	h.add(effectController, "ks", 0.0, 1.0, 0.025).name("Ks");
-	h.add(effectController, "metallic");
-	h.add(effectController, "newTess", [2,3,4,5,6,8,10,12,16,24,32] ).name("Tessellation Level");
+	// h.add(effectController, "dropoff", 0.0, 2.0, 0.025).name("dropoff");
+	// h.add(effectController, "ka", 0.0, 1.0, 0.025).name("Ka");
+	// h.add(effectController, "kd", 0.0, 1.0, 0.025).name("Kd");
+	// h.add(effectController, "ks", 0.0, 1.0, 0.025).name("Ks");
+	// h.add(effectController, "metallic");
+	// h.add(effectController, "newTess", [2,3,4,5,6,8,10,12,16,24,32] ).name("Tessellation Level");
 
 
 	// material (color)
 
-	h = gui.addFolder("Material color");
+	// h = gui.addFolder("Material color");
 
-	//h.add(effectController, "curvature").name("Curvature");
-	h.add(effectController, "hue", 0.0, 2.0, 0.025).name("m_hue");
-	h.add(effectController, "saturation", 0.0, 2.0, 0.025).name("m_saturation");
-	h.add(effectController, "lightness", 0.0, 2.0, 0.025).name("m_lightness");
+	// //h.add(effectController, "curvature").name("Curvature");
+	// h.add(effectController, "hue", 0.0, 2.0, 0.025).name("m_hue");
+	// h.add(effectController, "saturation", 0.0, 2.0, 0.025).name("m_saturation");
+	// h.add(effectController, "lightness", 0.0, 2.0, 0.025).name("m_lightness");
 
 	// light (point)
 
-	h = gui.addFolder("Light color");
+	// h = gui.addFolder("Light color");
 
-	h.add(effectController, "lhue", 0.0, 1.0, 0.025).name("hue");
-	h.add(effectController, "lsaturation", 0.0, 1.0, 0.025).name("saturation");
-	h.add(effectController, "llightness", 0.0, 1.0, 0.025).name("lightness");
+	// h.add(effectController, "lhue", 0.0, 1.0, 0.025).name("hue");
+	// h.add(effectController, "lsaturation", 0.0, 1.0, 0.025).name("saturation");
+	// h.add(effectController, "llightness", 0.0, 1.0, 0.025).name("lightness");
 
 	// light (directional)
 

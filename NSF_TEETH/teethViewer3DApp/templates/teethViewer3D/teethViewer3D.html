@@ -1,4 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+{% load compress %}
 <html lang="en">
 
 <!--
@@ -10,14 +11,17 @@
     http://django-compressor.readthedocs.org/en/latest/quickstart/
 -->
 
-{% load staticfiles %}
-{% load compress %}
+
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>{{title}}</title>
-    <meta charset="utf-8" content="chrome=1" http-equiv="X-UA-Compatible">{% load staticfiles %}
-    <link href="{% static "css/webgl.css" %}" media="screen" rel="stylesheet" type="text/css">
+    <meta charset="utf-8" content="chrome=1" http-equiv="X-UA-Compatible">
+    {% compress css %}
+    <link rel="stylesheet" href="/static/css/webgl.css" media="screen"  type="text/css" charset="utf-8" />
+    <link rel="stylesheet" href="/static/css/jquery.contextMenu.css" type="text/css" charset="utf-8" />
+    {% endcompress %}
+    
 
     <body>
         <div id="system_message">
@@ -192,112 +196,115 @@
             <button onclick="exportPointsToCSV(this);" style="margin-top:1%;">Export to CSV</button>
         </div> -->
         <div id="pointPickerDiv" class="textdisable" style="display:none;">
-            <p>--</p>
         </div>
+        
+
     </body>
-        {% compress js%}
-        <!-- jqeury, three.js, dat.gui, progressbar, and filesaver library -->
-        <script type="text/javascript" src="{% static "js/libs/jquery-1.8.3.min.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/fileSaver.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/d3.min.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/three.min.71.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/Detector.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/dat.gui.min.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/libs/progressbar.js" %}" charset="utf-8"></script>
-        <!-- Orbit and Pan Controllers -->
-        <script type="text/javascript" src="{% static "js/controls/OrbitAndPanControls.js" %}" charset="utf-8"></script>
-        <!--STL and DAE file loader -->
-        <script src="{% static "js/loaders/STLLoader.js" %}" charset="utf-8"></script>
-        <script src="{% static "js/loaders/ColladaLoader.js" %}" charset="utf-8"></script>
-        <!-- vertex shader -->
-        <script type="text/x-glsl" id="vertex">
-            varying vec3 vNormal;
-            varying vec3 vViewPosition;
 
-            void main() {
+     <!-- jqeury, three.js, dat.gui, progressbar, jQuery-contextMenu, jquery.ui.position, and filesaver library -->
+    {% compress js%}
+    <script type="text/javascript" src="/static/js/libs/jquery-1.8.3.min.js" charset="utf-8"></script> 
+    <script type="text/javascript" src="/static/js/libs/jquery.ui.position.js" charset="utf-8"></script> 
+    <script type="text/javascript" src="/static/js/libs/jquery.contextMenu.js" charset="utf-8"></script> 
+    <script type="text/javascript" src="/static/js/libs/fileSaver.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/libs/d3.min.js"  charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/libs/three.min.71.js"  charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/libs/Detector.js"  charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/libs/dat.gui.min.js"  charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/libs/progressbar.js"  charset="utf-8"></script>
+    <!-- Orbit and Pan Controllers -->
+    <script type="text/javascript" src="/static/js/controls/OrbitAndPanControls.js" charset="utf-8"></script>
+    <!--STL and DAE file loader -->
+    <script src="/static/js/loaders/STLLoader.js"  charset="utf-8"></script>
+    <script src="/static/js/loaders/ColladaLoader.js"  charset="utf-8"></script>
+    <!-- vertex shader -->
+    <script type="text/x-glsl" id="vertex">
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
 
-                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-                vNormal = normalize( normalMatrix * normal );
-                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-                vViewPosition = -mvPosition.xyz;
+        void main() {
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            vNormal = normalize( normalMatrix * normal );
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            vViewPosition = -mvPosition.xyz;
+        }
+    </script>
+    <!--fragment shader -->
+    <!-- TODO: check code here -->
+    <script type="text/x-glsl" id="fragment">
+        uniform vec3 uMaterialColor;
+        uniform vec3 uSpecularColor;
+
+        uniform vec3 uDirLightPos;
+        uniform vec3 uDirLightColor;
+
+        uniform vec3 uAmbientLightColor;
+
+        uniform float uKd;
+        uniform float uKs;
+        uniform float shininess;
+
+        uniform float uDropoff;
+
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+
+            // ambient
+            gl_FragColor = vec4( uAmbientLightColor, 1.0 );
+
+            // compute direction to light
+            vec4 lDirection = viewMatrix * vec4( uDirLightPos, 0.0 );
+            vec3 lVector = normalize( lDirection.xyz );
+
+            vec3 normal = normalize( vNormal );
+
+            // diffuse: N * L. Normal must be normalized, since it's interpolated.
+            float diffuse = max( dot( normal, lVector ), 0.0);
+
+            // This can give a hard termination to the highlight, but it's better than some weird sparkle.
+            if (diffuse <= 0.0) {
+                return;
             }
-        </script>
-        <!--fragment shader -->
-        <!-- TODO: check code here -->
-        <script type="text/x-glsl" id="fragment">
-            uniform vec3 uMaterialColor;
-            uniform vec3 uSpecularColor;
 
-            uniform vec3 uDirLightPos;
-            uniform vec3 uDirLightColor;
+            gl_FragColor.rgb += uKd * uMaterialColor * uDirLightColor * diffuse;
 
-            uniform vec3 uAmbientLightColor;
+            // specular: N * H to a power. H is light vector + view vector
+            vec3 viewPosition = normalize( vViewPosition );
+            vec3 pointHalfVector = normalize( lVector + viewPosition );
+            float pointDotNormalHalf = max( dot( normal, pointHalfVector ), 0.0 );
+            float specular = pow( pointDotNormalHalf, shininess );
+            specular *= diffuse*(2.0 + shininess)/8.0;
+            // specular = ( specular < uDropoff ) ? 0.0 : 1.0;
+            // if(specular < uDropoff) {
+            //     specular = 0.0;
+            // }
+            // else {
+            //     specular = 1.0;
+            // }
 
-            uniform float uKd;
-            uniform float uKs;
-            uniform float shininess;
+            gl_FragColor.rgb += uDirLightColor * uSpecularColor * uKs * specular;
+        }
+    </script>
+    
+    <!-- For Andrew Sapiens: You can pass file_url here to load file as you want
+         The syntax "%static %"" is the template tag in Django. Here are some examples
+         https://docs.djangoproject.com/en/1.8/howto/static-files/
+         You can change the "%static %"" to the regular static url
+    -->
 
-            uniform float uDropoff;
-
-            varying vec3 vNormal;
-            varying vec3 vViewPosition;
-
-            void main() {
-
-                // ambient
-                gl_FragColor = vec4( uAmbientLightColor, 1.0 );
-
-                // compute direction to light
-                vec4 lDirection = viewMatrix * vec4( uDirLightPos, 0.0 );
-                vec3 lVector = normalize( lDirection.xyz );
-
-                vec3 normal = normalize( vNormal );
-
-                // diffuse: N * L. Normal must be normalized, since it's interpolated.
-                float diffuse = max( dot( normal, lVector ), 0.0);
-
-                // This can give a hard termination to the highlight, but it's better than some weird sparkle.
-                if (diffuse <= 0.0) {
-                    return;
-                }
-
-                gl_FragColor.rgb += uKd * uMaterialColor * uDirLightColor * diffuse;
-
-                // specular: N * H to a power. H is light vector + view vector
-                vec3 viewPosition = normalize( vViewPosition );
-                vec3 pointHalfVector = normalize( lVector + viewPosition );
-                float pointDotNormalHalf = max( dot( normal, pointHalfVector ), 0.0 );
-                float specular = pow( pointDotNormalHalf, shininess );
-                specular *= diffuse*(2.0 + shininess)/8.0;
-                // specular = ( specular < uDropoff ) ? 0.0 : 1.0;
-                // if(specular < uDropoff) {
-                //     specular = 0.0;
-                // }
-                // else {
-                //     specular = 1.0;
-                // }
-
-                gl_FragColor.rgb += uDirLightColor * uSpecularColor * uKs * specular;
-            }
-        </script>
-        
-        <!-- For Andrew Sapiens: You can pass file_url here to load file as you want
-             The syntax "%static %"" is the template tag in Django. Here are some examples
-             https://docs.djangoproject.com/en/1.8/howto/static-files/
-             You can change the "%static %"" to the regular static url
-        -->
-
-        <script type = "text/javascript">
-            $('#tpDRHeader').hide();
-            $('#teethContainer').hide();
-            var file_url = "{{file_url}}";
-            console.log("teethViewer3D.html file_url" + file_url);
-        </script>
-        <!-- viwer and 3D editor -->
-        
-        <script type="text/javascript" src="{% static "js/viewer.js" %}" charset="utf-8"></script>
-        <script type="text/javascript" src="{% static "js/editor_teeth.js" %}" charset="utf-8"></script>
-        {% endcompress js%}
-        
+    <script type = "text/javascript">
+        $('#tpDRHeader').hide();
+        $('#teethContainer').hide();
+        var file_url = "{{file_url}}";
+        console.log("teethViewer3D.html file_url" + file_url);
+    </script>
+    <!-- viwer and 3D editor -->
+    
+    <script type="text/javascript" src="/static/js/viewer.js"  charset="utf-8"></script>
+    <script type="text/javascript" src="/static/js/editor_teeth.js"  charset="utf-8"></script>
+    {% endcompress %}
 
 </html>

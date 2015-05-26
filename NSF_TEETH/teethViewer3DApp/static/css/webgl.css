@@ -1,5 +1,3 @@
-{% load staticfiles %}
-
 .appriseOverlay {
     position:fixed;
     top:0;

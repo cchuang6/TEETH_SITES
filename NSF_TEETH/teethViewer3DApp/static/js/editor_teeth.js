@@ -34,6 +34,7 @@ function enableAngleMode(){
 	rotationState = "disabled";
 	angleBtnMode = "enabled";
 	$("#polyPointsPickedInfo").show();
+	console.log("show angle mode");
 	$("#pointPickerDiv").show();
 	$("#rotationControl span:first").addClass("icon-disabled");
 	$("#anglebtn span:first").removeClass("icon-disabled");
@@ -439,7 +440,8 @@ function onContainerMouseDown( event ) {
 		// 		return;
 		// 	}
 		// }
-		else{			
+		else{
+			//left click
 			if( (event.button || event.which) === 1){
 				selectedPoint = intersects[result.p_intersect_Id].object;
 				if(org_position == undefined){
@@ -450,6 +452,33 @@ function onContainerMouseDown( event ) {
 				$('html,body').css('cursor','move');
 				// pass in a dummy first parameter
 				// selectRow("that", pointId);
+			}
+			//right click
+			else if(event.button === 2 || event.which === 3){
+				//selectedPoint = intersects[result.p_intersect_Id].object;
+				//link to context menu
+				//TODO:
+				// 1. make all be red if deleteAll
+				// 2. make the last one be red if only delete the last
+				
+
+				if( pointId == polyPointsPickedCounter){
+					intersects[result.p_intersect_Id].object.material.color.setRGB(1, 0, 0);
+					registerContextMenuForDel(intersects[result.p_intersect_Id].object, true);
+				}
+				else{
+					var polyObj = intersects[result.p_intersect_Id].object.parent;
+					polyObj.traverse( function(child) {
+						if(child instanceof THREE.Mesh){
+							child.material.color.setRGB(1, 0, 0);
+						}
+					});
+					registerContextMenuForDel(intersects[result.p_intersect_Id].object, false);
+				}
+
+				$('#pointPickerDiv').contextMenu();
+				$("#pointPickerDiv").hide();
+				
 			}
 			return;
 		}
@@ -677,21 +706,25 @@ function updateHoverStatus(intersects, result, event){
 		//update context
 		var polyNumber = hoverPoint.parent.name.replace("polyObj","");
 		var uiPolyName = $("#polyTextField"+polyNumber).val();
-		$("#pointPickerDiv p").html("<span> Poly : "+ uiPolyName + " Point : " + (hoverPoint.pointId+1) + ""+
+		if (document.getElementById("context-menu-layer") == undefined){
+			$("#pointPickerDiv").html("<span> Poly : "+ uiPolyName + " Point : " + (hoverPoint.pointId+1) + ""+
 									 "<br>x: " + hoverPoint.position.x +
 									 "<br>y: " + hoverPoint.position.y +
 									 "<br>z: " + hoverPoint.position.z);
-		$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+		}
 	}
 	else{
 		if((event.button || event.which) != 1)
 			clearHoverPoint(hoverPoint);
 		if(intersect_Id >-1){
 			//updateHoverStatus(intersects);
-			$("#pointPickerDiv p").html("x: " + intersects[intersect_Id].point.x +
+			if(document.getElementById("context-menu-layer") == undefined){
+				$("#pointPickerDiv").html("x: " + intersects[intersect_Id].point.x +
 										"<br>y: " + intersects[intersect_Id].point.y +
 										"<br>z: " + intersects[intersect_Id].point.z);
-			$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+				$("#pointPickerDiv").css({top: (event.pageY+5)+"px",left: (event.pageX+5)+"px"}).show();
+			}
 		}
 		else{
 			//clearHoverPoint(hoverPoint);
@@ -740,7 +773,7 @@ function getRayCastIntersects(x, y){
 
 //add points into scene
 function addPoint(mode, intersects, index){
-	if(index == -1) return;
+	if(index == -1 || document.getElementById("context-menu-layer") != undefined) return;
 	var point = intersects[index].point;
 	//console.log(intersects);
 	//push points on UI
@@ -1491,6 +1524,57 @@ function calculate2DDistance(p1,p2){
 	return distance
 }
 
+function registerContextMenuForDel(point, isLastPoint){
+	//console.log(arguments);
+	var items = {"deletePolygonPoints": {name: "Delete Polygon Points", icon: "deletePolygonPoints"}};
+	if (isLastPoint)
+		items.deletePoint = {name: "Delete Point", icon: "deletePoint", disabled: false}
+	else
+		items.deletePoint = {name: "Delete Point", icon: "deletePoint-disabled", disabled: true}
+	
+	var options = {
+		selector: '#pointPickerDiv', 
+		trigger: 'none',
+		position: function(opt, x, y) {
+			opt.$menu.position({
+				my: 'center top',
+				at: 'left top',
+				of: opt.$trigger
+			});
+		},
+		callback: function(key, options) {
+			var m = "clicked: " + key;
+			window.console && console.log(m) || alert(m);
+		},
+		events:{
+			hide: function(){
+				//console.log("hide");
+				//TODO: restore color
+				//console.log(lastPoint);
+				if(isLastPoint){
+					point.material.color.setRGB(0, 0, 0);
+				}
+				else{
+					//console.log("set all back to black");
+					//console.log(lastPoint);
+					var polyObj = point.parent;
+					polyObj.traverse( function(child) {
+						if(child instanceof THREE.Mesh){
+							child.material.color.setRGB(0, 0, 0);
+						}
+					});
+				}
+				$.contextMenu( 'destroy' );
+				$("#pointPickerDiv").show();
+			}
+		}
+	}
+	options.items = items;
+
+	$.contextMenu(options);
+}
+
+
 
 // rendering scales
 function createScale(){
@@ -1538,3 +1622,7 @@ function createScale(){
 }
 
 createScale();
+
+//context menu
+
+
