@@ -1603,7 +1603,7 @@ function calculate2DDistance(p1,p2){
 
 function registerContextMenuDel(point, isLastPoint){
 	//console.log(arguments);
-	
+	//custom items
 	var items = {"deletePolygonPoints": {type: "deletePolygonPoints", name: "Delete Polygon Points",
 										className: "icon icon-deletePolygonPoints"}};
 	
@@ -1623,13 +1623,7 @@ function registerContextMenuDel(point, isLastPoint){
 				if(polyObj != undefined){
 					setObjectChildrenColor(polyObj, 0, -1, 0xff0000);
 			}
-        	//console.log(item.name, "hover");
         });
-		// this.on('keydown', function(e) {
-		// 	deletePolygonPoints(point.parent);
-		// }).on('hover', function(e) {
-  //       	console.log(item.name, "hover");
-  //   		});
 	};
 
 	$.contextMenu.types.deleteLastPoint = function(item, opt, root) {
@@ -1647,13 +1641,7 @@ function registerContextMenuDel(point, isLastPoint){
 			}
         	
         });
-		// this.on('keydown', function(e) {
-		// 	deleteLastPoint(point.parent);
-		// }).on('hover', function(e) {
-  //       	console.log(item.name, "hover");
-  //   		});
 	};
-
 
 	var options = {
 		selector: '#pointPickerDiv', 
@@ -1678,13 +1666,10 @@ function registerContextMenuDel(point, isLastPoint){
 		},
 		events:{
 			hide: function(){
-				//console.log("set all back to black");
-				//console.log(lastPoint);
 				var polyObj = point.parent;
 				if(polyObj != undefined){
 					setObjectChildrenColor(polyObj, 0, -1, 0x000000);
 				}
-				//$("#pointPickerDiv").show();
 				$.contextMenu( 'destroy' );
 				
 			}
@@ -1695,9 +1680,8 @@ function registerContextMenuDel(point, isLastPoint){
 	$.contextMenu(options);
 }
 
+//set object children color
 function setObjectChildrenColor(obj, start, length, colorHex){
-	console.log("setObjectChildrenColor");
-	
 	if(start < 0 || start > obj.children.length){
 		console.log("start index is negative or larger than obj length");
 		return;
@@ -1707,7 +1691,6 @@ function setObjectChildrenColor(obj, start, length, colorHex){
 	}
 	for(var i = start; i < start+length; i++){
 		obj.children[i].material.color.setHex(colorHex);
-		//obj.children[i].material.color.setHex(colorHex);
 	}
 }
 
