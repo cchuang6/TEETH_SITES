@@ -276,7 +276,7 @@ function onDocumentMouseUp( event ){
 	}
 
 	if(angleBtnMode == "enabled"){
-		//TODO
+		
 		if(selectedPoint){
 			intersects_Id = -1;
 			//check if inside canvas
@@ -951,7 +951,6 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 		} else {
 			// 2D Info Update
 			console.log("add point on polyPointsPickedInfo");
-			//TODO: fix the class problem after append.....
 			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'poly" + 
 				polyCounter + "'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
@@ -1065,7 +1064,7 @@ function convertDictToHTML(dict){
 	return htmlStr;
 }
 
-//TODO: re-write this pat
+//TODO: re-write this part
 function updatePolyPointsPickedInfo(polyItems, polyItemIndex, pointIndex, changedPoint, updatedPolyInfo){
 	
 	var vertices = updatedPolyInfo.vertices;
@@ -1619,7 +1618,6 @@ function registerContextMenuForDel(point, isLastPoint){
 			});
 		},
 		callback: function(key, options) {
-			//TODO:
 			// delete the last point or delete all points
 			switch (key){
 				case "deletePolygonPoints":
