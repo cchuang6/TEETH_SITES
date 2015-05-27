@@ -18,6 +18,7 @@ var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
 var altKeyPressed = false;
+var polyItemsTest;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -34,7 +35,6 @@ function enableAngleMode(){
 	rotationState = "disabled";
 	angleBtnMode = "enabled";
 	$("#polyPointsPickedInfo").show();
-	console.log("show angle mode");
 	$("#pointPickerDiv").show();
 	$("#rotationControl span:first").addClass("icon-disabled");
 	$("#anglebtn span:first").removeClass("icon-disabled");
@@ -455,24 +455,15 @@ function onContainerMouseDown( event ) {
 			}
 			//right click
 			else if(event.button === 2 || event.which === 3){
-				//selectedPoint = intersects[result.p_intersect_Id].object;
+				var polyObj = intersects[result.p_intersect_Id].object.parent;
+				var polyId = polyObj.name.replace("polyObj","");
 				//link to context menu
-				//TODO:
-				// 1. make all be red if deleteAll
-				// 2. make the last one be red if only delete the last
-				
-
-				if( pointId == polyPointsPickedCounter){
-					intersects[result.p_intersect_Id].object.material.color.setRGB(1, 0, 0);
+				if( pointId == polyPointsPickedCounter && polyId == polyCounter){
+					setObjectChildrenColor(polyObj, polyObj.children.length -2, 2, 0xff0000);
 					registerContextMenuForDel(intersects[result.p_intersect_Id].object, true);
 				}
 				else{
-					var polyObj = intersects[result.p_intersect_Id].object.parent;
-					polyObj.traverse( function(child) {
-						if(child instanceof THREE.Mesh){
-							child.material.color.setRGB(1, 0, 0);
-						}
-					});
+					setObjectChildrenColor(polyObj, 0, -1, 0xff0000);
 					registerContextMenuForDel(intersects[result.p_intersect_Id].object, false);
 				}
 
@@ -550,7 +541,7 @@ function closePolygon(){
 
 		// 2D distance
 		msg = convertDictToHTML(result.distance2D);
-		appendToPolyPointsPickedInfo("2D Distances", msg);
+		appendToPolyPointsPickedInfo("2D Distances", msg, polyCounter);
 	}
 	else{
 		//store results in polyInfo
@@ -572,21 +563,23 @@ function closePolygon(){
 
 		//Area
 		var msg = parseFloat(result.area).toFixed(3);
-		appendToPolyPointsPickedInfo("Area", msg);
+		appendToPolyPointsPickedInfo("Area", msg, polyCounter);
 		
 		//angles
 		msg = convertDictToHTML(result.angles);
-		appendToPolyPointsPickedInfo("Angles", msg);
+		appendToPolyPointsPickedInfo("Angles", msg, polyCounter);
 		// 2D distance
 		msg = convertDictToHTML(result.distance2D);
-		appendToPolyPointsPickedInfo("2D Distances", msg);
+		appendToPolyPointsPickedInfo("2D Distances", msg, polyCounter);
 	}
 
 	polyPointsPickedCounter = -1;
 }
 
-function appendToPolyPointsPickedInfo(header, msg){
-	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+// add polyId class
+function appendToPolyPointsPickedInfo(header, msg, polyId){
+	$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'poly" + 
+				polyCounter + "'>"+
 				"<span> " + header + " : " + msg + "</span></div>");
 }
 
@@ -663,13 +656,9 @@ function onDocumentKeyUp(event){
 	}
 }
 
-// function to delete point from keyboard
-function deleteSelectedPoint(){
-	$.each(markedPointIds, function(key, val){
-			delPoint("that",val);
-		});
 
-}
+// function to delete point from keyboard
+
 
 function outCanvas(x, y){
 	var canvasWidth = container.width();
@@ -906,19 +895,21 @@ function rgbToMeanCurvature(red, green, blue){
 	}
 }
 
+//add polyId
 function displayPolyOnUI(){
 	// 2D Info Update
 	$("#polyPointsPickedInfo div:first").append(
-	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
+	  "<div style='padding:5px;border-bottom:solid 1px black;' class = '" + "poly" + polyCounter + "'>"+
 	  "<span> Poly ID :</span><input type='text' value='" + polyCounter + "' id='polyTextField" + polyCounter + "'> </div>");	
 
 	// 3D Info Update
-	$("#polyPointsPickedInfo3D div:first").append(
-	  "<div style='padding:5px;border-bottom:solid 1px black;'>"+
-	  "<span> Poly ID : " + polyCounter +
-	  "</span></div>");
+	// $("#polyPointsPickedInfo3D div:first").append(
+	//   "<div style='padding:5px;border-bottom:solid 1px black;' class = 'polyObj" + polyCounter + "'>"+
+	//   "<span> Poly ID : " + polyCounter +
+	//   "</span></div>");
 }
 
+// add polyId
 function displayPointsOnUI(mode,point,pointId,mCurvature){
 	if(mode == "getPointValMode"){
 		if(mCurvature !== undefined){
@@ -940,7 +931,9 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 	} else if(mode == "angleBtnMode"){
 		if(mCurvature !== undefined){
 			// 2D Info Update
-			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+			// "<div style='padding:5px;border-bottom:solid 1px black;' class = 'polyObj" + polyCounter + "'>"+
+			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'poly" + 
+				polyCounter + "'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
 				" z : "+parseFloat(point.z).toFixed(3)+
@@ -948,26 +941,31 @@ function displayPointsOnUI(mode,point,pointId,mCurvature){
 				"</span></div>");
 
 			// 3D Info Update
-			$("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
-				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
-				" y : "+parseFloat(point.y).toFixed(3)+
-				" z : "+parseFloat(point.z).toFixed(3)+
-				"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
-				"</span></div>");
+			// $("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'polyObj" + 
+			// 	polyCounter + "'>"+
+			// 	"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+			// 	" y : "+parseFloat(point.y).toFixed(3)+
+			// 	" z : "+parseFloat(point.z).toFixed(3)+
+			// 	"<br>mean curvature : "+parseFloat(mCurvature).toFixed(3)+
+			// 	"</span></div>");
 		} else {
 			// 2D Info Update
-			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
+			console.log("add point on polyPointsPickedInfo");
+			//TODO: fix the class problem after append.....
+			$("#polyPointsPickedInfo div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'poly" + 
+				polyCounter + "'>"+
 				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
 				" y : "+parseFloat(point.y).toFixed(3)+
 				" z : "+parseFloat(point.z).toFixed(3)+
 				"</span></div>");
 
 			// 3D Info Update
-			$("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;'>"+
-				"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
-				" y : "+parseFloat(point.y).toFixed(3)+
-				" z : "+parseFloat(point.z).toFixed(3)+
-				"</span></div>");
+			// $("#polyPointsPickedInfo3D div:first").append("<div style='padding:5px;border-bottom:solid 1px black;' class= 'polyObj" + 
+			// 	polyCounter + "'>"+
+			// 	"<span>" + (pointId+1) + ") x : "+parseFloat(point.x).toFixed(3)+
+			// 	" y : "+parseFloat(point.y).toFixed(3)+
+			// 	" z : "+parseFloat(point.z).toFixed(3)+
+			// 	"</span></div>");
 		}
 	}
 }
@@ -1339,6 +1337,84 @@ function exportPointsToCSV(that){
 	saveAs(blob, "dataExport.csv");
 }
 
+function deleteSelectedPoint(){
+	$.each(markedPointIds, function(key, val){
+			delPoint("that",val);
+		});
+
+}
+
+function deleteLastPoint(point){
+	console.log("deleteLastPoint");
+	
+	var polyObj = point.parent;
+	var pointId = point.pointId
+	var polyId = polyObj.name.replace("polyObj","");
+
+	//delete mesh and line
+	if (pointId == 0){
+		var angleObj = scene.getObjectByName("angleObj");
+		angleObj.remove(polyObj);
+
+		//reset point counter and poly counter
+		polyPointsPickedCounter = -1;
+		polyCounter -= 1;
+
+		//update #polyPointsPickedInfo
+		$("#polyPointsPickedInfo").find('.poly'+polyId).remove();
+	}
+	else{
+		// remove the last point and line
+		for (var i = 0; i < 2; i++){
+			var length = polyObj.children.length
+			var lastObj = polyObj.children[length -1];
+			polyObj.remove(lastObj); 
+		}
+
+		polyPointsPickedCounter -= 1;
+
+		//update #polyPointsPickedInfo by point
+		var deletePointText = (pointId+1) + ")"
+		$("#polyPointsPickedInfo").find('.poly'+polyId).find(":contains('" + deletePointText + "')").parent().remove();
+		// $.each($("#polyPointsPickedInfo div > div"),function(key,val){
+		// 	if($(val).find("input").attr('id') == "polyTextField" + polyId){
+		// 		var polyItems = $("#polyPointsPickedInfo div > div");
+		// 		polyItems.remove(key + 1 + pointId)
+		// 		return false;
+		// 	}
+		// });
+	}
+}
+
+function deletePolygonPoints(polyObj){
+	var polyId = polyObj.name.replace("polyObj","");
+	//delete mesh and line
+	var angleObj = scene.getObjectByName("angleObj");
+	angleObj.remove(polyObj);
+
+	//delete non-closed poly
+	if(polyPointsPickedCounter != -1 && polyCounter == polyId){
+		polyPointsPickedCounter = -1;
+		polyCounter -= 1;
+	}
+	//delete the closed poly
+	else{
+		//update polyInfo
+		$.each(polyInfo, function(i, val){
+	    	if(val.polyId === polyId) {
+	        	polyInfo.splice(i,1);
+	        	return false;
+	    	}
+		});
+		// update angle,area on container
+		$('.polyObj' + polyId).empty();
+	}
+
+
+	//update polyPointsPickedInfo;
+	$("#polyPointsPickedInfo").find('.poly'+polyId).remove();
+}
+
 function deleteAllPoints(that){
 	// following code is for point picker mode
 	// $("#pointsPickedInfo div").children().remove();
@@ -1357,7 +1433,7 @@ function deleteAllPoints(that){
 	// markedPointIds = [];
 	if($(that).parent().attr("id") == "polyPointsPickedInfo" || $(that).parent().attr("id") == "polyPointsPickedInfo3D"){
 		$("#polyPointsPickedInfo div").children().remove();
-		$("#polyPointsPickedInfo3D div").children().remove();
+		// $("#polyPointsPickedInfo3D div").children().remove();
 		var angleObj = scene.getObjectByName("angleObj");
 		var toremove = [];
 		$.each(angleObj.children, function(index,val){
@@ -1528,9 +1604,9 @@ function registerContextMenuForDel(point, isLastPoint){
 	//console.log(arguments);
 	var items = {"deletePolygonPoints": {name: "Delete Polygon Points", icon: "deletePolygonPoints"}};
 	if (isLastPoint)
-		items.deletePoint = {name: "Delete Point", icon: "deletePoint", disabled: false}
+		items.deleteLastPoint = {name: "Delete Point", icon: "deletePoint", disabled: false}
 	else
-		items.deletePoint = {name: "Delete Point", icon: "deletePoint-disabled", disabled: true}
+		items.deleteLastPoint = {name: "Delete Point", icon: "deletePoint-disabled", disabled: true}
 	
 	var options = {
 		selector: '#pointPickerDiv', 
@@ -1543,29 +1619,37 @@ function registerContextMenuForDel(point, isLastPoint){
 			});
 		},
 		callback: function(key, options) {
-			var m = "clicked: " + key;
-			window.console && console.log(m) || alert(m);
+			//TODO:
+			// delete the last point or delete all points
+			switch (key){
+				case "deletePolygonPoints":
+					deletePolygonPoints(point.parent);
+					break;
+				case "deleteLastPoint":
+					deleteLastPoint(point);
+					break;
+			}
 		},
 		events:{
 			hide: function(){
-				//console.log("hide");
-				//TODO: restore color
-				//console.log(lastPoint);
 				if(isLastPoint){
-					point.material.color.setRGB(0, 0, 0);
+					var polyObj = point.parent;
+					if(polyObj != undefined){
+						setObjectChildrenColor(polyObj, polyObj.children.length-2, 2, 0x000000);
+					}
+
 				}
 				else{
 					//console.log("set all back to black");
 					//console.log(lastPoint);
 					var polyObj = point.parent;
-					polyObj.traverse( function(child) {
-						if(child instanceof THREE.Mesh){
-							child.material.color.setRGB(0, 0, 0);
-						}
-					});
+					if(polyObj != undefined){
+						setObjectChildrenColor(polyObj, 0, -1, 0x000000);
+					}
 				}
+				//$("#pointPickerDiv").show();
 				$.contextMenu( 'destroy' );
-				$("#pointPickerDiv").show();
+				
 			}
 		}
 	}
@@ -1574,6 +1658,21 @@ function registerContextMenuForDel(point, isLastPoint){
 	$.contextMenu(options);
 }
 
+function setObjectChildrenColor(obj, start, length, colorHex){
+	console.log("setObjectChildrenColor");
+	
+	if(start < 0 || start > obj.children.length){
+		console.log("start index is negative or larger than obj length");
+		return;
+	}
+	if (length < 0 || start + length > obj.children.length) {
+		length = obj.children.length - start;
+	}
+	for(var i = start; i < start+length; i++){
+		obj.children[i].material.color.setHex(colorHex);
+		//obj.children[i].material.color.setHex(colorHex);
+	}
+}
 
 
 // rendering scales
