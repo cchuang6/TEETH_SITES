@@ -18,7 +18,7 @@ var lastSelected;
 var markedPointIds = [];
 var hoverPoint;
 var altKeyPressed = false;
-var polyItemsTest;
+var testItem;
 
 // default rotation control is on, set cursor
 $('html,body').css('cursor','url("/static/css/images/webgl/rotation.png"), auto');
@@ -197,7 +197,8 @@ function onMousewheel(e){
 function onContainerMouseMove( event ){
 	
 
-	if(outCanvas(event.clientX, event.clientY)){
+	if(outCanvas(event.clientX, event.clientY) ||
+		document.getElementById("context-menu-layer") != undefined){
 		return;
 	}
 
@@ -413,6 +414,7 @@ function onContainerMouseDown( event ) {
 		// }
 
 		//check clientX, clientY inside polygon
+		if(document.getElementById("context-menu-layer") != undefined) return;
 		if(isInPolygons(event.clientX, event.clientY)) return;
 
 		var intersects = getRayCastIntersects(event.clientX, event.clientY);
@@ -460,11 +462,11 @@ function onContainerMouseDown( event ) {
 				//link to context menu
 				if( pointId == polyPointsPickedCounter && polyId == polyCounter){
 					setObjectChildrenColor(polyObj, polyObj.children.length -2, 2, 0xff0000);
-					registerContextMenuForDel(intersects[result.p_intersect_Id].object, true);
+					registerContextMenuDel(intersects[result.p_intersect_Id].object, true);
 				}
 				else{
 					setObjectChildrenColor(polyObj, 0, -1, 0xff0000);
-					registerContextMenuForDel(intersects[result.p_intersect_Id].object, false);
+					registerContextMenuDel(intersects[result.p_intersect_Id].object, false);
 				}
 
 				$('#pointPickerDiv').contextMenu();
@@ -762,7 +764,7 @@ function getRayCastIntersects(x, y){
 
 //add points into scene
 function addPoint(mode, intersects, index){
-	if(index == -1 || document.getElementById("context-menu-layer") != undefined) return;
+	if(index == -1 ) return;
 	var point = intersects[index].point;
 	//console.log(intersects);
 	//push points on UI
@@ -1599,14 +1601,60 @@ function calculate2DDistance(p1,p2){
 	return distance
 }
 
-function registerContextMenuForDel(point, isLastPoint){
+function registerContextMenuDel(point, isLastPoint){
 	//console.log(arguments);
-	var items = {"deletePolygonPoints": {name: "Delete Polygon Points", icon: "deletePolygonPoints"}};
-	if (isLastPoint)
-		items.deleteLastPoint = {name: "Delete Point", icon: "deletePoint", disabled: false}
-	else
-		items.deleteLastPoint = {name: "Delete Point", icon: "deletePoint-disabled", disabled: true}
 	
+	var items = {"deletePolygonPoints": {type: "deletePolygonPoints", name: "Delete Polygon Points",
+										className: "icon icon-deletePolygonPoints"}};
+	
+	if (isLastPoint)
+		items.deleteLastPoint = {type: "deleteLastPoint", name: "Delete Point",
+								 className: "icon icon-deletePoint", disabled: false}
+	else
+		items.deleteLastPoint = {type: "deleteLastPoint", name: "Delete Point",
+								 className: "icon icon-deletePoint-disabled", disabled: true}
+	
+	$.contextMenu.types.deletePolygonPoints = function(item, opt, root) {
+		// item.parentNode.addClass('icon');
+		// item.parentNode.addClass('icon-deletePoint');
+		$('<span>' + item.name + '</span>').appendTo(this);
+		this.on('hover', function(e) {
+			var polyObj = point.parent;
+				if(polyObj != undefined){
+					setObjectChildrenColor(polyObj, 0, -1, 0xff0000);
+			}
+        	//console.log(item.name, "hover");
+        });
+		// this.on('keydown', function(e) {
+		// 	deletePolygonPoints(point.parent);
+		// }).on('hover', function(e) {
+  //       	console.log(item.name, "hover");
+  //   		});
+	};
+
+	$.contextMenu.types.deleteLastPoint = function(item, opt, root) {
+		// item.parentNode.addClass('icon');
+		// item.parentNode.addClass('icon-deletePoint');
+		$('<span>' + item.name + '</span>').appendTo(this);
+		this.on('hover', function(e) {
+			if(isLastPoint){
+				console.log(item.name, "hover");
+				var polyObj = point.parent;
+				if(polyObj != undefined){
+					setObjectChildrenColor(polyObj, 0, -1, 0x000000);
+					setObjectChildrenColor(polyObj, polyObj.children.length -2, 2, 0xff0000)
+				}
+			}
+        	
+        });
+		// this.on('keydown', function(e) {
+		// 	deleteLastPoint(point.parent);
+		// }).on('hover', function(e) {
+  //       	console.log(item.name, "hover");
+  //   		});
+	};
+
+
 	var options = {
 		selector: '#pointPickerDiv', 
 		trigger: 'none',
@@ -1630,20 +1678,11 @@ function registerContextMenuForDel(point, isLastPoint){
 		},
 		events:{
 			hide: function(){
-				if(isLastPoint){
-					var polyObj = point.parent;
-					if(polyObj != undefined){
-						setObjectChildrenColor(polyObj, polyObj.children.length-2, 2, 0x000000);
-					}
-
-				}
-				else{
-					//console.log("set all back to black");
-					//console.log(lastPoint);
-					var polyObj = point.parent;
-					if(polyObj != undefined){
-						setObjectChildrenColor(polyObj, 0, -1, 0x000000);
-					}
+				//console.log("set all back to black");
+				//console.log(lastPoint);
+				var polyObj = point.parent;
+				if(polyObj != undefined){
+					setObjectChildrenColor(polyObj, 0, -1, 0x000000);
 				}
 				//$("#pointPickerDiv").show();
 				$.contextMenu( 'destroy' );
