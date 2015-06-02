@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+{% load compress %}
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=Big5">
+		<title>Test Height Field -</title>
+		{% compress css %}
+		<link rel="stylesheet" type="text/css" href="/static/css/myStyle.css">
+		{% endcompress css %}
+
+		{% compress js %}
+		<script type="text/javascript" src="/static/js/jquery.min.js" charset="utf-8"> </script>
+		<script type="text/javascript" src="/static/js/three.js" charset="utf-8"> </script>
+		<script type="text/javascript" src="/static/js/stats.min.js" charset="utf-8"> </script>
+		<script type="text/javascript" src="/static/js/Detector.js" charset="utf-8"> </script>
+		<script type="text/javascript" src="/static/js/myWebGL.js" charset="utf-8"> </script>
+		{% endcompress js %}
+	</head>
+	<body>
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			varying vec3 vNormal;
+			varying vec4 vWorldPosition;
+
+			void main() {
+				vUv = uv;
+				vNormal = normalMatrix * normal;
+			
+				vWorldPosition = modelMatrix * vec4( position, 1.0 );
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}
+
+		</script>
+		<script id="vertexShader_rendering" type="x-shader/x-vertex">
+			varying vec4 vWorldPosition;
+			varying vec2 vUv;
+			uniform sampler2D uSampler;
+
+			void main() {
+				vUv = uv;
+			
+				vec3 curPos = position;
+				curPos.z = texture2D(uSampler, vUv).r;
+				
+				vWorldPosition = modelMatrix * vec4( curPos, 1.0 );
+			
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( curPos, 1.0 );
+			}
+		</script>
+		<script id="fragment_shader_rendering" type="x-shader/x-fragment">
+			varying vec4 vWorldPosition;
+			varying vec2 vUv;
+			uniform vec2 delta;
+			uniform sampler2D uSampler;
+			uniform sampler2D groundSampler;
+			uniform sampler2D borderSampler;
+			uniform samplerCube cubeTexture;
+
+			const float ground_level = 7.5;
+
+			void main() {
+				vec3 du = vec3(0.15625, texture2D(uSampler, vec2(vUv.x+delta.x, vUv.y)).r - texture2D(uSampler, vUv).r, 0.0);
+				vec3 dv = vec3(0.0, texture2D(uSampler, vec2(vUv.x, vUv.y+delta.y)).r - texture2D(uSampler, vUv).r, -0.039);
+				vec3 normal = normalize( cross(du, dv) );
+				vec3 dirLight = normalize( vec3(0, 1, -1) );
+				
+				vec3 reflectVec  = reflect( vWorldPosition.xyz, normal );
+				reflectVec = normalize(reflectVec);
+			
+				vec4 environment;
+			
+				float tx = (10.0*sign(reflectVec.x) - vWorldPosition.x) / reflectVec.x;
+				float tz = (-7.5                    - vWorldPosition.z) / reflectVec.z;
+				
+				if(tx < tz){
+					// check intersection with side wall
+					vec4 border_reflect;
+			
+					vec3 intersectWithBorder = vWorldPosition.xyz + reflectVec*tx;
+					if(intersectWithBorder.y < -2.5 && intersectWithBorder.z > -7.5){
+						// hit border
+						vec2 tex_coord_intersect;
+						tex_coord_intersect.x = fract( abs(intersectWithBorder.z+4.5)/1.0 );
+						tex_coord_intersect.y = fract( abs(intersectWithBorder.y+12.0)/2.0 );
+			
+						// consider reflection on border (2nd reflection)	
+						reflectVec = reflect( reflectVec, vec3(-sign(reflectVec.x), 0, 0) );
+			
+						environment = texture2D( borderSampler, tex_coord_intersect )*0.1 + textureCube( cubeTexture, reflectVec )*0.5;
+					} else {
+						// does not hit border
+						environment = textureCube( cubeTexture, reflectVec );
+					}
+					
+				}else{
+					// check intersection with back wall
+			
+					vec3 intersectWithBorder = vWorldPosition.xyz + reflectVec*tz;
+					if(intersectWithBorder.y < -2.5 && intersectWithBorder.x >= -10.0 && intersectWithBorder.x <= 10.0){
+						// hit border
+						vec2 tex_coord_intersect;
+						tex_coord_intersect.x = fract( abs(intersectWithBorder.x+10.0)/2.0 );
+						tex_coord_intersect.y = fract( abs(intersectWithBorder.y+4.5)/1.0 );
+					
+						// consider reflection on border (2nd reflection)	
+						reflectVec = reflect( reflectVec, vec3(0, 0, 1) );
+			
+						environment = texture2D( borderSampler, tex_coord_intersect )*0.1 + textureCube( cubeTexture, reflectVec )*0.5;
+					}else{
+						// does not hit border
+						environment = textureCube( cubeTexture, reflectVec );
+					}
+				}
+				// environment = textureCube( cubeTexture, reflectVec );
+				
+				vec3 refractVec = refract( vWorldPosition.xyz, normal, 0.75 );
+				refractVec = normalize(refractVec);
+				
+				vec3 t_intersect = (vec3(-10, -4.5, -7.5) - vWorldPosition.xyz) / refractVec;
+				if(t_intersect.x < 0.0){
+					// "refractVec" hits right border
+					t_intersect.x = (10.0-vWorldPosition.x) / refractVec.x;
+				}
+				
+				vec2 tex_coord_intersect = vec2(0, 0);
+				vec4 border_refract;
+				
+				if( abs(t_intersect.x) < abs(t_intersect.y) && abs(t_intersect.x) < abs(t_intersect.z) ){
+					// hit x side wall
+					tex_coord_intersect = vWorldPosition.zy + refractVec.zy*t_intersect.x;
+					tex_coord_intersect.x = fract( abs(tex_coord_intersect.x+4.5)/1.0 );
+					tex_coord_intersect.y = fract( abs(tex_coord_intersect.y+12.0)/2.0 );
+					
+					border_refract = texture2D( borderSampler, tex_coord_intersect )*0.2;
+				}else if( abs(t_intersect.y) < abs(t_intersect.z) ){
+					// hit ground
+					tex_coord_intersect = vWorldPosition.xz + refractVec.xz*t_intersect.y;
+					tex_coord_intersect.x = fract( abs(tex_coord_intersect.x+10.0)/20.0 );
+					tex_coord_intersect.y = fract( abs(tex_coord_intersect.y+7.5)/5.0 );
+					
+					border_refract = texture2D( groundSampler, tex_coord_intersect )*0.8;
+				}else{
+					// hit back wall
+					tex_coord_intersect = vWorldPosition.xy + refractVec.xy*t_intersect.z;
+					tex_coord_intersect.x = fract( abs(tex_coord_intersect.x+10.0)/2.0 );
+					tex_coord_intersect.y = fract( abs(tex_coord_intersect.y+4.5)/1.0 );
+					
+					border_refract = texture2D( borderSampler, tex_coord_intersect )*0.2;
+				}
+				
+				//float t = (ground_level - vWorldPosition.y) / refractVec.y;
+				
+				//vec2 intersect_ground = vWorldPosition.xz + refractVec.xz*t;
+				//intersect_ground = (intersect_ground+10.0)*0.05;
+				
+				//environment*0.6 +c8ffec
+				gl_FragColor = environment*0.6 + border_refract;// + vec4(0, 0.01, 0.01, 1)*dot(normal, dirLight) + vec4(1.0, 1.0, 1.0, 1.0)*max( pow(dot(			reflectVec, dirLight),100.0), 0.0 );// + ground;//
+				//gl_FragColor.rgb = normal;
+				//gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0)* pow(dot(reflectVec, dirLight), 100.0);
+			}
+		</script>
+		<script id="fragment_shader_water" type="x-shader/x-fragment">
+			varying vec2 vUv;
+			uniform float time;
+			uniform vec2 delta;
+			uniform sampler2D uSampler;
+			
+			void main() {
+				// In each texel, r stores the position and g stores the velocity. 
+				// Updating r and g of each pixel in thie shader
+			
+				float u = vUv.x;
+				float v = vUv.y;
+				
+				float avgNeighbor = ( texture2D(uSampler, vec2(u-delta.x, v)).r + 
+				                      texture2D(uSampler, vec2(u+delta.x, v)).r +
+				                      texture2D(uSampler, vec2(u, v-delta.y)).r + 
+				                      texture2D(uSampler, vec2(u, v+delta.y)).r ) * 0.25;
+				float velocity = texture2D(uSampler, vUv).g + avgNeighbor - texture2D(uSampler, vUv).r;
+				velocity *= 0.995;
+				
+				gl_FragColor = vec4(texture2D(uSampler, vUv).r + velocity, velocity, 0.0, 1.0);
+			}
+		</script>
+		<script id="fragment_shader_addDrop" type="x-shader/x-fragment">
+			varying vec2 vUv;
+			uniform vec2 delta;
+			uniform vec2 center;
+			uniform float strength;
+			uniform sampler2D uSampler;
+			const float PI = 3.141592653589793;
+			
+			void main() {
+				vec2 curPosAndVelocity = texture2D(uSampler, vec2(vUv.x, vUv.y)).rg;
+				
+				// add the drop to the height
+				float drop = max(0.0, 1.0 - length(center - vUv) / 0.03);
+				drop = 0.5 - cos(drop * PI) * 0.5;
+				
+				gl_FragColor.rg = vec2(curPosAndVelocity.x - strength*drop, curPosAndVelocity.y);
+			}
+		</script>
+		<script id="fragment_shader_border" type="x-shader/x-fragment">
+			varying vec4 vWorldPosition;
+			varying vec2 vUv;
+			varying vec3 vNormal;
+			uniform vec2 delta;
+			uniform sampler2D uSampler;
+			uniform sampler2D groundSampler;
+			uniform sampler2D borderSampler;
+			uniform samplerCube cubeTexture;
+			
+			const float ground_level = 7.5;
+			
+			void main() {
+				vec4 border;
+				vec4 environment = vec4(0.0, 0.0, 0.0, 1.0);
+				
+				vec3 dirLight = normalize( vec3(0, 1, -1) );
+				
+				vec3 reflectVec  = reflect( vWorldPosition.xyz, vNormal );
+				reflectVec = normalize(reflectVec);
+			
+				if( dot(vNormal, vec3(0.0, 1.0, 0.0)) > 0.999 ){
+					vec2 tex_coord = vec2( fract( (vWorldPosition.x+10.0)/2.0 ), fract( (vWorldPosition.z+7.5)/0.6 ) );
+					border = texture2D( borderSampler, tex_coord );
+					
+					environment = textureCube( cubeTexture, reflectVec );
+					//			gl_FragColor = environment * border;// + vec4(0.1, 0.1, 0.1, 1.0);
+				} else {
+				
+					vec2 tex_coord;
+					
+					if( dot(vNormal, vec3(0.0, 0.0, 1.0)) > 0.999 ){
+						tex_coord.x = fract( abs(vWorldPosition.x+10.0)/2.0 );
+						tex_coord.y = fract( abs(vWorldPosition.y+4.5)/1.0 );
+					} else {
+						tex_coord.x = fract( abs(vWorldPosition.z+4.5)/1.0 );
+						tex_coord.y = fract( abs(vWorldPosition.y+12.0)/2.0 );
+					}
+				
+					border = texture2D( borderSampler, tex_coord );
+				
+					// intersection with water surface
+					float t_intersect = (-3.05 - vWorldPosition.y) / reflectVec.y;
+					
+					vec3 intersect_with_water = vec3(vWorldPosition.x + reflectVec.x*t_intersect, -3.05, vWorldPosition.z + reflectVec.z*t_intersect);
+					
+					if(intersect_with_water.x > -10.0 && intersect_with_water.x < 10.0 && intersect_with_water.z > -7.5 && intersect_with_water.z < -2.5 ){
+						// reflectVec intersects with water surface			
+						vec2 vUv = vec2( (intersect_with_water.x+10.0)/20.0, intersect_with_water.z*-0.2 - 0.5 );
+						
+						vec3 du = vec3(0.15625, texture2D(uSampler, vec2(vUv.x+delta.x, vUv.y)).r - texture2D(uSampler, vUv).r, 0.0);
+						vec3 dv = vec3(0.0, texture2D(uSampler, vec2(vUv.x, vUv.y+delta.y)).r - texture2D(uSampler, vUv).r, -0.039);
+						vec3 normal_water = normalize( cross(du, dv) );
+						
+						vec3 reflectVec_water = reflect( normalize(intersect_with_water - vWorldPosition.xyz), normal_water );
+						reflectVec_water = normalize(reflectVec_water);
+						environment = textureCube( cubeTexture, reflectVec_water )*0.5;
+					}else{
+						environment = textureCube( cubeTexture, reflectVec )*0.3;
+					}
+				}
+				
+				vec4 light = vec4(0.2, 0.2, 0.2, 1.0)*dot(vNormal, dirLight) + vec4(1.0, 1.0, 1.0, 1.0)*max( pow(dot(reflectVec, dirLight),100.0), 0.0 );
+				gl_FragColor = border*0.5 + environment*0.6 + light;
+				//						gl_FragColor += vec4(0.1, 0.1, 0.1, 1.0)*dot(vNormal, dirLight) + vec4(1.0, 1.0, 1.0, 1.0)*max( pow(dot(reflectVec, 			dirLight),100.0), 0.0 );
+			}
+		</script>
+		<script>
+			LoadWebGL();
+		</script>
+		<canvas width="1291" height="667" style="height: 667px; width: 1291px;"></canvas>
+	</body>
+</html>
