@@ -237,6 +237,8 @@ INSTALLED_APPS = (
     "mapApp",
     "teethViewer3DApp",
     "waterShaderApp",
+    "waterTestApp",
+    "waterHeightFieldApp",
     "mezzanine_pagedown",
     "django.contrib.admin",
     "django.contrib.auth",

@@ -51,6 +51,8 @@ urlpatterns += patterns('',
     url("^$", "mezzanine.pages.views.page", {"slug": "/"}, name="home"),
     url(r'^map/', include('mapApp.urls')),
     url(r'^waterShader/', include('waterShaderApp.urls')),
+    url(r'^waterHeightField/', include('waterHeightFieldApp.urls')),
+    url(r'^waterTest/', include('waterTestApp.urls')),
     #url(r'^teethViewer3D/', include('teethViewer3DApp.urls')),
     
 

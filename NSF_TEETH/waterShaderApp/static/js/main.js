@@ -25,6 +25,9 @@ function loadSky(){
     ]);
 
     cubeMap.format = THREE.RGBFormat;
+    
+    // This is for water-material-height-field
+    //var cubeMap = reflectionCube;
 
     var cubeShader = THREE.ShaderLib['cube'];
     cubeShader.uniforms['tCube'].value = cubeMap;
@@ -101,20 +104,32 @@ function init() {
     // CONTROLS
     cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
     cameraControls.target.set(0, 0, 0);
-
+    loadSky();
 
     //add geometry
-    var geometry = new THREE.SphereGeometry(50, 128, 128); 
-    var material = new  THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x009900, shininess: 30, shading: THREE.FlatShading } ) 
-    var sphere = new THREE.Mesh( geometry, material );    
-    scene.add( sphere );
+    // var geometry = new THREE.SphereGeometry(50, 128, 128); 
+    // var material = new  THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x009900, shininess: 30, shading: THREE.FlatShading } ) 
+    // var sphere = new THREE.Mesh( geometry, material );    
+    // scene.add( sphere );
 
+    // previous water shader
     //add water surface
     // Load textures        
-    var waterNormals = new THREE.ImageUtils.loadTexture('/static/img/waternormals.jpg');
-    waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping; 
+    //var waterNormals = new THREE.ImageUtils.loadTexture('/static/img/waternormals.jpg');
+    //waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
+    var renderTargetLinearFloatParams = {
+                minFilter:THREE.LinearFilter,
+                magFilter:THREE.LinearFilter,
+                wrapS:THREE.RenderTargetWrapping,
+                wrapT:THREE.RenderTargetWrapping,
+                format:THREE.RGBAFormat,
+                stencilBuffer:false,
+                depthBuffer:false,
+                type:THREE.FloatType
+            };
+    waterNormals = new THREE.WebGLRenderTarget( 256, 256, renderTargetLinearFloatParams ); 
     
-    // Create the water effect
+    // // Create the water effect
     waterObj = new THREE.Water(renderer, camera, scene, {
         textureWidth: 256,
         textureHeight: 256,
@@ -122,20 +137,31 @@ function init() {
         alpha:  1.0,
         sunDirection: directionalLight.position.normalize(),
         sunColor: 0xffffff,
+        //waterColor: 0x001e0f,
         waterColor: 0x001e0f,
         betaVersion: 0,
         side: THREE.DoubleSide
     });
+
+
+    //load sky
+    
+
+    //new water-height field shader
+    //waterObj = new THREE.HeightFieldWater(renderer, camera, scene);
+    
+    //rendering material
     var waterMeshMirror = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(2000, 2000, 10, 10), 
         waterObj.material
     );
+
     waterMeshMirror.add(waterObj);
     waterMeshMirror.rotation.x = - Math.PI * 0.5;
     
     scene.add(waterMeshMirror);
  
-    loadSky();
+    
     window.addEventListener( 'resize', onWindowResize, false );
 
 }
