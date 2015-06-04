@@ -344,8 +344,8 @@
 					strength: 0.075,
 					radius: 0.025,
 					scale: 3.0,
-					alpha: 0.9,
-					ambient: "#111111",
+					alpha: 0.6,
+					ambient: "#c5bbae",
 					diffuse: "#ffffff",
 					specular: "#ffffff",
 					shininess: 50,
@@ -365,7 +365,7 @@
 						mainUniforms.lightPos.value.y = this.lightPosY;
 						mainUniforms.lightPos.value.z = this.lightPosZ;
 						animateLight = this.animateLight = false;
-						this.ambient = "#111111";
+						this.ambient = "#c5bbae";
 						this.diffuse = "#ffffff";
 						this.specular = "#ffffff";
 						mainUniforms.ambient.value = new THREE.Color(this.ambient);
@@ -453,7 +453,7 @@
 					alpha: { type: "f", value: guiParams.alpha },
 					colorMap: { type: "t", value: THREE.ImageUtils.loadTexture( '/static/img/py.jpg' ) },
 					normalMap: { type: "t", value: normalMap },
-					ambient: { type: "c", value: new THREE.Color(0x111111) },
+					ambient: { type: "c", value: new THREE.Color(0xc5bbae) },
 					diffuse: { type: "c", value: new THREE.Color(0xffffff) },
 					specular: { type: "c", value: new THREE.Color(0xffffff) },
 					invRadius: { type: "f", value: 0.0 },
