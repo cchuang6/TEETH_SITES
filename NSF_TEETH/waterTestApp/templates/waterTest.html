@@ -12,8 +12,6 @@
     {% compress js %}
 		<script type="text/javascript" src="/static/js/three.min.71.js" charset="utf-8"></script>
 		<script type="text/javascript" src="/static/js/Detector.js" charset="utf-8"></script>
-		<script type="text/javascript" src="/static/js/stats.js" charset="utf-8"></script>
-		<script type="text/javascript" src="/static/js/THREEx.RenderStats.js" charset="utf-8"></script>
 		<script type="text/javascript" src="/static/js/dat.gui.min.js" charset="utf-8"></script>
 		<script type="text/javascript" src="/static/js/OrbitAndPanControls.js" charset="utf-8"></script>
     <script type="text/javascript" src="/static/js/jquery-1.8.3.min.js" charset="utf-8"></script>
@@ -44,7 +42,7 @@
 			uniform float damping, strength, radius;
 			
 			varying vec2 vUv;
-			const float v = 3.14159;
+			const float pi = 3.14159;
 
 			void main() 
 			{
@@ -54,9 +52,8 @@
 				// Draw ripples with mouse
 				if(mouseActive >= 1) 
 				{
-					 //float m = max(0.0, 1.0 - length(vec2(mousePoint.x, mousePoint.y) - vUv) / radius);
           float m = max(0.0, 1.0 - length(vec2(mousePoint.x, mousePoint.y) - vUv) / radius);
-					m = 0.5 -cos(m * v) * 0.5;
+					m = 0.5 -cos(m * pi) * 0.5;
 					info.r -= m * strength;
 				}
 
@@ -216,7 +213,7 @@
 			//------------------------------------------
 			// Globals
 			//------------------------------------------
-			var stats, renderStats, cameraRTT, cameraControls, sceneRTT, scene, renderer;
+			var cameraRTT, cameraControls, sceneRTT, scene, renderer;
 			var rtTexture, rtTexture2, normalMap;
 			var simRes = 256;
 			var rtUniforms, mainUniforms, normalUniforms;
@@ -280,75 +277,6 @@
 			start();
 			update();
 
-      //startTest();
-      //updateTest();
-      //renderTest();
-
-      function startTest(){
-        
-        //scene
-        scene = new THREE.Scene();
-        scene = new THREE.Scene();
-        
-        
-        // RENDERER
-        var canvasWidth = window.innerWidth;
-        var canvasHeight = window.innerHeight;
-        if (Detector.webgl)
-            renderer = new THREE.WebGLRenderer( {antialias:true, alpha:true} );
-        // else{
-        //     Detector.addGetWebGLMessage();
-        //     renderer = new THREE.CanvasRenderer();
-        // }
-        renderer.setSize(canvasWidth, canvasHeight);
-        renderer.setClearColor(0x808080);
-        renderer.autoClear = false;
-        // renderer.setClearColor(0x000000, 1.0);
-        // renderer.gammaInput = true;
-        // renderer.gammaOutput = true;
-        document.body.appendChild( renderer.domElement );
-
-
-
-        // CAMERA
-        var canvasRatio = canvasWidth / canvasHeight;
-        //var viewAngle = 30.0;
-        var viewAngle = 55.0;
-        var near = 0.1;
-        //var far = 20000;
-        var far = 3000000;
-        defaultCamPos = new THREE.Vector3(0.0, 0.0, 0.0)
-        var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
-        //camera.position.set(defaultCamPos.x, defaultCamPos.y, defaultCamPos.z);
-        //camera.position.set(1000, 500, -1500);
-        camera.position.set(-600, 100, 300);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-        //scene.add(camera);
-    
-        // CONTROLS
-        cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
-        //cameraControls.target.set(0, 0, 0);
-        loadSky();
-
-
-      }
-
-      function updateTest(){
-        
-        requestAnimationFrame( updateTest );
-        renderTest();
-
-      }
-
-      function renderTest(){
-       
-        renderer.clear();
-        
-        // Final render pass
-        renderer.render( scene, cameraControls.object );
-      
-    }
-
 			//------------------------------------------
 			// Initialization
 			//------------------------------------------
@@ -381,8 +309,9 @@
 
 				// add a basic directional light
         // LIGHTS
+        var lightRadius = 850.0
 				light = new THREE.DirectionalLight(0xffff55, 1);
-				light.position.set(-600, 300, 600);
+				light.position.set(850 * Math.sin(Math.PI/4.0), 250, 850 * Math.cos(Math.PI/4.0));
 				light.target.position.set(0, 0, 0);
 				light.castShadow = true;
 				//light.shadowCameraVisible = true;
@@ -400,20 +329,6 @@
 				// Setup mouse event handlers
 				setupControls();				
 
-				// Setup FPS counter
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.bottom = '0px';
-				stats.domElement.style.left = '0px';
-				document.body.appendChild( stats.domElement );
-				
-				// Setup rendering performance counter
-				rendererStats = new THREEx.RendererStats();
-				rendererStats.domElement.style.position	= 'absolute';
-				rendererStats.domElement.style.bottom = '50px';
-				rendererStats.domElement.style.left	= '0px';
-				document.body.appendChild( rendererStats.domElement );
-
 				// controls
 				//cameraControls = new THREE.OrbitControls( camera );
 			}
@@ -428,16 +343,16 @@
 					damping: 0.99,
 					strength: 0.075,
 					radius: 0.025,
-					scale: 10.0,
+					scale: 3.0,
 					alpha: 0.9,
 					ambient: "#111111",
 					diffuse: "#ffffff",
 					specular: "#ffffff",
 					shininess: 50,
 					height: 0.05,
-					lightPosX: 300.0,
-					lightPosY: 400.0,
-					lightPosZ: 600.0,
+					lightPosX: Math.sin(Math.PI/4)*850,
+					lightPosY: 250.0,
+					lightPosZ: Math.cos(Math.PI/4)*850,
 					animateLight: false,
 					reset: function() {
 						rtUniforms.damping.value = this.damping;
@@ -457,7 +372,12 @@
 						mainUniforms.diffuse.value = new THREE.Color(this.diffuse);
 						mainUniforms.specular.value = new THREE.Color(this.specular);
 						normalUniforms.height.value = this.height;
+            clock.stop();
+            clock.startTime = 0;
+            clock.oldTime = 0;
+            clock.elapsedTime = 0;
 						guiNeedsUpdate = true;
+            
 					}
 				};
 				
@@ -477,7 +397,12 @@
 				lightFolder.add(mainUniforms.lightPos.value, "x").name("X");
 				lightFolder.add(mainUniforms.lightPos.value, "y").name("Y");
 				lightFolder.add(mainUniforms.lightPos.value, "z").name("Z");
-				lightFolder.add(guiParams, "animateLight").name("Animate Light").onChange(function(newValue) { animateLight = newValue; guiNeedsUpdate = true; });
+				lightFolder.add(guiParams, "animateLight").name("Animate Light").onChange(function(newValue) { animateLight = newValue; 
+          if(newValue)
+            clock.start();
+          else
+            clock.stop();
+          guiNeedsUpdate = true; });
 				lightFolder.open();
 				
 				waterColorFolder = gui.addFolder("Water Colors");
@@ -585,7 +510,8 @@
         var canvasRatio = window.innerWidth / window.innerHeight;
         var far = 3000000;
         var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
-        camera.position.set(-600, 100, 300);
+        var rotateRadius = 300.0;
+        camera.position.set(rotateRadius*Math.cos(Math.PI/4.0), 55, -rotateRadius*Math.sin(Math.PI/4.0));
         camera.lookAt(new THREE.Vector3(0, 0, 0));
     
         // CONTROLS
@@ -593,79 +519,17 @@
         
         
 				
-				var waterGeo = new THREE.PlaneBufferGeometry( 512, 512, simRes-1, simRes-1 );				
+				var waterGeo = new THREE.PlaneBufferGeometry( 2048, 2048, simRes-1, simRes-1 );				
 				water = new THREE.Mesh( waterGeo , waterMat );
         water.name = "water";
 				water.rotation.x = THREE.Math.degToRad(-90);
+        water.rotation.z = THREE.Math.degToRad(-90);
 				scene.add( water );
 				
-				// lower 'floor' plane
-				var floorTexture = THREE.ImageUtils.loadTexture( '/static/img/checkerboard.jpg' );
-				floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-				floorTexture.repeat.set( 5, 5 );
-				var floorPlaneGeo = new THREE.PlaneBufferGeometry( 512, 512, 1, 1 );
-				var floorPlane = new THREE.Mesh( floorPlaneGeo, new THREE.MeshLambertMaterial({color:0xffffff, map: floorTexture}) );
-        floorPlane.name = "floorPlane";
-				floorPlane.position.set(0, -50, 0);
-				floorPlane.rotation.x = THREE.Math.degToRad(-90);
-				scene.add( floorPlane );
-				
-				// debug the render texture by applying it to a basic plane in the upper-left
-				// area of the scene
-				var rtDbgGeo = new THREE.PlaneBufferGeometry( 150, 150, 1, 1 );
-				var rtDbgMat = new THREE.MeshBasicMaterial({ color: 0xffffff, map: normalMap });
-				var rtDbg = new THREE.Mesh( rtDbgGeo, rtDbgMat );
-        rtDbg.name = "rtDbg";
-				rtDbg.position.set(-300, 200, 0);
-				scene.add( rtDbg );
-				
-				// Lens flare
-				// var textureFlare0 = THREE.ImageUtils.loadTexture( "/static/img/lensflare0.png" );
-				// var textureFlare2 = THREE.ImageUtils.loadTexture( "/static/img/lensflare2.png" );
-				// var textureFlare3 = THREE.ImageUtils.loadTexture( "/static/img/lensflare3.png" );
-				// var flareColor = new THREE.Color( 0xffffff );
-				// lensFlare = new THREE.LensFlare( textureFlare0, 700, 0.0, THREE.AdditiveBlending, flareColor );
-				// lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare3, 60, 0.6, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare3, 70, 0.7, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare3, 120, 0.9, THREE.AdditiveBlending );
-				// lensFlare.add( textureFlare3, 70, 1.0, THREE.AdditiveBlending );
-				// lensFlare.customUpdateCallback = lensFlareUpdateCallback;
-				// lensFlare.position = light.position;
-				//scene.add( lensFlare );
-				
-				// sphere to test that lighting is working
-				var sp = new THREE.SphereGeometry( 50, 30, 15 );
-				var spm = new THREE.Mesh( sp, new THREE.MeshLambertMaterial({color:0xff0000}) );
-				spm.position.set(300, 200, 0);
-				scene.add( spm );	
+
 			}
 			
-			
-			//------------------------------------------
-			// Update the lens flare
-			//------------------------------------------
-			function lensFlareUpdateCallback( object ) {
-				var f, fl = object.lensFlares.length;
-				var flare;
-				var vecX = -object.positionScreen.x * 2;
-				var vecY = -object.positionScreen.y * 2;
-
-				for( f = 0; f < fl; f++ ) 
-				{
-					flare = object.lensFlares[ f ];
-
-					flare.x = object.positionScreen.x + vecX * flare.distance;
-					flare.y = object.positionScreen.y + vecY * flare.distance;
-
-					flare.rotation = 0;
-				}
-
-				object.lensFlares[ 2 ].y += 0.025;
-				object.lensFlares[ 3 ].rotation = object.positionScreen.x * 0.5 + THREE.Math.degToRad( 45 );
-			}
+		
 
 
 			//------------------------------------------
@@ -749,12 +613,6 @@
                 return false;
               }
           });
-
-          
-          
-     //      console.log(rtUniforms.mousePoint.value);
-					// if (1 > Math.abs(rtUniforms.mousePoint.value.x) && 1 > Math.abs(rtUniforms.mousePoint.value.y))
-					     
 				};
 			}
 
@@ -762,12 +620,6 @@
         var canvasWidth = window.innerWidth;
         var canvasHeight = window.innerHeight;
         var camera = cameraControls.object;
-        //var mouseVector = new THREE.Vector3(2*((x - leftOffset)/canvasWidth)-1,
-        //                  1-2*((y -topOffset)/canvasHeight),
-        //                  0.5);
-        //var projector = new THREE.Projector();
-        //projector.unprojectVector(mouseVector,camera);
-        //var raycaster = new THREE.Raycaster(camera.position,mouseVector.sub(camera.position).normalize());
         var mouseVector = new THREE.Vector2( -1 + 2*(x / canvasWidth),
                                              1  - 2*(y / canvasHeight));
         var raycaster = new THREE.Raycaster();
@@ -783,8 +635,10 @@
 
 				if (animateLight)
 				{
-					light.position.x = Math.sin(clock.getElapsedTime()) * 400.0;
-					light.position.z = Math.cos(clock.getElapsedTime()) * 400.0;
+          console.log(clock.getElapsedTime());
+          //clock.start();
+					light.position.x = Math.sin(clock.getElapsedTime() + Math.PI/4) * 850.0;
+					light.position.z = Math.cos(clock.getElapsedTime() + Math.PI/4) * 850.0;
 					guiNeedsUpdate = true;
 				}
 
@@ -810,14 +664,8 @@
 					}
 					guiNeedsUpdate = false;
 				}
-				
-				//lensFlare.position = light.position;
-				
 				render();
-								
-				stats.update();
         cameraControls.update();
-				rendererStats.update(renderer);
 			}
 
 			
