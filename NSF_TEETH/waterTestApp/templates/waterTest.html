@@ -13,8 +13,8 @@
 		<script type="text/javascript" src="/static/js/three.min.71.js" charset="utf-8"></script>
 		<script type="text/javascript" src="/static/js/Detector.js" charset="utf-8"></script>
 		<script type="text/javascript" src="/static/js/dat.gui.min.js" charset="utf-8"></script>
-		<script type="text/javascript" src="/static/js/OrbitAndPanControls.js" charset="utf-8"></script>
-    <script type="text/javascript" src="/static/js/jquery-1.8.3.min.js" charset="utf-8"></script>
+		<script type="text/javascript" src="/static/js/FlyControls.js" charset="utf-8"></script>
+    	<script type="text/javascript" src="/static/js/jquery-1.8.3.min.js" charset="utf-8"></script>
     {% endcompress %}
 
 
@@ -52,7 +52,7 @@
 				// Draw ripples with mouse
 				if(mouseActive >= 1) 
 				{
-          float m = max(0.0, 1.0 - length(vec2(mousePoint.x, mousePoint.y) - vUv) / radius);
+          			float m = max(0.0, 1.0 - length(vec2(mousePoint.x, mousePoint.y) - vUv) / radius);
 					m = 0.5 -cos(m * pi) * 0.5;
 					info.r -= m * strength;
 				}
@@ -223,7 +223,9 @@
 			var normalMat, screenMat;
 			var light, lensFlare;
 			var animateLight = false;
-			var controls, clock;
+			var container, clock;
+			var bullets = [];
+			var BULLETMOVESPEED = 500;
 			
 			var renderTargetLinearFloatParams = {
 				minFilter:THREE.LinearFilter,
@@ -236,44 +238,138 @@
 				type:THREE.FloatType
 			};
 
-    function loadSky(){
-        var cubeMap = THREE.ImageUtils.loadTextureCube([
-            "/static/img/px.jpg",
-            "/static/img/nx.jpg",
-            "/static/img/py.jpg",
-            "/static/img/ny.jpg",
-            "/static/img/pz.jpg",
-            "/static/img/nz.jpg",
-        ]);
+    		function loadSky(){
+    		    var cubeMap = THREE.ImageUtils.loadTextureCube([
+    		        "/static/img/px.jpg",
+    		        "/static/img/nx.jpg",
+    		        "/static/img/py.jpg",
+    		        "/static/img/ny.jpg",
+    		        "/static/img/pz.jpg",
+    		        "/static/img/nz.jpg",
+    		    ]);
     
-        cubeMap.format = THREE.RGBFormat;
-        
-        // This is for water-material-height-field
-        //var cubeMap = reflectionCube;
+    		    cubeMap.format = THREE.RGBFormat;
+    		    
+    		    // This is for water-material-height-field
+    		    //var cubeMap = reflectionCube;
     
-        var cubeShader = THREE.ShaderLib['cube'];
-        cubeShader.uniforms['tCube'].value = cubeMap;
+    		    var cubeShader = THREE.ShaderLib['cube'];
+    		    cubeShader.uniforms['tCube'].value = cubeMap;
     
-        var skyBoxMaterial = new THREE.ShaderMaterial({
-          fragmentShader: cubeShader.fragmentShader,
-          vertexShader: cubeShader.vertexShader,
-          uniforms: cubeShader.uniforms,
-          depthWrite: false,
-          side: THREE.BackSide
-        });
+    		    var skyBoxMaterial = new THREE.ShaderMaterial({
+    		      fragmentShader: cubeShader.fragmentShader,
+    		      vertexShader: cubeShader.vertexShader,
+    		      uniforms: cubeShader.uniforms,
+    		      depthWrite: false,
+    		      side: THREE.BackSide
+    		    });
     
-            var skybox = new THREE.Mesh(
-              new THREE.BoxGeometry(100000, 100000, 100000),
-              skyBoxMaterial
-            );
-            
-            scene.add(skybox);
-      }
+    		        var skybox = new THREE.Mesh(
+    		          new THREE.BoxGeometry(100000, 100000, 100000),
+    		          skyBoxMaterial
+    		        );
+    		        
+    		        scene.add(skybox);
+    		}
 
 			
 			//------------------------------------------
 			// Main init and loop
 			//------------------------------------------
+
+			//startTest();
+			//updateTest();
+
+			function startTest(){
+
+				scene = new THREE.Scene();
+				sceneRTT = new THREE.Scene();
+				
+				clock = new THREE.Clock();
+				clockFlyControls = new THREE.Clock();
+				
+        		// RENDERER
+        		if (Detector.webgl)
+        		    renderer = new THREE.WebGLRenderer( {antialias:true, alpha: true} );
+        		else{
+        		    Detector.addGetWebGLMessage();
+        		    renderer = new THREE.CanvasRenderer();
+        		}
+        		container = document.createElement( 'div' );
+        		document.body.appendChild( container);
+        		var canvasWidth = window.innerWidth;
+        		var canvasHeight = window.innerHeight;        		
+				renderer.setSize(canvasWidth, canvasHeight);
+				renderer.setClearColor(0x808080);
+				renderer.autoClear = false;
+
+				container.appendChild( renderer.domElement );
+				//renderer.shadowMapEnabled = true;
+
+							
+				
+        		//add skybox
+        		loadSky();
+
+				// add a basic directional light
+        		// LIGHTS
+        		var lightRadius = 850.0
+				light = new THREE.DirectionalLight(0xffff55, 1);
+				light.position.set(850 * Math.sin(Math.PI/4.0), 250, 850 * Math.cos(Math.PI/4.0));
+				light.target.position.set(0, 0, 0);
+				light.castShadow = true;
+				//light.shadowCameraVisible = true;
+				scene.add( light );
+
+				setupMainSceneTest();
+
+			}
+
+			function updateTest(){
+				requestAnimationFrame( updateTest );
+				renderTest();
+
+			}
+
+			function renderTest(){
+
+				renderer.clear();
+				// Final render pass
+				var delta = clock.getDelta();
+				cameraControls.update( delta );
+        		renderer.render( scene, cameraControls.object );
+			
+			}
+
+			function setupMainSceneTest(){
+
+        		//setup camera
+        		var viewAngle = 55.0;
+        		var near = 0.1;
+        		var canvasRatio = window.innerWidth / window.innerHeight;
+        		var far = 3000000;
+        		var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
+        		var rotateRadius = 300.0;
+        		camera.position.z = rotateRadius * 5;
+        		//camera.position.set(rotateRadius*Math.cos(Math.PI/4.0), 55, -rotateRadius*Math.sin(Math.PI/4.0));
+        		//camera.lookAt(new THREE.Vector3(0, 0, 0));
+    		
+        		// CONTROLS
+        		cameraControls = new THREE.FlyControls(camera);
+        		cameraControls.movementSpeed = 1000;
+				cameraControls.domElement = container;
+				cameraControls.rollSpeed = Math.PI / 24;
+				cameraControls.autoForward = false;
+				cameraControls.dragToLook = false;
+				// var waterGeo = new THREE.PlaneBufferGeometry( 2048, 2048, simRes-1, simRes-1 );				
+				// water = new THREE.Mesh( waterGeo , waterMat );
+    //     		water.name = "water";
+				// water.rotation.x = THREE.Math.degToRad(-90);
+    //     		water.rotation.z = THREE.Math.degToRad(-90);
+				// scene.add( water );
+				
+			}
+
 			start();
 			update();
 
@@ -285,31 +381,36 @@
 
 				scene = new THREE.Scene();
 				sceneRTT = new THREE.Scene();
+
+				clockLightControl = new THREE.Clock();
+				clockFlyControls = new THREE.Clock();
 				
-				clock = new THREE.Clock();
-				
-        // RENDERER
-        if (Detector.webgl)
-            renderer = new THREE.WebGLRenderer( {antialias:true, alpha: true} );
-        else{
-            Detector.addGetWebGLMessage();
-            renderer = new THREE.CanvasRenderer();
-        }
-        var canvasWidth = window.innerWidth;
-        var canvasHeight = window.innerHeight;
+        		// RENDERER
+        		if (Detector.webgl)
+        		    renderer = new THREE.WebGLRenderer( {antialias:true, alpha: true} );
+        		else{
+        		    Detector.addGetWebGLMessage();
+        		    renderer = new THREE.CanvasRenderer();
+        		}
+        		container = document.createElement( 'div' );
+        		document.body.appendChild( container);
+        		var canvasWidth = window.innerWidth;
+        		var canvasHeight = window.innerHeight;        		
 				renderer.setSize(canvasWidth, canvasHeight);
 				renderer.setClearColor(0x808080);
 				renderer.autoClear = false;
+
+				container.appendChild( renderer.domElement );
 				//renderer.shadowMapEnabled = true;
 
-				document.body.appendChild( renderer.domElement );			
+							
 				
-        //add skybox
-        loadSky();
+        		//add skybox
+        		loadSky();
 
 				// add a basic directional light
-        // LIGHTS
-        var lightRadius = 850.0
+        		// LIGHTS
+        		var lightRadius = 850.0
 				light = new THREE.DirectionalLight(0xffff55, 1);
 				light.position.set(850 * Math.sin(Math.PI/4.0), 250, 850 * Math.cos(Math.PI/4.0));
 				light.target.position.set(0, 0, 0);
@@ -317,6 +418,10 @@
 				//light.shadowCameraVisible = true;
 				scene.add( light );	
 										
+				
+
+
+
 				// Setup GUI
 				setupGUI();
 				
@@ -343,7 +448,7 @@
 					damping: 0.99,
 					strength: 0.075,
 					radius: 0.025,
-					scale: 3.0,
+					scale: 5.0,
 					alpha: 0.6,
 					ambient: "#c5bbae",
 					diffuse: "#ffffff",
@@ -372,49 +477,48 @@
 						mainUniforms.diffuse.value = new THREE.Color(this.diffuse);
 						mainUniforms.specular.value = new THREE.Color(this.specular);
 						normalUniforms.height.value = this.height;
-            clock.stop();
-            clock.startTime = 0;
-            clock.oldTime = 0;
-            clock.elapsedTime = 0;
+						clockLightControl.stop();
+            			clockLightControl.startTime = 0;
+            			clockLightControl.oldTime = 0;
+            			clockLightControl.elapsedTime = 0;
 						guiNeedsUpdate = true;
-            
 					}
 				};
 				
 				// Setup materials
 				setupMats();
 							
-				gui = new dat.GUI();
+				// gui = new dat.GUI();
 				
-				mainFolder = gui.addFolder("Main Settings");
-				mainFolder.add(rtUniforms.damping, "value", 0.0, 1.0).name("Damping");
-				mainFolder.add(rtUniforms.strength, "value", 0.0, 0.1).name("Input Strength");
-				mainFolder.add(rtUniforms.radius, "value", 0.0, 0.1).name("Input Radius");
-				mainFolder.add(mainUniforms.scale, "value", 0.0, 100.0).name("Simulation Scale");
-				mainFolder.open();
+				// mainFolder = gui.addFolder("Main Settings");
+				// mainFolder.add(rtUniforms.damping, "value", 0.0, 1.0).name("Damping");
+				// mainFolder.add(rtUniforms.strength, "value", 0.0, 0.1).name("Input Strength");
+				// mainFolder.add(rtUniforms.radius, "value", 0.0, 0.1).name("Input Radius");
+				// mainFolder.add(mainUniforms.scale, "value", 0.0, 100.0).name("Simulation Scale");
+				// mainFolder.open();
 				
-				lightFolder = gui.addFolder("Light Position");
-				lightFolder.add(mainUniforms.lightPos.value, "x").name("X");
-				lightFolder.add(mainUniforms.lightPos.value, "y").name("Y");
-				lightFolder.add(mainUniforms.lightPos.value, "z").name("Z");
-				lightFolder.add(guiParams, "animateLight").name("Animate Light").onChange(function(newValue) { animateLight = newValue; 
-          if(newValue)
-            clock.start();
-          else
-            clock.stop();
-          guiNeedsUpdate = true; });
-				lightFolder.open();
+				// lightFolder = gui.addFolder("Light Position");
+				// lightFolder.add(mainUniforms.lightPos.value, "x").name("X");
+				// lightFolder.add(mainUniforms.lightPos.value, "y").name("Y");
+				// lightFolder.add(mainUniforms.lightPos.value, "z").name("Z");
+				// lightFolder.add(guiParams, "animateLight").name("Animate Light").onChange(function(newValue) { animateLight = newValue; 
+    //       		if(newValue)
+    //       		  clockLightControl.start();
+    //       		else
+    //       		  clockLightControl.stop();
+    //       		guiNeedsUpdate = true; });
+				// lightFolder.open();
 				
-				waterColorFolder = gui.addFolder("Water Colors");
-				waterColorFolder.addColor(guiParams, "ambient").name("Ambient").onChange(function(colorValue) { mainUniforms.ambient.value = new THREE.Color(colorValue); });
-				waterColorFolder.addColor(guiParams, "diffuse").name("Diffuse").onChange(function(colorValue) { mainUniforms.diffuse.value = new THREE.Color(colorValue); });
-				waterColorFolder.addColor(guiParams, "specular").name("Specular").onChange(function(colorValue) { mainUniforms.specular.value = new THREE.Color(colorValue); });
-				waterColorFolder.add(mainUniforms.alpha, "value", 0.0, 1.0).name("Opacity");
-				waterColorFolder.add(mainUniforms.shininess, "value", 0.0, 300.0).name("Shininess");
-				waterColorFolder.add(normalUniforms.height, "value", 0.001, 0.1).name("Normal Height");
-				waterColorFolder.open();
+				// waterColorFolder = gui.addFolder("Water Colors");
+				// waterColorFolder.addColor(guiParams, "ambient").name("Ambient").onChange(function(colorValue) { mainUniforms.ambient.value = new THREE.Color(colorValue); });
+				// waterColorFolder.addColor(guiParams, "diffuse").name("Diffuse").onChange(function(colorValue) { mainUniforms.diffuse.value = new THREE.Color(colorValue); });
+				// waterColorFolder.addColor(guiParams, "specular").name("Specular").onChange(function(colorValue) { mainUniforms.specular.value = new THREE.Color(colorValue); });
+				// waterColorFolder.add(mainUniforms.alpha, "value", 0.0, 1.0).name("Opacity");
+				// waterColorFolder.add(mainUniforms.shininess, "value", 0.0, 300.0).name("Shininess");
+				// waterColorFolder.add(normalUniforms.height, "value", 0.001, 0.1).name("Normal Height");
+				// waterColorFolder.open();
 				
-				gui.add(guiParams, "reset").name("Reset to Defaults");
+				// gui.add(guiParams, "reset").name("Reset to Defaults");
 			}
 			
 			
@@ -434,7 +538,7 @@
 					texture: { type: "t", value: rtTexture2 },
 					delta: { type: "v2", value: new THREE.Vector2( delta, delta ) },
 					//mousePoint: { type:"v2", value: new THREE.Vector2(-1, -1) },
-          mousePoint: { type:"v2", value: new THREE.Vector2(0, 0) },
+          			mousePoint: { type:"v2", value: new THREE.Vector2(0, 0) },
 					mouseActive: { type:"i", value: 0 },
 					damping: { type: "f", value: guiParams.damping },
 					strength: { type: "f", value: guiParams.strength },
@@ -491,7 +595,7 @@
 				
 				var screenGeo = new THREE.PlaneBufferGeometry( simRes, simRes );
 				screenQuad = new THREE.Mesh( screenGeo, screenMat );
-        screenQuad.name = "screenQuad";
+        		screenQuad.name = "screenQuad";
 				screenQuad.position.z = -100;
 				sceneRTT.add( screenQuad );
 			}
@@ -502,28 +606,35 @@
 			//------------------------------------------
 			function setupMainScene(){
 
-        //setup camera
-        
-        
-        var viewAngle = 55.0;
-        var near = 0.1;
-        var canvasRatio = window.innerWidth / window.innerHeight;
-        var far = 3000000;
-        var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
-        var rotateRadius = 300.0;
-        camera.position.set(rotateRadius*Math.cos(Math.PI/4.0), 55, -rotateRadius*Math.sin(Math.PI/4.0));
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-    
-        // CONTROLS
-        cameraControls = new THREE.OrbitAndPanControls(camera, renderer.domElement);
+        		//setup camera
+        		
+        		
+        		var viewAngle = 55.0;
+        		var near = 0.1;
+        		var canvasRatio = window.innerWidth / window.innerHeight;
+        		var far = 3000000;
+        		var camera = new THREE.PerspectiveCamera(viewAngle, canvasRatio, near, far);
+        		var rotateRadius = 300.0;
+        		camera.position.set(rotateRadius*Math.cos(Math.PI/4.0), 55, -rotateRadius*Math.sin(Math.PI/4.0));
+        		camera.lookAt(new THREE.Vector3(0, 0, 0));
+    		
+        		// CONTROLS
+        		cameraControls = new THREE.FlyControls(camera);
+        		cameraControls.movementSpeed = 1000;
+				cameraControls.domElement = container;
+				cameraControls.rollSpeed = Math.PI / 24;
+				cameraControls.autoForward = false;
+				cameraControls.dragToLook = false;
+
         
         
 				
-				var waterGeo = new THREE.PlaneBufferGeometry( 2048, 2048, simRes-1, simRes-1 );				
+				var waterGeo = new THREE.PlaneBufferGeometry( 2048, 2048, simRes-1, simRes-1 );	
+				waterGeo.computeBoundingBox();
 				water = new THREE.Mesh( waterGeo , waterMat );
-        water.name = "water";
+        		water.name = "water";
 				water.rotation.x = THREE.Math.degToRad(-90);
-        water.rotation.z = THREE.Math.degToRad(-90);
+        		water.rotation.z = THREE.Math.degToRad(-90);
 				scene.add( water );
 				
 
@@ -541,33 +652,12 @@
 				{
 					if (event.button === 0)
 					{
-            var intersects = getRayCastIntersects(event.clientX, event.clientY);
-            var u = 0.0; 
-            var v = 0.0;
-            $.each(intersects, function(key, val){
-              if(val.object.name == "water"){
-                //console.log("find water");
-                rtUniforms.mouseActive.value = 2;
-                cameraControls.noRotate = true;
-                mouseDown = true;
-                
-                //create ripple
-                var face = val.face;
-                u += val.object.geometry.attributes.uv.array[face.a*2];
-                v += val.object.geometry.attributes.uv.array[face.a*2 + 1];
-                u += val.object.geometry.attributes.uv.array[face.b*2];
-                v += val.object.geometry.attributes.uv.array[face.b*2 + 1];
-                u += val.object.geometry.attributes.uv.array[face.c*2];
-                v += val.object.geometry.attributes.uv.array[face.c*2 + 1];
-
-                u /= 3.0;
-                v /= 3.0;
-                rtUniforms.mousePoint.value.set(u, v);
-                return false;
-              }
-            });
-						
-
+						mouseDown = true;
+						cameraControls.dragToLook = true;
+						var rayCasterResult = getRayCastIntersects(event.clientX, event.clientY)
+            			//var intersects = rayCasterResult.intersectObject;
+            			createBullet(rayCasterResult);
+            			
 					}
 				};
 				
@@ -576,7 +666,7 @@
 
 					mouseDown = false;
 					rtUniforms.mouseActive.value = 0;
-          cameraControls.noRotate = false;
+          			cameraControls.dragToLook = false;
           
 				};
 				
@@ -590,42 +680,46 @@
 
 				renderer.domElement.onmousemove = function (event) 
 				{
-          //rtUniforms.mouseActive.value = mouseDown ? 2 : 0;
-          if(!mouseDown) return;
-					var intersects = getRayCastIntersects(event.clientX, event.clientY);
-          var u = 0.0; 
-          var v = 0.0;
+          			//rtUniforms.mouseActive.value = mouseDown ? 2 : 0;
+          			if(!mouseDown) return;
+     //       			var rayCasterResult = getRayCastIntersects(event.clientX, event.clientY);
+					// var intersects = rayCasterResult.intersectObject;
+     //      			var u = 0.0; 
+     //      			var v = 0.0;
         
-          $.each(intersects, function(key, val){
-              if(val.object.name == "water"){
-                var face = val.face;
-                u += val.object.geometry.attributes.uv.array[face.a*2];
-                v += val.object.geometry.attributes.uv.array[face.a*2 + 1];
-                u += val.object.geometry.attributes.uv.array[face.b*2];
-                v += val.object.geometry.attributes.uv.array[face.b*2 + 1];
-                u += val.object.geometry.attributes.uv.array[face.c*2];
-                v += val.object.geometry.attributes.uv.array[face.c*2 + 1];
-
-                u /= 3.0;
-                v /= 3.0;
-                rtUniforms.mousePoint.value.set(u, v);
-                //rtUniforms.mouseActive.value = mouseDown ? 2 : 0;
-                return false;
-              }
-          });
+     //      			$.each(intersects, function(key, val){
+     //      			    if(val.object.name == "water"){
+     //      			      var face = val.face;
+     //      			      u += val.object.geometry.attributes.uv.array[face.a*2];
+     //      			      v += val.object.geometry.attributes.uv.array[face.a*2 + 1];
+     //      			      u += val.object.geometry.attributes.uv.array[face.b*2];
+     //      			      v += val.object.geometry.attributes.uv.array[face.b*2 + 1];
+     //      			      u += val.object.geometry.attributes.uv.array[face.c*2];
+     //      			      v += val.object.geometry.attributes.uv.array[face.c*2 + 1];
+			
+     //      			      u /= 3.0;
+     //      			      v /= 3.0;
+     // 					  rtUniforms.mouseActive.value = mouseDown ? 2 : 0;
+     //      			      rtUniforms.mousePoint.value.set(u, v);
+          			      
+     //      			      return false;
+     //      			    }
+     //      			});
 				};
 			}
 
-      function getRayCastIntersects(x, y){
-        var canvasWidth = window.innerWidth;
-        var canvasHeight = window.innerHeight;
-        var camera = cameraControls.object;
-        var mouseVector = new THREE.Vector2( -1 + 2*(x / canvasWidth),
-                                             1  - 2*(y / canvasHeight));
-        var raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouseVector, camera);
-        return raycaster.intersectObject(scene.getObjectByName( "water" ),false);
-      }
+      		function getRayCastIntersects(x, y){
+      		  var canvasWidth = window.innerWidth;
+      		  var canvasHeight = window.innerHeight;
+      		  var camera = cameraControls.object;
+      		  var mouseVector = new THREE.Vector2( -1 + 2*(x / canvasWidth),
+      		                                       1  - 2*(y / canvasHeight));
+      		  var raycaster = new THREE.Raycaster();
+      		  raycaster.setFromCamera(mouseVector, camera);
+      		  
+      		  return {ray: raycaster.ray,
+      		  		  intersectObject: raycaster.intersectObject(scene.getObjectByName( "water" ),false)};
+      		}
 			
 			//------------------------------------------
 			// Main loop
@@ -633,46 +727,46 @@
 			function update() {
 				requestAnimationFrame( update );
 
-				if (animateLight)
-				{
-          console.log(clock.getElapsedTime());
-          //clock.start();
-					light.position.x = Math.sin(clock.getElapsedTime() + Math.PI/4) * 850.0;
-					light.position.z = Math.cos(clock.getElapsedTime() + Math.PI/4) * 850.0;
-					guiNeedsUpdate = true;
-				}
+				// if (animateLight)
+				// {
+				// 	light.position.x = Math.sin(clockLightControl.getElapsedTime() + Math.PI/4) * 850.0;
+				// 	light.position.z = Math.cos(clockLightControl.getElapsedTime() + Math.PI/4) * 850.0;
+				// 	guiNeedsUpdate = true;
+				// }
 
-				// Refresh GUI
-				if (guiNeedsUpdate)
-				{
-					// Iterate over all controllers
-					for (var i in gui.__controllers) 
-					{
-						gui.__controllers[i].updateDisplay();
-					}
-					for (var j in mainFolder.__controllers) 
-					{
-						mainFolder.__controllers[j].updateDisplay();
-					}
-					for (var k in lightFolder.__controllers) 
-					{
-						lightFolder.__controllers[k].updateDisplay();
-					}
-					for (var l in waterColorFolder.__controllers) 
-					{
-						waterColorFolder.__controllers[l].updateDisplay();
-					}
-					guiNeedsUpdate = false;
-				}
-				render();
-        cameraControls.update();
+				// // Refresh GUI
+				// if (guiNeedsUpdate)
+				// {
+				// 	// Iterate over all controllers
+				// 	for (var i in gui.__controllers) 
+				// 	{
+				// 		gui.__controllers[i].updateDisplay();
+				// 	}
+				// 	for (var j in mainFolder.__controllers) 
+				// 	{
+				// 		mainFolder.__controllers[j].updateDisplay();
+				// 	}
+				// 	for (var k in lightFolder.__controllers) 
+				// 	{
+				// 		lightFolder.__controllers[k].updateDisplay();
+				// 	}
+				// 	for (var l in waterColorFolder.__controllers) 
+				// 	{
+				// 		waterColorFolder.__controllers[l].updateDisplay();
+				// 	}
+				// 	guiNeedsUpdate = false;
+				// }
+				var flyingDelta = clockFlyControls.getDelta()
+				render(flyingDelta);
+        		cameraControls.update(flyingDelta);
+        		//cameraControls.update();
 			}
 
 			
 			//------------------------------------------
 			// Main rendering
 			//------------------------------------------
-			function render() {
+			function render(delta) {
 				renderer.clear();
 				
 				// Run heightMap simulation, updating both buffers
@@ -681,9 +775,9 @@
 				
 				// Generate normalMap from new heightMap
 				updateNormals();
-				
+				updateBullets(delta);
 				// Final render pass
-        renderer.render( scene, cameraControls.object );
+        		renderer.render( scene, cameraControls.object );
 			}
 			
 			
@@ -723,6 +817,96 @@
 				rtTexture2 = rtTexture;
 				rtTexture = a;
 				rtUniforms.texture.value = rtTexture2;
+			}
+
+			function checkWaterCollision(obj, waterBoundingBox){
+
+				obj.updateMatrixWorld();
+				var objBoundingBox = obj.geometry.boundingBox.clone().applyMatrix4(obj.matrixWorld);
+				if(objBoundingBox.isIntersectionBox(waterBoundingBox)){
+					//console.log(objBoundingBox.intersect(waterBoundingBox));
+					return true;
+				}
+				
+			}
+
+			function updateBullets(delta){
+
+				var waterBoundingBox = water.geometry.boundingBox.clone().applyMatrix4(water.matrix);
+				var hit = false;
+				for (var i = bullets.length-1; i >= 0; i--) {
+					//console.log("update bullets");
+					var b = bullets[i], p = b.ray.origin, d = b.ray.direction;
+					//console.log(b)
+					var speed = delta * BULLETMOVESPEED
+
+					//var bbox = new THREE.Box3().setFromObject(water);
+					if(checkWaterCollision(b, waterBoundingBox)){
+						console.log("hit");
+						hit = true;
+						rtUniforms.mouseActive.value = 2;
+						//rtUniforms.mouseActive.value = 2;
+            	    	rtUniforms.mousePoint.value.set(b.collisionUV.x, b.collisionUV.y);
+
+
+					}
+					
+					b.translateX(speed *  d.x);
+					b.translateY(speed *  d.y);
+					b.translateZ(speed *  d.z);
+
+				}
+				if(!hit)
+					rtUniforms.mouseActive.value = 0;			
+
+				
+			}
+			
+
+			function createBullet(rayCasterResult) {
+				var ray = rayCasterResult.ray;
+				var intersects = rayCasterResult.intersectObject;
+				if (ray === undefined) {
+					return;
+				}
+				console.log("create bullet");
+				var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x333333});
+				var sphereGeo = new THREE.SphereGeometry(5, 20, 20);
+				sphereGeo.computeBoundingBox();				
+				var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
+				var camera = cameraControls.object;
+				sphere.position.set(ray.origin.x, ray.origin.y, ray.origin.z + 1);
+				
+				sphere.ray = ray;
+				//add uv coordinate when collision
+				var u = 0.0; 
+            	var v = 0.0;
+            	$.each(intersects, function(key, val){
+            	  if(val.object.name == "water"){
+            	    //console.log("find water");
+            	    //rtUniforms.mouseActive.value = 2;
+            	    mouseDown = true;
+            	    
+            	    //create ripple
+            	    var face = val.face;
+            	    u += val.object.geometry.attributes.uv.array[face.a*2];
+            	    v += val.object.geometry.attributes.uv.array[face.a*2 + 1];
+            	    u += val.object.geometry.attributes.uv.array[face.b*2];
+            	    v += val.object.geometry.attributes.uv.array[face.b*2 + 1];
+            	    u += val.object.geometry.attributes.uv.array[face.c*2];
+            	    v += val.object.geometry.attributes.uv.array[face.c*2 + 1];
+	
+            	    u /= 3.0;
+            	    v /= 3.0;
+            	    //rtUniforms.mousePoint.value.set(u, v);
+            	    return false;
+            	  }
+            	});
+            	console.log("uv", u, v);
+            	sphere.collisionUV = new THREE.Vector2(u, v);
+				bullets.push(sphere);
+				scene.add(sphere);
+				return sphere;
 			}
 		</script>
 	</body>
